@@ -25,6 +25,7 @@ jobs:
         run: |
           node --check app.js
           node --check enhancements.js
+          node --check pdf-smart.js
 
       - name: Verify required files
         shell: bash
@@ -34,8 +35,10 @@ jobs:
           test -f styles.css
           test -f app.js
           test -f enhancements.js
+          test -f pdf-smart.js
           grep -q 'id="demoBtn"' index.html
           grep -q 'enhancements.js' index.html
+          grep -q 'pdf-smart.js' index.html
           grep -q 'APA7 Module Formatter' index.html
 
       - name: Prepare static site
@@ -44,7 +47,7 @@ jobs:
           set -e
           rm -rf /tmp/apa7-site
           mkdir -p /tmp/apa7-site
-          cp index.html styles.css app.js enhancements.js /tmp/apa7-site/
+          cp index.html styles.css app.js enhancements.js pdf-smart.js /tmp/apa7-site/
           touch /tmp/apa7-site/.nojekyll
 
       - name: Publish gh-pages branch
@@ -63,6 +66,6 @@ jobs:
       - name: Publication summary
         shell: bash
         run: |
-          echo "### APA7 Formatter publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "La aplicación fue validada y la rama **gh-pages** fue actualizada." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Formatter v2.2 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "La aplicación fue validada, incluyendo **PDF Smart**, y la rama **gh-pages** fue actualizada." >> "$GITHUB_STEP_SUMMARY"
           echo "Si GitHub Pages todavía no está habilitado, seleccione **Settings → Pages → Deploy from a branch → gh-pages / root** una sola vez." >> "$GITHUB_STEP_SUMMARY"
