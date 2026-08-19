@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Formateador de módulos académicos en estilo APA 7, ejecutado completamente en el navegador.">
+  <title>APA7 Module Formatter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido principal</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div>
+        <p class="eyebrow">Herramienta académica</p>
+        <h1>APA7 Module Formatter</h1>
+        <p class="subtitle">Importa módulos, normaliza el formato y exporta una copia limpia en estilo APA 7.</p>
+      </div>
+      <span class="badge" aria-label="Versión inicial">MVP 1.0</span>
+    </div>
+  </header>
+
+  <main id="main" class="layout">
+    <section class="panel controls" aria-labelledby="upload-title">
+      <h2 id="upload-title">1. Cargar módulos</h2>
+      <p>Puede seleccionar varios archivos. Se aceptan DOCX, PDF, TXT, MD, HTML y HTM.</p>
+
+      <label class="drop-zone" for="files" id="dropZone">
+        <span class="drop-icon" aria-hidden="true">⇧</span>
+        <strong>Seleccione o arrastre archivos aquí</strong>
+        <span>Los archivos se procesan localmente en su navegador.</span>
+        <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
+      </label>
+
+      <div id="fileList" class="file-list" aria-live="polite"></div>
+
+      <fieldset>
+        <legend>Configuración APA 7</legend>
+        <label>
+          Fuente
+          <select id="fontFamily">
+            <option value="Times New Roman" selected>Times New Roman — 12 pt</option>
+            <option value="Arial">Arial — 11 pt</option>
+            <option value="Calibri">Calibri — 11 pt</option>
+            <option value="Georgia">Georgia — 11 pt</option>
+          </select>
+        </label>
+        <label class="checkbox-row">
+          <input id="firstLineIndent" type="checkbox" checked>
+          Sangría de primera línea de 0.5 pulg. en párrafos regulares
+        </label>
+        <label class="checkbox-row">
+          <input id="hangingReferences" type="checkbox" checked>
+          Sangría francesa de 0.5 pulg. en referencias
+        </label>
+      </fieldset>
+
+      <div class="button-row">
+        <button id="formatBtn" class="primary" type="button">Formatear en APA 7</button>
+        <button id="clearBtn" type="button">Limpiar</button>
+      </div>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel audit" aria-labelledby="audit-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Revisión automática</p>
+          <h2 id="audit-title">2. Auditoría rápida</h2>
+        </div>
+        <span id="score" class="score" aria-live="polite">—</span>
+      </div>
+      <p class="muted">La auditoría identifica problemas de formato y señales que requieren revisión humana. No sustituye una evaluación académica completa.</p>
+      <ul id="auditList" class="audit-list">
+        <li>Cargue uno o más archivos para comenzar.</li>
+      </ul>
+    </section>
+
+    <section class="panel preview-panel" aria-labelledby="preview-title">
+      <div class="preview-toolbar">
+        <div>
+          <p class="eyebrow">Documento editable</p>
+          <h2 id="preview-title">3. Vista previa</h2>
+        </div>
+        <div class="button-row compact">
+          <button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button>
+          <button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button>
+        </div>
+      </div>
+
+      <p id="previewHelp" class="muted">Después de formatear, puede editar directamente el contenido antes de descargarlo.</p>
+      <div class="paper-wrap">
+        <article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true">
+          <p class="placeholder">El contenido formateado aparecerá aquí.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>APA7 Module Formatter · Procesamiento local en el navegador · Sin almacenamiento automático de documentos.</p>
+  </footer>
+</body>
+</html>
