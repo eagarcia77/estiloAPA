@@ -14,7 +14,6 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido principal</a>
-
   <header class="site-header">
     <div class="header-inner">
       <div>
@@ -25,89 +24,42 @@
       <span class="badge" aria-label="Versión 2.2">v2.2</span>
     </div>
   </header>
-
   <main id="main" class="layout">
     <section class="panel controls" aria-labelledby="upload-title">
       <h2 id="upload-title">1. Cargar y ejecutar</h2>
       <p>Seleccione uno o varios documentos. Para comprobar que la aplicación funciona sin subir archivos, presione <strong>Probar ejemplo</strong>.</p>
-
       <label class="drop-zone" for="files" id="dropZone">
         <span class="drop-icon" aria-hidden="true">⇧</span>
         <strong>Seleccione o arrastre archivos aquí</strong>
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-
       <p class="muted"><strong>PDF Smart v2.2:</strong> cuando todos los archivos seleccionados son PDF, la aplicación reconstruye párrafos y encabezados utilizando posición, tamaño de fuente y espaciado. Los PDFs escaneados sin capa de texto requieren OCR o el archivo DOCX original.</p>
-
       <div id="fileList" class="file-list" aria-live="polite"></div>
-
       <fieldset>
         <legend>Configuración APA 7</legend>
-        <label>
-          Fuente
-          <select id="fontFamily">
-            <option value="Times New Roman" selected>Times New Roman — 12 pt</option>
-            <option value="Arial">Arial — 11 pt</option>
-            <option value="Calibri">Calibri — 11 pt</option>
-            <option value="Georgia">Georgia — 11 pt</option>
-          </select>
-        </label>
+        <label>Fuente<select id="fontFamily"><option value="Times New Roman" selected>Times New Roman — 12 pt</option><option value="Arial">Arial — 11 pt</option><option value="Calibri">Calibri — 11 pt</option><option value="Georgia">Georgia — 11 pt</option></select></label>
         <label class="checkbox-row"><input id="firstLineIndent" type="checkbox" checked> Sangría de primera línea de 0.5 pulg. en párrafos regulares</label>
         <label class="checkbox-row"><input id="hangingReferences" type="checkbox" checked> Sangría francesa de 0.5 pulg. en referencias</label>
         <label class="checkbox-row"><input id="sortReferences" type="checkbox" checked> Ordenar referencias alfabéticamente</label>
         <label class="checkbox-row"><input id="pageNumbers" type="checkbox" checked> Añadir número de página en el DOCX</label>
       </fieldset>
-
-      <div class="button-row">
-        <button id="formatBtn" class="primary" type="button">Formatear en APA 7</button>
-        <button id="demoBtn" type="button">Probar ejemplo</button>
-        <button id="clearBtn" type="button">Limpiar</button>
-      </div>
+      <div class="button-row"><button id="formatBtn" class="primary" type="button">Formatear en APA 7</button><button id="demoBtn" type="button">Probar ejemplo</button><button id="clearBtn" type="button">Limpiar</button></div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </section>
-
     <section class="panel audit" aria-labelledby="audit-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Revisión automática</p>
-          <h2 id="audit-title">2. Auditoría APA 7</h2>
-        </div>
-        <span id="score" class="score" aria-live="polite">—</span>
-      </div>
+      <div class="section-heading"><div><p class="eyebrow">Revisión automática</p><h2 id="audit-title">2. Auditoría APA 7</h2></div><span id="score" class="score" aria-live="polite">—</span></div>
       <p class="muted">La puntuación es heurística. Sirve para identificar asuntos que requieren revisión; no sustituye la evaluación académica humana.</p>
       <div id="metrics" class="metrics" aria-label="Métricas de auditoría"></div>
-      <div class="button-row compact">
-        <button id="reauditBtn" type="button" disabled>Volver a auditar</button>
-        <button id="downloadAuditBtn" type="button" disabled>Descargar auditoría</button>
-      </div>
-      <ul id="auditList" class="audit-list">
-        <li>Cargue uno o más archivos o presione “Probar ejemplo”.</li>
-      </ul>
+      <div class="button-row compact"><button id="reauditBtn" type="button" disabled>Volver a auditar</button><button id="downloadAuditBtn" type="button" disabled>Descargar auditoría</button></div>
+      <ul id="auditList" class="audit-list"><li>Cargue uno o más archivos o presione “Probar ejemplo”.</li></ul>
     </section>
-
     <section class="panel preview-panel" aria-labelledby="preview-title">
-      <div class="preview-toolbar">
-        <div>
-          <p class="eyebrow">Documento editable</p>
-          <h2 id="preview-title">3. Vista previa y exportación</h2>
-        </div>
-        <div class="button-row compact">
-          <button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button>
-          <button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button>
-        </div>
-      </div>
+      <div class="preview-toolbar"><div><p class="eyebrow">Documento editable</p><h2 id="preview-title">3. Vista previa y exportación</h2></div><div class="button-row compact"><button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button></div></div>
       <p id="previewHelp" class="muted">Puede editar el contenido directamente. La auditoría se actualiza automáticamente después de los cambios.</p>
-      <div class="paper-wrap">
-        <article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true">
-          <p class="placeholder">El contenido formateado aparecerá aquí.</p>
-        </article>
-      </div>
+      <div class="paper-wrap"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">El contenido formateado aparecerá aquí.</p></article></div>
     </section>
   </main>
-
-  <footer>
-    <p>APA7 Module Formatter v2.2 · PDF Smart · Procesamiento local · Sin base de datos · Sin API de IA requerida.</p>
-  </footer>
+  <footer><p>APA7 Module Formatter v2.2 · PDF Smart · Procesamiento local · Sin base de datos · Sin API de IA requerida.</p></footer>
 </body>
 </html>
