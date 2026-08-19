@@ -84,7 +84,6 @@ function normalizeReferenceText(text) {
   value = value.replace(/https?:\/\/doi\.org\/https?:\/\/(?:dx\.)?doi\.org\//gi, "https://doi.org/");
   value = value.replace(/\(\s*((?:19|20)\d{2}[a-z]?|n\.d\.|s\.f\.)\s*\)\s*\./gi, "($1).");
   value = value.replace(/\s+([,.;:])/g, "$1");
-  value = value.replace(/([,.;:])(?=[A-Za-zÁÉÍÓÚÑÜáéíóúñü])/g, "$1 ");
   value = value.replace(/(https?:\/\/\S+?)[.,;:]+$/i, "$1");
   return value.trim();
 }
@@ -251,24 +250,34 @@ function applySafeReferenceFixes() {
   }
 
   let changed = 0;
+  let skippedRichText = 0;
   for (const ref of refs) {
     const before = ref.textContent.trim();
     const after = normalizeReferenceText(before);
-    if (after !== before) {
-      ref.textContent = after;
-      changed += 1;
+    if (after === before) continue;
+
+    // No reemplazamos contenido enriquecido porque podría eliminar cursivas, enlaces u otro marcado útil.
+    if (ref.children.length > 0) {
+      skippedRichText += 1;
+      continue;
     }
+
+    ref.textContent = after;
+    changed += 1;
   }
 
   const preview = getPreview();
-  preview?.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: null }));
+  preview?.dispatchEvent(new Event("input", { bubbles: true }));
   renderAdvancedAudit();
 
   const status = document.querySelector("#status");
   if (status) {
+    const skippedMessage = skippedRichText
+      ? ` ${skippedRichText} referencia(s) con cursivas/enlaces se dejaron intactas para preservar el formato.`
+      : "";
     status.textContent = changed
-      ? `APA7 v${ENHANCEMENT_VERSION}: se aplicaron correcciones seguras a ${changed} referencia(s). Revise los datos bibliográficos manualmente.`
-      : `APA7 v${ENHANCEMENT_VERSION}: no se encontraron correcciones seguras adicionales.`;
+      ? `APA7 v${ENHANCEMENT_VERSION}: se aplicaron correcciones seguras a ${changed} referencia(s).${skippedMessage} Revise los datos bibliográficos manualmente.`
+      : `APA7 v${ENHANCEMENT_VERSION}: no se aplicaron cambios automáticos.${skippedMessage}`;
     status.className = "status success";
   }
 }
