@@ -265,7 +265,11 @@ function normalizeReferences(root) {
     const flush = () => {
       if (els.sortReferences.checked && heading && referenceBlocks.length > 1) {
         referenceBlocks.sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim(), "es", { sensitivity: "base" }));
-        for (const block of referenceBlocks) heading.parentNode.insertBefore(block, heading.nextSibling);
+        let anchor = heading;
+        for (const block of referenceBlocks) {
+          anchor.after(block);
+          anchor = block;
+        }
       }
       referenceBlocks = [];
     };
