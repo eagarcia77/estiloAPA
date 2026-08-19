@@ -10,6 +10,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module" src="enhancements.js"></script>
+  <script type="module" src="pdf-smart.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Saltar al contenido principal</a>
@@ -19,9 +20,9 @@
       <div>
         <p class="eyebrow">Herramienta académica · ejecución local</p>
         <h1>APA7 Module Formatter</h1>
-        <p class="subtitle">Importa módulos, aplica formato APA 7, compara citas con referencias, audita accesibilidad básica y exporta una copia limpia.</p>
+        <p class="subtitle">Importa módulos, aplica formato APA 7, reconstruye la estructura de PDFs, compara citas con referencias, audita accesibilidad básica y exporta una copia limpia.</p>
       </div>
-      <span class="badge" aria-label="Versión 2.1">v2.1</span>
+      <span class="badge" aria-label="Versión 2.2">v2.2</span>
     </div>
   </header>
 
@@ -36,6 +37,8 @@
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
+
+      <p class="muted"><strong>PDF Smart v2.2:</strong> cuando todos los archivos seleccionados son PDF, la aplicación reconstruye párrafos y encabezados utilizando posición, tamaño de fuente y espaciado. Los PDFs escaneados sin capa de texto requieren OCR o el archivo DOCX original.</p>
 
       <div id="fileList" class="file-list" aria-live="polite"></div>
 
@@ -104,7 +107,7 @@
   </main>
 
   <footer>
-    <p>APA7 Module Formatter v2.1 · Procesamiento local · Sin base de datos · Sin API de IA requerida.</p>
+    <p>APA7 Module Formatter v2.2 · PDF Smart · Procesamiento local · Sin base de datos · Sin API de IA requerida.</p>
   </footer>
 </body>
 </html>
