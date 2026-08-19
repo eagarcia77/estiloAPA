@@ -41,31 +41,18 @@ jobs:
           grep -q 'pdf-smart.js' index.html
           grep -q 'APA7 Module Formatter' index.html
 
-      - name: Prepare static site
-        shell: bash
-        run: |
-          set -e
-          rm -rf /tmp/apa7-site
-          mkdir -p /tmp/apa7-site
-          cp index.html styles.css app.js enhancements.js pdf-smart.js /tmp/apa7-site/
-          touch /tmp/apa7-site/.nojekyll
-
       - name: Publish gh-pages branch
         shell: bash
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan gh-pages
-          git rm -rf . || true
-          cp -a /tmp/apa7-site/. .
-          git add -A
-          git commit -m "Publish APA7 Formatter ${GITHUB_SHA::7}"
+          git branch -f gh-pages "$GITHUB_SHA"
           git push --force origin gh-pages
 
       - name: Publication summary
         shell: bash
         run: |
           echo "### APA7 Formatter v2.2 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "La aplicación fue validada, incluyendo **PDF Smart**, y la rama **gh-pages** fue actualizada." >> "$GITHUB_STEP_SUMMARY"
+          echo "La aplicación fue validada, incluyendo **PDF Smart**, y la rama **gh-pages** apunta a la versión validada de main." >> "$GITHUB_STEP_SUMMARY"
           echo "Si GitHub Pages todavía no está habilitado, seleccione **Settings → Pages → Deploy from a branch → gh-pages / root** una sola vez." >> "$GITHUB_STEP_SUMMARY"
