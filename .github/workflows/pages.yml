@@ -25,6 +25,7 @@ jobs:
           node --check app.js
           node --check enhancements.js
           node --check pdf-smart.js
+          node --check docx-enhance.js
       - name: Verify required files
         shell: bash
         run: |
@@ -34,8 +35,10 @@ jobs:
           test -f app.js
           test -f enhancements.js
           test -f pdf-smart.js
+          test -f docx-enhance.js
           grep -q 'id="demoBtn"' index.html
           grep -q 'pdf-smart.js' index.html
+          grep -q 'docx-enhance.js' index.html
           grep -q 'APA7 Module Formatter' index.html
       - name: Publish gh-pages branch
         shell: bash
@@ -47,5 +50,5 @@ jobs:
           git push --force origin gh-pages
       - name: Publication summary
         run: |
-          echo "### APA7 Formatter v2.2 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "La aplicación fue validada con PDF Smart y gh-pages fue sincronizada." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Formatter v2.3 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "La aplicación fue validada con PDF Smart v2.3, preservación de figuras/tablas y exportación DOCX mejorada." >> "$GITHUB_STEP_SUMMARY"
