@@ -1,4 +1,4 @@
-const MODULE_PROFILE_VERSION = "2.4";
+const MODULE_PROFILE_VERSION = "2.5";
 
 const PROFILE_ID = "formatProfile";
 const MODULE_PROFILE = "modulo11c";
@@ -81,37 +81,68 @@ function linkifyPlainUrls(root) {
   }
 }
 
+function classifyApaHeading(block, text) {
+  if (/^Referencias$/i.test(text)) return 1;
+  if (/^(Introducción|Objetivos del módulo|Palabras clave|Lecturas y recursos requeridos|Integración de conceptos|Conclusión)$/i.test(text)) return 1;
+  if (/^Tema\s+\d+\.\s+/i.test(text)) return 2;
+  if (/^(Adquiere|Refuerza)$/i.test(text)) return 3;
+  return 0;
+}
+
+function applyHeadingSemantics(block, level, text) {
+  block.classList.remove("level-1", "level-2", "level-3", "apa-heading-level-1", "apa-heading-level-2", "apa-heading-level-3", "topic-heading", "module-subheading");
+  block.classList.add("module-heading", `apa-heading-level-${level}`, `level-${level}`, "no-indent");
+  block.dataset.apaHeadingLevel = String(level);
+  if (/^Tema\s+\d+\./i.test(text)) block.classList.add("topic-heading");
+  if (/^(Adquiere|Refuerza)$/i.test(text)) block.classList.add("module-subheading");
+  if (/^Referencias$/i.test(text)) block.classList.add("apa-references-heading", "references-heading");
+}
+
+function markTableSemantics(preview) {
+  preview.querySelectorAll("table").forEach((table) => {
+    table.classList.add("module-apa-table", "apa7-strict-table");
+    table.setAttribute("role", "table");
+    const rows = [...table.rows];
+    if (!rows.length) return;
+
+    const firstRow = rows[0];
+    firstRow.classList.add("apa-table-header-row");
+    [...firstRow.cells].forEach((cell, index) => {
+      cell.classList.add("apa-table-header-cell");
+      cell.setAttribute("scope", "col");
+      cell.dataset.apaColumnIndex = String(index);
+    });
+
+    rows.slice(1).forEach((row) => {
+      [...row.cells].forEach((cell, index) => {
+        cell.dataset.apaColumnIndex = String(index);
+        const text = normalizeProfileText(cell.textContent);
+        if (/^[-+]?[$€£]?\s*\d[\d,.]*(?:\s*%|\s*[A-Za-z]{0,3})?$/.test(text)) cell.classList.add("apa-numeric-cell");
+        else cell.classList.add("apa-text-cell");
+      });
+    });
+
+    let previous = table.previousElementSibling;
+    if (previous && previous.classList.contains("module-table-title")) previous = previous.previousElementSibling;
+    if (previous && /^Tabla\s+\d+/i.test(normalizeProfileText(previous.textContent))) previous.classList.add("module-table-label", "no-indent");
+
+    const next = table.nextElementSibling;
+    if (next && /^Nota\./i.test(normalizeProfileText(next.textContent))) next.classList.add("apa-note", "module-table-note", "no-indent");
+  });
+}
+
 function markModuleSemantics(preview) {
   if (!preview || !moduleProfileEnabled()) return;
 
-  preview.classList.add("module11c-profile");
+  preview.classList.add("module11c-profile", "apa7-strict-profile");
   const blocks = [...preview.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li")];
 
   for (const block of blocks) {
     const text = normalizeProfileText(block.textContent);
     if (!text) continue;
 
-    const isReferences = /^Referencias$/i.test(text);
-    const isHeading =
-      /^(Introducción|Objetivos del módulo|Palabras clave|Lecturas y recursos requeridos|Integración de conceptos|Conclusión)$/i.test(text) ||
-      /^Tema\s+\d+\.\s+/i.test(text);
-
-    if (isHeading || isReferences) {
-      block.classList.add("module-heading", "no-indent");
-      if (/^Tema\s+\d+\./i.test(text)) block.classList.add("topic-heading");
-      if (isReferences) {
-        block.classList.add("apa-references-heading", "references-heading");
-        block.classList.remove("level-2", "level-3");
-        block.classList.add("level-1");
-      } else {
-        block.classList.remove("level-1", "level-3");
-        block.classList.add("level-2");
-      }
-    }
-
-    if (/^(Adquiere|Refuerza)$/i.test(text)) {
-      block.classList.add("module-subheading", "no-indent");
-    }
+    const headingLevel = classifyApaHeading(block, text);
+    if (headingLevel) applyHeadingSemantics(block, headingLevel, text);
 
     if (/^Figura\s+\d+[A-Za-z]?\s*\.?$/i.test(text)) {
       block.classList.add("apa-figure-label", "no-indent");
@@ -170,7 +201,7 @@ function markModuleSemantics(preview) {
     }
   });
 
-  preview.querySelectorAll("table").forEach((table) => table.classList.add("module-apa-table"));
+  markTableSemantics(preview);
   linkifyPlainUrls(preview);
 }
 
@@ -185,37 +216,117 @@ function ensureModuleProfileStyles() {
       line-height: 2 !important;
     }
     .apa-paper.module11c-profile p { margin: 0 !important; }
+
+    /* APA 7: headings use the same font and size as the body. */
     .apa-paper.module11c-profile .module-heading {
-      text-align: left !important; font-family: Arial, Helvetica, sans-serif !important;
-      font-size: 14pt !important; font-weight: 700 !important; font-style: normal !important;
-      line-height: 1.35 !important; margin: 1em 0 .55em !important; text-indent: 0 !important;
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 12pt !important;
+      line-height: 2 !important;
+      text-indent: 0 !important;
+      color: #000 !important;
     }
-    .apa-paper.module11c-profile .module-heading.references-heading,
+    .apa-paper.module11c-profile .apa-heading-level-1 {
+      text-align: center !important;
+      font-weight: 700 !important;
+      font-style: normal !important;
+      margin: 1em 0 0 !important;
+    }
+    .apa-paper.module11c-profile .apa-heading-level-2 {
+      text-align: left !important;
+      font-weight: 700 !important;
+      font-style: normal !important;
+      margin: 1em 0 0 !important;
+    }
+    .apa-paper.module11c-profile .apa-heading-level-3 {
+      text-align: left !important;
+      font-weight: 700 !important;
+      font-style: italic !important;
+      margin: 1em 0 0 !important;
+    }
+    .apa-paper.module11c-profile .references-heading,
     .apa-paper.module11c-profile .apa-references-heading {
-      text-align: center !important; font-size: 12pt !important; margin: 0 0 .65em !important;
+      text-align: center !important;
+      font-size: 12pt !important;
+      font-weight: 700 !important;
+      font-style: normal !important;
+      margin: 1em 0 0 !important;
     }
-    .apa-paper.module11c-profile .module-subheading { font-weight: 700 !important; text-indent: 0 !important; margin-top: .45em !important; }
+
     .apa-paper.module11c-profile .module-lead,
     .apa-paper.module11c-profile .module-keywords { text-indent: 0 !important; }
     .apa-paper.module11c-profile .module-keywords { font-weight: 700 !important; }
     .apa-paper.module11c-profile ul,
     .apa-paper.module11c-profile ol { margin: 0 0 .6em .45in !important; padding-left: .25in !important; }
     .apa-paper.module11c-profile li { margin: 0 !important; padding: 0 !important; }
+
     .apa-paper.module11c-profile .apa-figure-label,
-    .apa-paper.module11c-profile .module-table-label { font-weight: 700 !important; text-indent: 0 !important; margin: .85em 0 0 !important; }
+    .apa-paper.module11c-profile .module-table-label {
+      font-weight: 700 !important;
+      text-indent: 0 !important;
+      margin: 1em 0 0 !important;
+    }
     .apa-paper.module11c-profile .apa-figure-title,
-    .apa-paper.module11c-profile .module-table-title { font-style: italic !important; text-indent: 0 !important; margin: 0 0 .35em !important; }
+    .apa-paper.module11c-profile .module-table-title {
+      font-style: italic !important;
+      text-indent: 0 !important;
+      margin: 0 !important;
+    }
     .apa-paper.module11c-profile .module-figure-image,
-    .apa-paper.module11c-profile img.apa-figure-image { display: block !important; width: auto !important; max-width: 100% !important; height: auto !important; margin: .35em auto .35em !important; }
-    .apa-paper.module11c-profile .apa-note { text-indent: 0 !important; font-size: 12pt !important; margin: .15em 0 .7em !important; }
+    .apa-paper.module11c-profile img.apa-figure-image {
+      display: block !important;
+      width: auto !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: .35em auto .35em !important;
+    }
+    .apa-paper.module11c-profile .apa-note,
+    .apa-paper.module11c-profile .module-table-note {
+      text-indent: 0 !important;
+      font-size: 12pt !important;
+      margin: .15em 0 .7em !important;
+    }
     .apa-paper.module11c-profile .module-example { text-indent: .5in !important; }
-    .apa-paper.module11c-profile table.module-apa-table,
-    .apa-paper.module11c-profile table { width: 100% !important; border-collapse: collapse !important; border-top: 1px solid #000 !important; border-bottom: 1px solid #000 !important; margin: .35em 0 .55em !important; }
-    .apa-paper.module11c-profile table th,
-    .apa-paper.module11c-profile table td { border: 0 !important; padding: .18em .18em !important; vertical-align: top !important; line-height: 1.55 !important; }
-    .apa-paper.module11c-profile table tr:first-child { border-bottom: 1px solid #000 !important; }
-    .apa-paper.module11c-profile table th { font-weight: 700 !important; }
-    .apa-paper.module11c-profile .apa-reference { padding-left: .5in !important; text-indent: -.5in !important; margin: 0 !important; }
+
+    /* APA 7 table presentation: no vertical rules and only essential horizontal rules. */
+    .apa-paper.module11c-profile table.apa7-strict-table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      border: 0 !important;
+      margin: .25em 0 .35em !important;
+      line-height: 1.15 !important;
+    }
+    .apa-paper.module11c-profile table.apa7-strict-table th,
+    .apa-paper.module11c-profile table.apa7-strict-table td {
+      border: 0 !important;
+      padding: .22em .28em !important;
+      vertical-align: top !important;
+      line-height: 1.15 !important;
+      background: transparent !important;
+    }
+    .apa-paper.module11c-profile table.apa7-strict-table tr:first-child th,
+    .apa-paper.module11c-profile table.apa7-strict-table tr:first-child td {
+      border-top: 1.25px solid #000 !important;
+      border-bottom: 1px solid #000 !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+    }
+    .apa-paper.module11c-profile table.apa7-strict-table tr:first-child th:first-child,
+    .apa-paper.module11c-profile table.apa7-strict-table tr:first-child td:first-child {
+      text-align: left !important;
+    }
+    .apa-paper.module11c-profile table.apa7-strict-table tr:last-child td,
+    .apa-paper.module11c-profile table.apa7-strict-table tr:last-child th {
+      border-bottom: 1.25px solid #000 !important;
+    }
+    .apa-paper.module11c-profile table.apa7-strict-table td.apa-text-cell { text-align: left !important; }
+    .apa-paper.module11c-profile table.apa7-strict-table td.apa-numeric-cell { text-align: right !important; }
+
+    .apa-paper.module11c-profile .apa-reference {
+      padding-left: .5in !important;
+      text-indent: -.5in !important;
+      margin: 0 !important;
+    }
     .apa-paper.module11c-profile a { color: #0563c1 !important; text-decoration: underline !important; }
   `;
   document.head.append(style);
@@ -226,7 +337,7 @@ function applyModuleProfile({ announce = false } = {}) {
   if (!preview) return;
 
   if (!moduleProfileEnabled()) {
-    preview.classList.remove("module11c-profile");
+    preview.classList.remove("module11c-profile", "apa7-strict-profile");
     return;
   }
 
@@ -249,7 +360,7 @@ function applyModuleProfile({ announce = false } = {}) {
   if (announce) {
     const status = document.querySelector("#status");
     if (status) {
-      status.textContent = `Perfil Módulo institucional v${MODULE_PROFILE_VERSION} aplicado según el patrón Modulo11c.`;
+      status.textContent = `Perfil APA 7 estricto v${MODULE_PROFILE_VERSION} aplicado según la estructura del módulo institucional.`;
       status.className = "status success";
     }
   }
