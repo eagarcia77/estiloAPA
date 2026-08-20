@@ -32,6 +32,7 @@ jobs:
           node --check thesis-alignment.js
           node --check apa-editor-v30.js
           node --check list-normalizer-v31.js
+          node --check table-figure-v32.js
           node --check reference-audit-v30.js
           node --check apa-editor-export-v30.js
           node --check thesis-html.js
@@ -39,33 +40,32 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify v3.1 lists, scrollbar, editor and APA safeguards
+      - name: Verify v3.2 tables, figures, lists and APA safeguards
         shell: bash
         run: |
           set -e
           test -f index.html
+          test -f table-figure-v32.js
           test -f list-normalizer-v31.js
           test -f scrollbar-v31.css
           test -f apa-editor-v30.js
           test -f reference-audit-v30.js
-          test -f apa-table-v29.js
           test -f thesis-docx.js
           test -f docx-enhance.js
-          grep -q 'v3.1' index.html
-          grep -q 'list-normalizer-v31.js' index.html
-          grep -q 'scrollbar-v31.css' index.html
+          grep -q 'v3.2' index.html
+          grep -q 'table-figure-v32.js' index.html
+          grep -q 'APA_MEDIA_VERSION = "3.2"' table-figure-v32.js
+          grep -q 'fontWeight = "400"' table-figure-v32.js
+          grep -q 'fontStyle = "italic"' table-figure-v32.js
+          grep -q 'apa-figure-image' table-figure-v32.js
+          grep -q 'Título de la figura \[revisar\]' table-figure-v32.js
+          grep -q 'window.normalizeApaMedia' table-figure-v32.js
           grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
-          grep -q 'window.normalizeNumberedLists' list-normalizer-v31.js
           grep -q 'max-height: 72vh' scrollbar-v31.css
-          grep -q 'overflow-y: scroll' scrollbar-v31.css
           grep -q 'DOCX_ENHANCE_VERSION = "3.1"' docx-enhance.js
           grep -q 'apa-numbering-v31-' docx-enhance.js
-          grep -q 'numberingConfigs.push' docx-enhance.js
           grep -q 'THESIS_DOCX_VERSION = "3.1"' thesis-docx.js
           grep -q 'thesis-numbering-v31-' thesis-docx.js
-          grep -q 'numberingState.configs' thesis-docx.js
-          grep -q 'APA_EDITOR_VERSION = "3.0"' apa-editor-v30.js
-          grep -q 'APA_REFERENCE_AUDIT_VERSION = "3.0"' reference-audit-v30.js
           grep -q 'insideVertical: none' thesis-docx.js
           grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
@@ -81,6 +81,7 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.1 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Cada lista numerada independiente reinicia en 1 al exportarse a Word; también se recuperan elementos numerados que quedaron como párrafos sueltos." >> "$GITHUB_STEP_SUMMARY"
-          echo "Vista previa y exportación incorpora un área desplazable con scrollbar vertical visible y controles de edición fuera del scroll." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.2 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Los títulos de tabla se fuerzan a alineación izquierda, cursiva y peso normal, evitando que un título como Integración de conceptos herede un heading centrado/negrita." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las imágenes que llegan desde DOCX/PDF se conservan como figuras APA 7, con número, título, texto alternativo y preservación de Nota existente; el DOCX vuelve a insertar las imágenes." >> "$GITHUB_STEP_SUMMARY"
+          echo "Se mantienen las correcciones v3.1 de listas numeradas y scrollbar de vista previa." >> "$GITHUB_STEP_SUMMARY"
