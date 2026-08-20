@@ -40,8 +40,10 @@ jobs:
           node --check thesis-docx.js
           node --check html-enhance.js
           node --check docx-enhance.js
+          node --check figure-apa.js
+          node --check docx-figure-export-v2.js
 
-      - name: Verify v3.4 media roles and APA safeguards
+      - name: Verify v3.4.1 figures and APA safeguards
         shell: bash
         run: |
           set -e
@@ -50,12 +52,22 @@ jobs:
           test -f table-figure-v32.js
           test -f list-normalizer-v31.js
           test -f scrollbar-v31.css
+          test -f figure-apa.js
+          test -f docx-figure-export-v2.js
           grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.4"' pdf-original-media-v33.js
           grep -q 'module-banner-image' pdf-original-media-v33.js
           grep -q 'apaSelfCaptioned' pdf-original-media-v33.js
           grep -q 'standaloneFigureLabel' pdf-original-media-v33.js
           grep -q 'previousPageTail' pdf-original-media-v33.js
           grep -q 'window.repairApaMediaRoles' pdf-original-media-v33.js
+          grep -q 'FIGURE_APA_VERSION = "3.4.1"' figure-apa.js
+          grep -q 'DOCX_FIGURE_EXPORT_VERSION = "3.4.1"' docx-figure-export-v2.js
+          grep -q 'module-banner-image' figure-apa.js
+          grep -q 'apaSelfCaptioned' figure-apa.js
+          grep -q 'apa-figure-label' figure-apa.js
+          grep -q 'insideVertical: none' docx-figure-export-v2.js
+          grep -q 'figure-apa.js' html-enhance.js
+          grep -q 'docx-figure-export-v2.js' html-enhance.js
           grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
           grep -q 'max-height: 72vh' scrollbar-v31.css
           grep -q 'insideVertical: none' thesis-docx.js
@@ -73,7 +85,8 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.4 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "El banner superior del módulo se preserva como elemento de diseño y no consume numeración de figuras." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las figuras raster que ya contienen Figura X, título y Nota dentro de la imagen se preservan sin duplicar captions externos y conservan su numeración original." >> "$GITHUB_STEP_SUMMARY"
-          echo "La recuperación usa contexto entre páginas para detectar figuras que comienzan al inicio de una página." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4.1 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Base v3.4 con parche controlado para figuras APA 7, sin reorganizar el módulo." >> "$GITHUB_STEP_SUMMARY"
+          echo "Los banners no se numeran y las figuras que ya contienen Figura X, título y Nota no duplican captions externos." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las figuras sin caption integrado reciben Figura X en negrita, título en cursiva y Nota cuando exista." >> "$GITHUB_STEP_SUMMARY"
+          echo "El exportador DOCX utiliza el orden actual de la vista previa y conserva tablas APA y listas independientes." >> "$GITHUB_STEP_SUMMARY"
