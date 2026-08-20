@@ -1,4 +1,4 @@
-const THESIS_HTML_VERSION = "2.6";
+const THESIS_HTML_VERSION = "2.7";
 
 function thesisHtmlEnabled() {
   return ["thesis-doctoral", "thesis-masters"].includes(document.querySelector("#formatProfile")?.value || "");
@@ -16,6 +16,7 @@ function thesisHtmlClone() {
 function thesisHtmlDownload() {
   const clone = thesisHtmlClone();
   const degree = document.querySelector("#formatProfile")?.value === "thesis-doctoral" ? "Disertación doctoral" : "Tesis de maestría";
+  const mode = document.querySelector("#preview")?.dataset?.thesisStructureMode || "";
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${degree} — formato institucional</title>
@@ -51,7 +52,11 @@ a { color: inherit; text-decoration: underline; }
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   const status = document.querySelector("#status");
-  if (status) { status.textContent = `${degree} exportada en HTML con perfil institucional v${THESIS_HTML_VERSION}.`; status.className = "status success"; }
+  if (status) {
+    const extra = mode === "module-like" ? " Se detectó contenido de módulo; no se interpretó como preliminares de tesis." : "";
+    status.textContent = `${degree} exportada en HTML con perfil institucional v${THESIS_HTML_VERSION}.${extra}`;
+    status.className = mode === "module-like" ? "status error" : "status success";
+  }
 }
 
 document.addEventListener("click", (event) => {
