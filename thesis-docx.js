@@ -1,4 +1,4 @@
-const THESIS_DOCX_VERSION = "2.7";
+const THESIS_DOCX_VERSION = "2.8";
 
 function thesisExportProfile() {
   return document.querySelector("#formatProfile")?.value || "";
@@ -30,7 +30,10 @@ async function thesisImageDimensions(src, maxWidth = 540, maxHeight = 620) {
     const image = new Image();
     image.onload = () => {
       const ratio = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight, 1);
-      resolve({ width: Math.max(1, Math.round(image.naturalWidth * ratio)), height: Math.max(1, Math.round(image.naturalHeight * ratio)) });
+      resolve({
+        width: Math.max(1, Math.round(image.naturalWidth * ratio)),
+        height: Math.max(1, Math.round(image.naturalHeight * ratio)),
+      });
     };
     image.onerror = reject;
     image.src = src;
@@ -38,10 +41,17 @@ async function thesisImageDimensions(src, maxWidth = 540, maxHeight = 620) {
 }
 
 function thesisInlineRuns(node, api, inherited = {}) {
-  const { TextRun } = api;
+  const { TextRun, ExternalHyperlink } = api;
   if (node.nodeType === Node.TEXT_NODE) {
     if (!node.nodeValue) return [];
-    return [new TextRun({ text: node.nodeValue, font: "Times New Roman", size: 24, bold: inherited.bold, italics: inherited.italics, underline: inherited.underline ? {} : undefined })];
+    return [new TextRun({
+      text: node.nodeValue,
+      font: "Times New Roman",
+      size: 24,
+      bold: inherited.bold,
+      italics: inherited.italics,
+      underline: inherited.underline ? {} : undefined,
+    })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
@@ -51,14 +61,22 @@ function thesisInlineRuns(node, api, inherited = {}) {
     underline: inherited.underline || tag === "U",
   };
   if (tag === "BR") return [new TextRun({ break: 1, font: "Times New Roman", size: 24 })];
+  if (tag === "A" && node.getAttribute("href") && ExternalHyperlink) {
+    const text = node.textContent || node.getAttribute("href");
+    return [new ExternalHyperlink({
+      link: node.getAttribute("href"),
+      children: [new TextRun({ text, font: "Times New Roman", size: 24, underline: {}, bold: style.bold, italics: style.italics })],
+    })];
+  }
   return [...node.childNodes].flatMap((child) => thesisInlineRuns(child, api, style));
 }
 
-function thesisParagraph(element, api, { allowPageBreak = true } = {}) {
+function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "body" } = {}) {
   const { Paragraph, TextRun, AlignmentType } = api;
   const text = String(element.textContent || "").replace(/\s+/g, " ").trim();
   if (!text) return null;
-  const isCover = element.classList.contains("thesis-cover-block");
+
+  const isCover = sectionRole === "cover" && element.classList.contains("thesis-cover-block");
   const isMajor = element.classList.contains("thesis-major-heading") || element.classList.contains("thesis-chapter-title");
   const isSection = element.classList.contains("thesis-section-heading");
   const isRef = element.classList.contains("thesis-reference") || element.classList.contains("apa-reference");
@@ -67,20 +85,30 @@ function thesisParagraph(element, api, { allowPageBreak = true } = {}) {
   const isTableLabel = element.classList.contains("thesis-table-label");
   const isTableTitle = element.classList.contains("thesis-table-title");
   const isNote = element.classList.contains("thesis-note") || element.classList.contains("apa-note");
-  const noIndent = isCover || isMajor || isSection || isRef || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle || isNote || element.classList.contains("no-indent");
 
   let runs = thesisInlineRuns(element, api);
   if (!runs.length) runs = [new TextRun({ text, font: "Times New Roman", size: 24 })];
-  if (isMajor || isSection || isFigureLabel || isTableLabel) runs = [new TextRun({ text, font: "Times New Roman", size: 24, bold: true })];
-  if (isFigureTitle || isTableTitle) runs = [new TextRun({ text, font: "Times New Roman", size: 24, italics: true })];
+  if (isMajor || isSection || isFigureLabel || isTableLabel) {
+    runs = [new TextRun({ text, font: "Times New Roman", size: 24, bold: true })];
+  } else if (isFigureTitle || isTableTitle) {
+    runs = [new TextRun({ text, font: "Times New Roman", size: 24, italics: true })];
+  }
 
+  // Regla v2.8: los párrafos de contenido siempre se escriben explícitamente a la izquierda.
+  // Solo la portada real y los encabezados mayores institucionales pueden ir centrados.
+  let alignment = AlignmentType.LEFT;
+  if (isCover || isMajor) alignment = AlignmentType.CENTER;
+
+  const noIndent = isCover || isMajor || isSection || isRef || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle || isNote || element.classList.contains("no-indent");
   const options = {
     children: runs,
     spacing: { line: 480, after: 0, before: 0 },
-    alignment: isCover || isMajor ? AlignmentType.CENTER : AlignmentType.LEFT,
+    alignment,
   };
+
   if (isRef) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent) options.indent = { firstLine: 720 };
+
   if (allowPageBreak && element.classList.contains("thesis-page-start")) options.pageBreakBefore = true;
   return new Paragraph(options);
 }
@@ -129,9 +157,7 @@ function thesisSplitBlocks(blocks) {
   const moduleLike = thesisLooksLikeModule(blocks);
 
   if (chapterIndex >= 0) {
-    const coverEnd = approvalIndex > 0
-      ? approvalIndex
-      : (firstPrelimIndex > 0 ? firstPrelimIndex : chapterIndex);
+    const coverEnd = approvalIndex > 0 ? approvalIndex : (firstPrelimIndex > 0 ? firstPrelimIndex : chapterIndex);
     return {
       cover: coverEnd > 0 ? blocks.slice(0, coverEnd) : [],
       prelim: blocks.slice(coverEnd, chapterIndex),
@@ -161,26 +187,34 @@ function thesisSplitBlocks(blocks) {
   };
 }
 
-async function thesisConvertBlocks(blocks, api, firstBlockNoBreak = false) {
+async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sectionRole = "body" } = {}) {
   const { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ImageRun, AlignmentType } = api;
   const children = [];
+
   for (let index = 0; index < blocks.length; index += 1) {
     const element = blocks[index];
+
     if (element.tagName === "IMG" && (element.classList.contains("apa-figure-image") || element.classList.contains("thesis-figure-image"))) {
       const src = element.getAttribute("src") || "";
       if (src.startsWith("data:image/")) {
         const dimensions = await thesisImageDimensions(src);
         const alt = element.getAttribute("alt") || "Figura de la tesis";
-        children.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { line: 480, after: 0, before: 0 }, children: [new ImageRun({ data: thesisBytes(src), transformation: dimensions, altText: { title: alt, description: alt, name: alt } })] }));
+        children.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { line: 480, after: 0, before: 0 },
+          children: [new ImageRun({ data: thesisBytes(src), transformation: dimensions, altText: { title: alt, description: alt, name: alt } })],
+        }));
       }
       continue;
     }
+
     if (["UL", "OL"].includes(element.tagName)) {
       for (const li of element.querySelectorAll(":scope > li")) {
-        const text = (li.textContent || "").replace(/\s+/g, " ").trim();
+        const text = thesisBlockText(li);
         if (!text) continue;
         const runs = thesisInlineRuns(li, api);
         children.push(new Paragraph({
+          alignment: AlignmentType.LEFT,
           children: runs.length ? runs : [new TextRun({ text, font: "Times New Roman", size: 24 })],
           bullet: element.tagName === "UL" ? { level: 0 } : undefined,
           numbering: element.tagName === "OL" ? { reference: "thesis-numbering", level: 0 } : undefined,
@@ -189,24 +223,39 @@ async function thesisConvertBlocks(blocks, api, firstBlockNoBreak = false) {
       }
       continue;
     }
+
     if (element.tagName === "TABLE") {
       const rows = [...element.querySelectorAll("tr")].map((row, rowIndex) => new TableRow({
         children: [...row.cells].map((cell) => new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: cell.textContent.trim(), font: "Times New Roman", size: 24, bold: rowIndex === 0 })], spacing: { line: 360, after: 0, before: 0 } })]
-        }))
+          children: [new Paragraph({
+            alignment: AlignmentType.LEFT,
+            children: [new TextRun({ text: cell.textContent.trim(), font: "Times New Roman", size: 24, bold: rowIndex === 0 })],
+            spacing: { line: 360, after: 0, before: 0 },
+          })],
+        })),
       }));
       if (rows.length) children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
       continue;
     }
-    const paragraph = thesisParagraph(element, api, { allowPageBreak: !(firstBlockNoBreak && index === 0) });
+
+    const paragraph = thesisParagraph(element, api, {
+      allowPageBreak: !(firstBlockNoBreak && index === 0),
+      sectionRole,
+    });
     if (paragraph) children.push(paragraph);
   }
+
   return children;
 }
 
 function thesisFooter(api) {
   const { Footer, Paragraph, TextRun, PageNumber, AlignmentType } = api;
-  return new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 24 })] })] });
+  return new Footer({
+    children: [new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ children: [PageNumber.CURRENT], font: "Times New Roman", size: 24 })],
+    })],
+  });
 }
 
 async function exportThesisDocx() {
@@ -215,17 +264,23 @@ async function exportThesisDocx() {
   const blocks = thesisPreviewBlocks();
   const split = thesisSplitBlocks(blocks);
   const sections = [];
-  const pageBase = { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 2160 } };
+  const pageBase = {
+    size: { width: 12240, height: 15840 },
+    margin: { top: 1440, right: 1440, bottom: 1440, left: 2160 },
+  };
 
   if (split.cover.length) {
-    sections.push({ properties: { page: pageBase }, children: await thesisConvertBlocks(split.cover, api, true) });
+    sections.push({
+      properties: { page: pageBase },
+      children: await thesisConvertBlocks(split.cover, api, { firstBlockNoBreak: true, sectionRole: "cover" }),
+    });
   }
 
   if (split.prelim.length) {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: split.cover.length ? 2 : 1, formatType: NumberFormat?.LOWER_ROMAN || "lowerRoman" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(split.prelim, api, true),
+      children: await thesisConvertBlocks(split.prelim, api, { firstBlockNoBreak: true, sectionRole: "prelim" }),
     });
   }
 
@@ -233,7 +288,7 @@ async function exportThesisDocx() {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(split.body, api, true),
+      children: await thesisConvertBlocks(split.body, api, { firstBlockNoBreak: true, sectionRole: "body" }),
     });
   }
 
@@ -241,14 +296,17 @@ async function exportThesisDocx() {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(blocks, api, true),
+      children: await thesisConvertBlocks(blocks, api, { firstBlockNoBreak: true, sectionRole: "body" }),
     });
   }
 
   const doc = new Document({
-    numbering: { config: [{ reference: "thesis-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] },
+    numbering: {
+      config: [{ reference: "thesis-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }],
+    },
     sections,
   });
+
   const blob = await Packer.toBlob(doc);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -261,12 +319,12 @@ async function exportThesisDocx() {
 
   const status = document.querySelector("#status");
   if (status) {
-    let detail = "preliminares romanos y cuerpo arábigo";
-    if (split.mode === "module-like") detail = "módulo detectado: exportado como cuerpo académico con numeración arábiga desde 1";
-    else if (split.mode === "body-only") detail = "sin preliminares ni Capítulo I: cuerpo académico con numeración arábiga desde 1";
-    else if (split.mode === "body-with-chapter") detail = "cuerpo con Capítulo I: numeración arábiga desde 1";
-    else if (split.mode === "prelim-only") detail = "solo preliminares detectados: numeración romana";
-    status.textContent = `DOCX de ${thesisExportProfile() === "thesis-doctoral" ? "disertación doctoral" : "tesis de maestría"} generado con perfil institucional v${THESIS_DOCX_VERSION}; ${detail}.`;
+    let detail = "preliminares romanos y cuerpo arábigo; párrafos de contenido alineados a la izquierda";
+    if (split.mode === "module-like") detail = "módulo detectado: cuerpo académico desde página 1, con párrafos alineados a la izquierda";
+    else if (split.mode === "body-only") detail = "cuerpo académico desde página 1, con párrafos alineados a la izquierda";
+    else if (split.mode === "body-with-chapter") detail = "Capítulo I desde página 1, con párrafos alineados a la izquierda";
+    else if (split.mode === "prelim-only") detail = "solo preliminares detectados; texto corriente alineado a la izquierda";
+    status.textContent = `DOCX generado con perfil institucional v${THESIS_DOCX_VERSION}; ${detail}.`;
     status.className = split.moduleLike ? "status error" : "status success";
   }
 }
@@ -280,6 +338,9 @@ document.addEventListener("click", (event) => {
   void exportThesisDocx().catch((error) => {
     console.error("Thesis DOCX export", error);
     const status = document.querySelector("#status");
-    if (status) { status.textContent = `No se pudo generar la tesis en DOCX: ${error?.message || error}`; status.className = "status error"; }
+    if (status) {
+      status.textContent = `No se pudo generar la tesis en DOCX: ${error?.message || error}`;
+      status.className = "status error";
+    }
   });
 }, true);
