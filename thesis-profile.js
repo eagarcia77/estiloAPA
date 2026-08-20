@@ -1,4 +1,4 @@
-const THESIS_PROFILE_VERSION = "2.6";
+const THESIS_PROFILE_VERSION = "2.7";
 const THESIS_DOCTORAL = "thesis-doctoral";
 const THESIS_MASTERS = "thesis-masters";
 
@@ -30,6 +30,46 @@ function isPreliminaryHeading(text) {
 
 function isMajorThesisHeading(text) {
   return isPreliminaryHeading(text) || /^Capítulo\s+[IVXLC]+\b/i.test(text) || /^(Referencias|Apéndices)$/i.test(text);
+}
+
+function thesisStructureInfo(preview) {
+  const blocks = [...preview.querySelectorAll("h1,h2,h3,h4,h5,h6,p")].filter((el) => thesisText(el.textContent));
+  const texts = blocks.map((el) => thesisText(el.textContent));
+  const approvalIndex = texts.findIndex((text) => /^Página de aprobación$/i.test(text));
+  const firstPrelimIndex = texts.findIndex((text) => isPreliminaryHeading(text));
+  const chapterIndex = texts.findIndex((text) => /^Capítulo\s+I\b/i.test(text));
+  const moduleSignals = [
+    /Objetivos del módulo/i,
+    /Palabras clave/i,
+    /Lecturas y recursos requeridos/i,
+    /^Tema\s+1\./im,
+    /Contenido del módulo/i,
+  ].filter((pattern) => pattern.test(thesisText(preview.textContent))).length;
+
+  let mode = "body-only";
+  if (chapterIndex >= 0 && firstPrelimIndex >= 0) mode = "full-thesis";
+  else if (chapterIndex >= 0) mode = "body-with-chapter";
+  else if (firstPrelimIndex >= 0) mode = "prelim-only";
+  if (moduleSignals >= 2) mode = "module-like";
+
+  const coverBoundary = chapterIndex >= 0
+    ? (approvalIndex > 0 ? approvalIndex : (firstPrelimIndex > 0 ? firstPrelimIndex : chapterIndex))
+    : (approvalIndex > 0 ? approvalIndex : (firstPrelimIndex > 0 ? firstPrelimIndex : 0));
+
+  return { blocks, texts, approvalIndex, firstPrelimIndex, chapterIndex, moduleSignals, mode, coverBoundary };
+}
+
+function clearThesisSemanticClasses(preview) {
+  const classes = [
+    "thesis-cover-block", "thesis-major-heading", "thesis-prelim-heading", "thesis-page-start",
+    "thesis-chapter-heading", "thesis-chapter-title", "thesis-section-heading", "thesis-references-heading",
+    "thesis-reference", "thesis-table-label", "thesis-table-title", "thesis-figure-label", "thesis-figure-title",
+    "thesis-note", "thesis-figure-image"
+  ];
+  preview.querySelectorAll("*").forEach((el) => {
+    classes.forEach((name) => el.classList.remove(name));
+    if (el.dataset?.thesisChapter) delete el.dataset.thesisChapter;
+  });
 }
 
 function markThesisReferences(preview) {
@@ -68,16 +108,17 @@ function markThesisTablesAndFigures(preview) {
 }
 
 function markThesisStructure(preview) {
-  const blocks = [...preview.querySelectorAll("h1,h2,h3,h4,h5,h6,p")];
-  let beforeApproval = true;
+  clearThesisSemanticClasses(preview);
+  const structure = thesisStructureInfo(preview);
+  preview.dataset.thesisStructureMode = structure.mode;
 
-  for (let i = 0; i < blocks.length; i += 1) {
-    const block = blocks[i];
-    const text = thesisText(block.textContent);
-    if (!text) continue;
+  for (let i = 0; i < structure.blocks.length; i += 1) {
+    const block = structure.blocks[i];
+    const text = structure.texts[i];
 
-    if (/^Página de aprobación$/i.test(text)) beforeApproval = false;
-    if (beforeApproval) block.classList.add("thesis-cover-block", "no-indent");
+    if (structure.coverBoundary > 0 && i < structure.coverBoundary) {
+      block.classList.add("thesis-cover-block", "no-indent");
+    }
 
     if (isPreliminaryHeading(text)) {
       block.classList.add("thesis-major-heading", "thesis-prelim-heading", "thesis-page-start", "no-indent");
@@ -101,6 +142,7 @@ function markThesisStructure(preview) {
 
   markThesisReferences(preview);
   markThesisTablesAndFigures(preview);
+  return structure;
 }
 
 function ensureThesisStyles() {
@@ -169,8 +211,17 @@ function thesisAudit(preview) {
   const text = thesisText(preview.textContent);
   const findings = [];
   const doctoral = thesisProfileValue() === THESIS_DOCTORAL;
+  const structure = thesisStructureInfo(preview);
   const requiredCommon = ["Resumen", "Abstract", "Tabla de contenido", "Capítulo I", "Referencias"];
   const requiredDoctoral = ["Página de aprobación", "Certificación de autoría", "Capítulo II", "Capítulo III", "Capítulo IV", "Capítulo V"];
+
+  if (structure.mode === "module-like") {
+    findings.push("El archivo parece ser un módulo académico, no una tesis/disertación. No se aplicará numeración romana a todo el documento; el DOCX se tratará como cuerpo académico con numeración arábiga desde 1.");
+  } else if (structure.chapterIndex < 0 && structure.firstPrelimIndex < 0) {
+    findings.push("No se detectaron preliminares ni Capítulo I. El DOCX se exportará como cuerpo académico y comenzará en página 1 arábiga.");
+  } else if (structure.chapterIndex < 0) {
+    findings.push("Se detectaron páginas preliminares, pero no Capítulo I. Solo los preliminares usarán números romanos hasta que el documento incluya el cuerpo de la tesis.");
+  }
 
   for (const label of requiredCommon) {
     if (!new RegExp(label.replace(" ", "\\s+"), "i").test(text)) findings.push(`Falta o no se detectó: ${label}.`);
@@ -182,7 +233,7 @@ function thesisAudit(preview) {
 
   const headings = [...preview.querySelectorAll(".thesis-major-heading,.thesis-section-heading")].length;
   const refs = preview.querySelectorAll(".thesis-reference,.apa-reference").length;
-  return { findings, headings, refs };
+  return { findings, headings, refs, structure };
 }
 
 function appendThesisAudit() {
@@ -195,9 +246,16 @@ function appendThesisAudit() {
   const summary = document.createElement("li");
   summary.dataset.thesisAudit = "true";
   summary.className = result.findings.length ? "warn" : "ok";
-  summary.textContent = `${thesisDegreeLabel()}: ${result.headings} encabezado(s) estructurales y ${result.refs} referencia(s) detectadas.`;
+  const modeLabels = {
+    "full-thesis": "tesis completa",
+    "body-with-chapter": "cuerpo con capítulos",
+    "prelim-only": "solo preliminares",
+    "body-only": "cuerpo académico",
+    "module-like": "módulo académico detectado",
+  };
+  summary.textContent = `${thesisDegreeLabel()}: ${result.headings} encabezado(s), ${result.refs} referencia(s). Estructura: ${modeLabels[result.structure.mode] || result.structure.mode}.`;
   list.append(summary);
-  for (const finding of result.findings.slice(0, 8)) {
+  for (const finding of result.findings.slice(0, 10)) {
     const li = document.createElement("li");
     li.dataset.thesisAudit = "true";
     li.className = "warn";
@@ -225,14 +283,17 @@ function applyThesisProfile({ announce = false } = {}) {
     if (input && !input.checked) { input.checked = true; input.dispatchEvent(new Event("change", { bubbles: true })); }
   }
 
-  markThesisStructure(preview);
+  const structure = markThesisStructure(preview);
   setTimeout(appendThesisAudit, 80);
 
   if (announce) {
     const status = document.querySelector("#status");
     if (status) {
-      status.textContent = `${thesisDegreeLabel()} — perfil institucional v${THESIS_PROFILE_VERSION} aplicado: TNR 12, doble espacio, margen izquierdo 1.5\", demás 1\", preliminares y capítulos.`;
-      status.className = "status success";
+      const special = structure.mode === "module-like"
+        ? " Se detectó contenido de módulo; se conservará como cuerpo académico y no como preliminares."
+        : (structure.chapterIndex < 0 && structure.firstPrelimIndex < 0 ? " No se detectó Capítulo I ni preliminares; la exportación iniciará en página 1 arábiga." : "");
+      status.textContent = `${thesisDegreeLabel()} — perfil institucional v${THESIS_PROFILE_VERSION} aplicado: TNR 12, doble espacio, margen izquierdo 1.5\", demás 1\".${special}`;
+      status.className = structure.mode === "module-like" ? "status error" : "status success";
     }
   }
 }
