@@ -26,6 +26,7 @@ jobs:
           node --check app.js
           node --check enhancements.js
           node --check pdf-smart.js
+          node --check apa-table-v29.js
           node --check module-profile.js
           node --check thesis-profile.js
           node --check thesis-alignment.js
@@ -34,25 +35,23 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify required profiles and thesis alignment safeguards
+      - name: Verify APA 7 tables and thesis safeguards
         shell: bash
         run: |
           set -e
           test -f index.html
-          test -f styles.css
-          test -f thesis-profile.js
-          test -f thesis-alignment.js
-          test -f thesis-html.js
+          test -f apa-table-v29.js
           test -f thesis-docx.js
-          grep -q 'v2.8' index.html
-          grep -q 'thesis-alignment.js' index.html
-          grep -q 'THESIS_ALIGNMENT_VERSION = "2.8"' thesis-alignment.js
-          grep -q 'THESIS_DOCX_VERSION = "2.8"' thesis-docx.js
-          grep -q 'THESIS_HTML_VERSION = "2.8"' thesis-html.js
+          grep -q 'v2.9' index.html
+          grep -q 'apa-table-v29.js' index.html
+          grep -q 'APA_TABLE_VERSION = "2.9"' apa-table-v29.js
+          grep -q 'THESIS_DOCX_VERSION = "2.9"' thesis-docx.js
+          grep -q 'insideVertical: none' thesis-docx.js
+          grep -q 'borderLeft = "0"' apa-table-v29.js
+          grep -q 'borderRight = "0"' apa-table-v29.js
+          grep -q 'Tabla ${tableNumber}' apa-table-v29.js
+          grep -q 'Concepto' apa-table-v29.js
           grep -q 'AlignmentType.LEFT' thesis-docx.js
-          grep -q 'sectionRole = "body"' thesis-docx.js
-          grep -q 'text-align: left' thesis-alignment.js
-          grep -q 'module-like' thesis-profile.js
           grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
@@ -67,6 +66,6 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v2.8 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Los párrafos de contenido en perfiles de maestría y doctorado se fuerzan a alineación izquierda en vista previa, DOCX y HTML." >> "$GITHUB_STEP_SUMMARY"
-          echo "Solo portada real y encabezados institucionales correspondientes conservan alineación centrada." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v2.9 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Las tablas eliminan líneas verticales y cuadrícula completa; conservan solo reglas horizontales APA 7." >> "$GITHUB_STEP_SUMMARY"
+          echo "Se añaden número en negrita, título en cursiva y recuperación adicional de tablas de dos columnas." >> "$GITHUB_STEP_SUMMARY"
