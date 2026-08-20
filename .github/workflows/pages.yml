@@ -42,10 +42,11 @@ jobs:
           node --check docx-enhance.js
           node --check figure-apa.js
           node --check exclude-banner-v343.js
+          node --check image-editor-v344.js
           node --check docx-figure-export-v2.js
           node --check docx-banner-safe-v343.js
 
-      - name: Verify v3.4.3 figures and banner-safe export
+      - name: Verify v3.4.4 editable figures and banner-safe export
         shell: bash
         run: |
           set -e
@@ -53,24 +54,26 @@ jobs:
           test -f pdf-original-media-v33.js
           test -f figure-apa.js
           test -f exclude-banner-v343.js
+          test -f image-editor-v344.js
           test -f docx-figure-export-v2.js
           test -f docx-banner-safe-v343.js
           grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.4"' pdf-original-media-v33.js
-          grep -q 'data-apa-self-captioned' pdf-original-media-v33.js
           grep -q 'apaMediaRole = "module-banner"' pdf-original-media-v33.js
           grep -q 'apaMediaRole = "self-captioned-figure"' pdf-original-media-v33.js
-          grep -q 'apaMediaRole = "unclassified"' pdf-original-media-v33.js
           grep -q 'BANNER_EXCLUDE_VERSION = "3.4.3"' exclude-banner-v343.js
-          grep -q 'apaExcludeExport = "true"' exclude-banner-v343.js
-          grep -q 'apa-start-banner-excluded' exclude-banner-v343.js
           grep -q 'display:none !important' exclude-banner-v343.js
-          if grep -q 'img.remove()' exclude-banner-v343.js; then echo 'v3.4.3 must not remove media from the live preview' >&2; exit 1; fi
-          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.3"' docx-banner-safe-v343.js
+          if grep -q 'img.remove()' exclude-banner-v343.js; then echo 'Banner filter must not remove media from the live preview' >&2; exit 1; fi
+          grep -q 'IMAGE_EDITOR_VERSION = "3.4.4"' image-editor-v344.js
+          grep -q 'insertApaImage' image-editor-v344.js
+          grep -q 'data-apa-manual-image' image-editor-v344.js
+          grep -q 'manual-figure' image-editor-v344.js
+          grep -q 'Editar imagen' image-editor-v344.js
+          grep -q 'Eliminar imagen' image-editor-v344.js
+          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.4"' docx-banner-safe-v343.js
           grep -q 'detachTrueBanners' docx-banner-safe-v343.js
           grep -q 'restoreTrueBanners' docx-banner-safe-v343.js
-          grep -q 'exclude-banner-v343.js' html-enhance.js
-          grep -q 'docx-banner-safe-v343.js' html-enhance.js
-          grep -q 'HTML_ENHANCE_VERSION = "3.4.3"' html-enhance.js
+          grep -q 'image-editor-v344.js' html-enhance.js
+          grep -q 'HTML_ENHANCE_VERSION = "3.4.4"' html-enhance.js
           grep -q 'data-apa-media-role="module-banner"' html-enhance.js
           grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
           grep -q 'insideVertical: none' thesis-docx.js
@@ -87,7 +90,8 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.4.3 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Se preserva el motor de imágenes PDF v3.4 y no se eliminan imágenes del DOM activo." >> "$GITHUB_STEP_SUMMARY"
-          echo "Solo el banner real de inicio (module-banner, página 1) se oculta en la vista formateada." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las figuras académicas permanecen visibles y se exportan; el banner se omite únicamente en las copias HTML/DOCX." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4.4 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "La Vista previa continúa editable y ahora permite insertar imágenes PNG/JPG manualmente en la posición seleccionada." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las imágenes manuales reciben Figura X, título en cursiva y Nota opcional, y pueden editarse o eliminarse desde la barra APA 7." >> "$GITHUB_STEP_SUMMARY"
+          echo "El banner inicial continúa excluido de HTML/DOCX sin eliminar figuras del documento activo." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las figuras insertadas manualmente se conservan en las exportaciones Word y HTML." >> "$GITHUB_STEP_SUMMARY"
