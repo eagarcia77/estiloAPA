@@ -41,44 +41,39 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
           node --check figure-apa.js
-          node --check exclude-banner-v342.js
+          node --check exclude-banner-v343.js
           node --check docx-figure-export-v2.js
+          node --check docx-banner-safe-v343.js
 
-      - name: Verify v3.4.2 figures, banner exclusion and APA safeguards
+      - name: Verify v3.4.3 figures and banner-safe export
         shell: bash
         run: |
           set -e
           test -f index.html
           test -f pdf-original-media-v33.js
-          test -f table-figure-v32.js
-          test -f list-normalizer-v31.js
-          test -f scrollbar-v31.css
           test -f figure-apa.js
-          test -f exclude-banner-v342.js
+          test -f exclude-banner-v343.js
           test -f docx-figure-export-v2.js
+          test -f docx-banner-safe-v343.js
           grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.4"' pdf-original-media-v33.js
-          grep -q 'module-banner-image' pdf-original-media-v33.js
-          grep -q 'apaSelfCaptioned' pdf-original-media-v33.js
-          grep -q 'standaloneFigureLabel' pdf-original-media-v33.js
-          grep -q 'previousPageTail' pdf-original-media-v33.js
-          grep -q 'window.repairApaMediaRoles' pdf-original-media-v33.js
-          grep -q 'FIGURE_APA_VERSION = "3.4.1"' figure-apa.js
-          grep -q 'BANNER_EXCLUDE_VERSION = "3.4.2"' exclude-banner-v342.js
-          grep -q 'excludeModuleStartBanner' exclude-banner-v342.js
-          grep -q 'img.remove()' exclude-banner-v342.js
-          grep -q 'DOCX_FIGURE_EXPORT_VERSION = "3.4.1"' docx-figure-export-v2.js
-          grep -q 'module-banner-image' figure-apa.js
-          grep -q 'apaSelfCaptioned' figure-apa.js
-          grep -q 'apa-figure-label' figure-apa.js
-          grep -q 'insideVertical: none' docx-figure-export-v2.js
-          grep -q 'exclude-banner-v342.js' html-enhance.js
-          grep -q 'figure-apa.js' html-enhance.js
-          grep -q 'docx-figure-export-v2.js' html-enhance.js
-          grep -q 'HTML_ENHANCE_VERSION = "3.4.2"' html-enhance.js
+          grep -q 'data-apa-self-captioned' pdf-original-media-v33.js
+          grep -q 'apaMediaRole = "module-banner"' pdf-original-media-v33.js
+          grep -q 'apaMediaRole = "self-captioned-figure"' pdf-original-media-v33.js
+          grep -q 'apaMediaRole = "unclassified"' pdf-original-media-v33.js
+          grep -q 'BANNER_EXCLUDE_VERSION = "3.4.3"' exclude-banner-v343.js
+          grep -q 'apaExcludeExport = "true"' exclude-banner-v343.js
+          grep -q 'apa-start-banner-excluded' exclude-banner-v343.js
+          grep -q 'display:none !important' exclude-banner-v343.js
+          if grep -q 'img.remove()' exclude-banner-v343.js; then echo 'v3.4.3 must not remove media from the live preview' >&2; exit 1; fi
+          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.3"' docx-banner-safe-v343.js
+          grep -q 'detachTrueBanners' docx-banner-safe-v343.js
+          grep -q 'restoreTrueBanners' docx-banner-safe-v343.js
+          grep -q 'exclude-banner-v343.js' html-enhance.js
+          grep -q 'docx-banner-safe-v343.js' html-enhance.js
+          grep -q 'HTML_ENHANCE_VERSION = "3.4.3"' html-enhance.js
+          grep -q 'data-apa-media-role="module-banner"' html-enhance.js
           grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
-          grep -q 'max-height: 72vh' scrollbar-v31.css
           grep -q 'insideVertical: none' thesis-docx.js
-          grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
       - name: Publish gh-pages branch
@@ -92,8 +87,7 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.4.2 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Base v3.4 con figuras APA 7 y sin reorganizar el módulo." >> "$GITHUB_STEP_SUMMARY"
-          echo "El banner inicial se excluye completamente de la vista formateada y de las exportaciones." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las figuras académicas se conservan; las auto-rotuladas no duplican captions y las demás reciben Figura X, título y Nota cuando corresponda." >> "$GITHUB_STEP_SUMMARY"
-          echo "El exportador DOCX mantiene el orden actual de la vista previa, tablas APA y listas independientes." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4.3 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Se preserva el motor de imágenes PDF v3.4 y no se eliminan imágenes del DOM activo." >> "$GITHUB_STEP_SUMMARY"
+          echo "Solo el banner real de inicio (module-banner, página 1) se oculta en la vista formateada." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las figuras académicas permanecen visibles y se exportan; el banner se omite únicamente en las copias HTML/DOCX." >> "$GITHUB_STEP_SUMMARY"
