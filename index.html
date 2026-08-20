@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Formateador y editor APA 7 para módulos, disertaciones doctorales y tesis de maestría con auditoría avanzada de referencias, tablas, figuras e imágenes originales de PDF.">
+  <meta name="description" content="Formateador y editor APA 7 para módulos, disertaciones doctorales y tesis de maestría con auditoría avanzada de referencias, tablas y figuras.">
   <title>APA7 Academic Formatter</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="scrollbar-v31.css">
@@ -34,9 +34,9 @@
       <div>
         <p class="eyebrow">Herramienta académica · ejecución local</p>
         <h1>APA7 Academic Formatter</h1>
-        <p class="subtitle">Formatea y edita módulos académicos, disertaciones doctorales y tesis de maestría; conserva imágenes originales de PDF, distingue imágenes de portada de figuras académicas y normaliza tablas/figuras según APA 7.</p>
+        <p class="subtitle">Versión 3.4 restaurada con un parche controlado para figuras APA 7. Conserva banners sin numeración, evita duplicar captions integrados y exporta el módulo siguiendo el orden actual de la vista previa.</p>
       </div>
-      <span class="badge" aria-label="Versión 3.3">v3.3</span>
+      <span class="badge" aria-label="Versión 3.4.1">v3.4.1</span>
     </div>
   </header>
   <main id="main" class="layout">
@@ -49,7 +49,7 @@
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-      <p class="muted"><strong>v3.3:</strong> conserva imágenes originales que ocupan regiones visuales del PDF. Las imágenes de portada se mantienen en su posición sin numerarlas como figuras; las imágenes del cuerpo se preservan y pasan por la revisión de figura APA 7. Se mantiene la corrección de títulos de tabla: número en negrita y título alineado a la izquierda, en cursiva y sin negrita.</p>
+      <p class="muted"><strong>v3.4.1:</strong> mantiene la base funcional v3.4. Los banners del módulo no reciben Figura X; las figuras que ya contienen número, título y Nota dentro de la imagen se conservan sin duplicar captions; las demás figuras reciben el formato APA 7 correspondiente.</p>
       <div id="fileList" class="file-list" aria-live="polite"></div>
       <fieldset>
         <legend>Configuración de formato</legend>
@@ -88,7 +88,7 @@
         <div><p class="eyebrow">Revisión automática</p><h2 id="audit-title">2. Auditoría APA 7 y estructura</h2></div>
         <span id="score" class="score" aria-live="polite">—</span>
       </div>
-      <p class="muted">La puntuación es heurística. Además de citas, estructura, referencias, listas, tablas y figuras, la auditoría informa cuántas imágenes originales del PDF fueron preservadas y diferencia las imágenes de portada de las figuras académicas.</p>
+      <p class="muted">La puntuación es heurística. La auditoría revisa citas, estructura, referencias, listas, tablas, figuras y medios originales.</p>
       <div id="metrics" class="metrics" aria-label="Métricas de auditoría"></div>
       <div class="button-row compact"><button id="reauditBtn" type="button" disabled>Volver a auditar</button><button id="downloadAuditBtn" type="button" disabled>Descargar auditoría</button></div>
       <ul id="auditList" class="audit-list"><li>Cargue uno o más archivos o presione “Probar ejemplo”.</li></ul>
@@ -98,10 +98,10 @@
         <div><p class="eyebrow">Documento editable</p><h2 id="preview-title">3. Vista previa y exportación</h2></div>
         <div class="button-row compact"><button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button></div>
       </div>
-      <p id="previewHelp" class="muted">Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. Las imágenes originales preservadas permanecen dentro del documento; las imágenes de portada no reciben numeración de figura y las figuras del cuerpo se normalizan antes de exportar.</p>
+      <p id="previewHelp" class="muted">Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. Las imágenes se conservan en su posición; los banners no se numeran y las figuras reciben tratamiento APA 7 sin reorganizar el módulo.</p>
       <div class="paper-wrap" tabindex="0" aria-label="Área desplazable de vista previa del documento"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">El contenido formateado aparecerá aquí.</p></article></div>
     </section>
   </main>
-  <footer><p>APA7 Academic Formatter v3.3 · Conservación de imágenes originales PDF · Tablas y figuras APA 7 · Listas numeradas · Scroll de vista previa · Auditoría de referencias.</p></footer>
+  <footer><p>APA7 Academic Formatter v3.4.1 · Base v3.4 · Figuras APA 7 · Tablas APA · Listas numeradas · Scroll de vista previa · Auditoría de referencias.</p></footer>
 </body>
 </html>
