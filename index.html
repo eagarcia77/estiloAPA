@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Formateador y editor APA 7 para módulos, disertaciones doctorales y tesis de maestría con auditoría avanzada de referencias.">
+  <meta name="description" content="Formateador y editor APA 7 para módulos, disertaciones doctorales y tesis de maestría con auditoría avanzada de referencias, tablas y figuras.">
   <title>APA7 Academic Formatter</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="scrollbar-v31.css">
@@ -18,6 +18,7 @@
   <script type="module" src="thesis-alignment.js"></script>
   <script type="module" src="apa-editor-v30.js"></script>
   <script type="module" src="list-normalizer-v31.js"></script>
+  <script type="module" src="table-figure-v32.js"></script>
   <script type="module" src="reference-audit-v30.js"></script>
   <script type="module" src="apa-editor-export-v30.js"></script>
   <script type="module" src="thesis-html.js"></script>
@@ -32,9 +33,9 @@
       <div>
         <p class="eyebrow">Herramienta académica · ejecución local</p>
         <h1>APA7 Academic Formatter</h1>
-        <p class="subtitle">Formatea y edita módulos académicos, disertaciones doctorales y tesis de maestría; incorpora una barra de edición APA 7, auditoría individual de referencias y control de listas numeradas.</p>
+        <p class="subtitle">Formatea y edita módulos académicos, disertaciones doctorales y tesis de maestría; conserva imágenes y figuras originales, normaliza tablas/figuras en APA 7 y mantiene la auditoría de referencias y listas.</p>
       </div>
-      <span class="badge" aria-label="Versión 3.1">v3.1</span>
+      <span class="badge" aria-label="Versión 3.2">v3.2</span>
     </div>
   </header>
   <main id="main" class="layout">
@@ -47,7 +48,7 @@
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-      <p class="muted"><strong>v3.1:</strong> corrige las listas numeradas para que cada lista independiente reinicie correctamente en 1 y recupera elementos que hayan quedado como párrafos numerados fuera de la lista. La vista previa ahora tiene una barra de desplazamiento vertical independiente para trabajar documentos largos.</p>
+      <p class="muted"><strong>v3.2:</strong> corrige los títulos de tabla APA 7 para que queden alineados a la izquierda, en cursiva y sin negrita. Las imágenes/figuras originales que lleguen a la vista previa se conservan, se numeran como Figura X, mantienen el título y la Nota existente cuando corresponda, y se exportan nuevamente al DOCX.</p>
       <div id="fileList" class="file-list" aria-live="polite"></div>
       <fieldset>
         <legend>Configuración de formato</legend>
@@ -86,7 +87,7 @@
         <div><p class="eyebrow">Revisión automática</p><h2 id="audit-title">2. Auditoría APA 7 y estructura</h2></div>
         <span id="score" class="score" aria-live="polite">—</span>
       </div>
-      <p class="muted">La puntuación es heurística. Además de citas, estructura, tablas y referencias, la auditoría de v3.1 verifica que las listas numeradas estén estructuradas correctamente y reinicien cuando corresponde.</p>
+      <p class="muted">La puntuación es heurística. Además de citas, estructura, referencias y listas, la auditoría verifica el estilo de los títulos de tabla y confirma cuántas imágenes/figuras se conservaron, señalando títulos o textos alternativos que requieran revisión.</p>
       <div id="metrics" class="metrics" aria-label="Métricas de auditoría"></div>
       <div class="button-row compact"><button id="reauditBtn" type="button" disabled>Volver a auditar</button><button id="downloadAuditBtn" type="button" disabled>Descargar auditoría</button></div>
       <ul id="auditList" class="audit-list"><li>Cargue uno o más archivos o presione “Probar ejemplo”.</li></ul>
@@ -96,10 +97,10 @@
         <div><p class="eyebrow">Documento editable</p><h2 id="preview-title">3. Vista previa y exportación</h2></div>
         <div class="button-row compact"><button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button></div>
       </div>
-      <p id="previewHelp" class="muted">Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. La hoja se desplaza dentro de esta sección mediante la barra vertical, sin perder los controles de edición y exportación.</p>
+      <p id="previewHelp" class="muted">Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. Las tablas, imágenes y figuras se normalizan antes de exportar; la hoja conserva el desplazamiento vertical independiente.</p>
       <div class="paper-wrap" tabindex="0" aria-label="Área desplazable de vista previa del documento"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">El contenido formateado aparecerá aquí.</p></article></div>
     </section>
   </main>
-  <footer><p>APA7 Academic Formatter v3.1 · Listas numeradas corregidas · Scroll de vista previa · Editor APA 7 · Auditoría de referencias · Tablas APA 7.</p></footer>
+  <footer><p>APA7 Academic Formatter v3.2 · Tablas y figuras APA 7 · Conservación de imágenes · Listas numeradas · Scroll de vista previa · Auditoría de referencias.</p></footer>
 </body>
 </html>
