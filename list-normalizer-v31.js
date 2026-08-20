@@ -43,7 +43,6 @@ function normalizeOrderedList(ol) {
     if (stripEmbeddedListNumber(li, index + 1)) changes += 1;
   });
 
-  // Recupera elementos consecutivos que quedaron fuera de la lista como "10. texto".
   let expected = items.length + 1;
   let sibling = ol.nextElementSibling;
   while (sibling && ["P", "DIV"].includes(sibling.tagName)) {
@@ -127,6 +126,8 @@ function normalizeNumberedLists(root = listRoot()) {
   }
   return changes;
 }
+
+window.normalizeNumberedLists = normalizeNumberedLists;
 
 function listAudit() {
   const root = listRoot();
