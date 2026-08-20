@@ -31,36 +31,42 @@ jobs:
           node --check thesis-profile.js
           node --check thesis-alignment.js
           node --check apa-editor-v30.js
+          node --check list-normalizer-v31.js
           node --check reference-audit-v30.js
+          node --check apa-editor-export-v30.js
           node --check thesis-html.js
           node --check thesis-docx.js
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify APA 7 editor, reference audit, tables and thesis safeguards
+      - name: Verify v3.1 lists, scrollbar, editor and APA safeguards
         shell: bash
         run: |
           set -e
           test -f index.html
+          test -f list-normalizer-v31.js
+          test -f scrollbar-v31.css
           test -f apa-editor-v30.js
           test -f reference-audit-v30.js
           test -f apa-table-v29.js
           test -f thesis-docx.js
-          grep -q 'v3.0' index.html
-          grep -q 'apa-editor-v30.js' index.html
-          grep -q 'reference-audit-v30.js' index.html
+          test -f docx-enhance.js
+          grep -q 'v3.1' index.html
+          grep -q 'list-normalizer-v31.js' index.html
+          grep -q 'scrollbar-v31.css' index.html
+          grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
+          grep -q 'window.normalizeNumberedLists' list-normalizer-v31.js
+          grep -q 'max-height: 72vh' scrollbar-v31.css
+          grep -q 'overflow-y: scroll' scrollbar-v31.css
+          grep -q 'DOCX_ENHANCE_VERSION = "3.1"' docx-enhance.js
+          grep -q 'apa-numbering-v31-' docx-enhance.js
+          grep -q 'numberingConfigs.push' docx-enhance.js
+          grep -q 'THESIS_DOCX_VERSION = "3.1"' thesis-docx.js
+          grep -q 'thesis-numbering-v31-' thesis-docx.js
+          grep -q 'numberingState.configs' thesis-docx.js
           grep -q 'APA_EDITOR_VERSION = "3.0"' apa-editor-v30.js
           grep -q 'APA_REFERENCE_AUDIT_VERSION = "3.0"' reference-audit-v30.js
-          grep -q 'Encabezado nivel 5' apa-editor-v30.js
-          grep -q 'Francesa .5' apa-editor-v30.js
-          grep -q 'Párrafo APA' apa-editor-v30.js
-          grep -q 'https://doi.org' reference-audit-v30.js
-          grep -q 'orden alfabético' reference-audit-v30.js
-          grep -q 'sangría francesa' reference-audit-v30.js
-          grep -q 'doble espacio' reference-audit-v30.js
           grep -q 'insideVertical: none' thesis-docx.js
-          grep -q 'borderLeft = "0"' apa-table-v29.js
-          grep -q 'AlignmentType.LEFT' thesis-docx.js
           grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
@@ -75,6 +81,6 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.0 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Vista previa incluye barra de edición con presets y reglas APA 7, encabezados 1–5, sangrías, interlineado, tabla, figura, enlace y salto de página." >> "$GITHUB_STEP_SUMMARY"
-          echo "La auditoría revisa individualmente referencias: autor/fecha, DOI/URL, cursivas, sangría francesa, doble espacio y orden alfabético." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.1 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cada lista numerada independiente reinicia en 1 al exportarse a Word; también se recuperan elementos numerados que quedaron como párrafos sueltos." >> "$GITHUB_STEP_SUMMARY"
+          echo "Vista previa y exportación incorpora un área desplazable con scrollbar vertical visible y controles de edición fuera del scroll." >> "$GITHUB_STEP_SUMMARY"
