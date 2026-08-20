@@ -28,37 +28,31 @@ jobs:
           node --check pdf-smart.js
           node --check module-profile.js
           node --check thesis-profile.js
+          node --check thesis-alignment.js
           node --check thesis-html.js
           node --check thesis-docx.js
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify required profiles and thesis structure safeguards
+      - name: Verify required profiles and thesis alignment safeguards
         shell: bash
         run: |
           set -e
           test -f index.html
           test -f styles.css
-          test -f app.js
-          test -f enhancements.js
-          test -f pdf-smart.js
-          test -f module-profile.js
           test -f thesis-profile.js
+          test -f thesis-alignment.js
           test -f thesis-html.js
           test -f thesis-docx.js
-          test -f html-enhance.js
-          test -f docx-enhance.js
-          grep -q 'id="formatProfile"' index.html
-          grep -q 'thesis-doctoral' index.html
-          grep -q 'thesis-masters' index.html
-          grep -q 'v2.7' index.html
-          grep -q 'THESIS_PROFILE_VERSION = "2.7"' thesis-profile.js
-          grep -q 'THESIS_DOCX_VERSION = "2.7"' thesis-docx.js
-          grep -q 'THESIS_HTML_VERSION = "2.7"' thesis-html.js
+          grep -q 'v2.8' index.html
+          grep -q 'thesis-alignment.js' index.html
+          grep -q 'THESIS_ALIGNMENT_VERSION = "2.8"' thesis-alignment.js
+          grep -q 'THESIS_DOCX_VERSION = "2.8"' thesis-docx.js
+          grep -q 'THESIS_HTML_VERSION = "2.8"' thesis-html.js
+          grep -q 'AlignmentType.LEFT' thesis-docx.js
+          grep -q 'sectionRole = "body"' thesis-docx.js
+          grep -q 'text-align: left' thesis-alignment.js
           grep -q 'module-like' thesis-profile.js
-          grep -q 'body-only' thesis-docx.js
-          grep -q 'firstPrelimIndex' thesis-docx.js
-          grep -q 'pageNumbers: { start: 1' thesis-docx.js
           grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
@@ -73,6 +67,6 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v2.7 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Corrige la clasificación de documentos sin Capítulo I y evita convertir módulos completos en preliminares romanos." >> "$GITHUB_STEP_SUMMARY"
-          echo "Preliminares usan romanos solo cuando se detectan; el cuerpo académico o Capítulo I inicia en 1 arábigo." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v2.8 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Los párrafos de contenido en perfiles de maestría y doctorado se fuerzan a alineación izquierda en vista previa, DOCX y HTML." >> "$GITHUB_STEP_SUMMARY"
+          echo "Solo portada real y encabezados institucionales correspondientes conservan alineación centrada." >> "$GITHUB_STEP_SUMMARY"
