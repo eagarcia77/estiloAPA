@@ -1,4 +1,4 @@
-const THESIS_HTML_VERSION = "2.7";
+const THESIS_HTML_VERSION = "2.8";
 
 function thesisHtmlEnabled() {
   return ["thesis-doctoral", "thesis-masters"].includes(document.querySelector("#formatProfile")?.value || "");
@@ -25,18 +25,19 @@ function thesisHtmlDownload() {
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; color: #000; }
 section[data-source-file] { display: contents; }
-p { margin: 0; text-indent: .5in; }
+p { margin: 0; text-indent: .5in; text-align: left; }
+li { text-align: left; }
 .no-indent,.thesis-cover-block,.thesis-major-heading,.thesis-section-heading,.thesis-chapter-title,.apa-reference,.thesis-reference,.thesis-note,.apa-note,.thesis-table-label,.thesis-table-title,.thesis-figure-label,.thesis-figure-title { text-indent: 0 !important; }
-.thesis-cover-block { text-align: center; }
-.thesis-major-heading,.thesis-chapter-title,.thesis-references-heading { text-align: center; font-weight: 700; }
-.thesis-section-heading { text-align: left; font-weight: 700; }
+.thesis-cover-block { text-align: center !important; }
+.thesis-major-heading,.thesis-chapter-heading,.thesis-chapter-title,.thesis-references-heading { text-align: center !important; font-weight: 700; }
+.thesis-section-heading,.apa-reference,.thesis-reference,.thesis-note,.apa-note,.thesis-table-label,.thesis-table-title,.thesis-figure-label,.thesis-figure-title { text-align: left !important; }
 .thesis-page-start { break-before: page; page-break-before: always; }
 .apa-reference,.thesis-reference { padding-left: .5in; text-indent: -.5in !important; }
 .thesis-table-label,.thesis-figure-label { font-weight: 700; }
 .thesis-table-title,.thesis-figure-title { font-style: italic; }
 img { display: block; max-width: 100%; height: auto; margin: .25em auto; }
 table { width: 100%; border-collapse: collapse; margin: .25em 0; line-height: 1.2; }
-th,td { border: 0; padding: .2em .3em; vertical-align: top; }
+th,td { border: 0; padding: .2em .3em; vertical-align: top; text-align: left; }
 tr:first-child th,tr:first-child td { border-top: 1.25px solid #000; border-bottom: 1px solid #000; font-weight: 700; }
 tr:last-child th,tr:last-child td { border-bottom: 1.25px solid #000; }
 a { color: inherit; text-decoration: underline; }
@@ -54,7 +55,7 @@ a { color: inherit; text-decoration: underline; }
   const status = document.querySelector("#status");
   if (status) {
     const extra = mode === "module-like" ? " Se detectó contenido de módulo; no se interpretó como preliminares de tesis." : "";
-    status.textContent = `${degree} exportada en HTML con perfil institucional v${THESIS_HTML_VERSION}.${extra}`;
+    status.textContent = `${degree} exportada en HTML con perfil institucional v${THESIS_HTML_VERSION}; párrafos alineados a la izquierda.${extra}`;
     status.className = mode === "module-like" ? "status error" : "status success";
   }
 }
