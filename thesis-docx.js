@@ -1,4 +1,4 @@
-const THESIS_DOCX_VERSION = "2.6";
+const THESIS_DOCX_VERSION = "2.7";
 
 function thesisExportProfile() {
   return document.querySelector("#formatProfile")?.value || "";
@@ -101,15 +101,63 @@ function thesisPreviewBlocks() {
   return blocks;
 }
 
+function thesisBlockText(el) {
+  return String(el?.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function thesisIsPrelim(text) {
+  return /^(Página de aprobación|Certificación de autoría|Dedicatoria|Agradecimientos?|Resumen|Abstract|Tabla de contenido|Índice de figuras|Índice de tablas)$/i.test(text);
+}
+
+function thesisLooksLikeModule(blocks) {
+  const text = blocks.map(thesisBlockText).join("\n");
+  const signals = [
+    /Objetivos del módulo/i,
+    /Palabras clave/i,
+    /Lecturas y recursos requeridos/i,
+    /^Tema\s+1\./im,
+    /Contenido del módulo/i,
+  ].filter((pattern) => pattern.test(text)).length;
+  return signals >= 2;
+}
+
 function thesisSplitBlocks(blocks) {
-  const approvalIndex = blocks.findIndex((el) => /^Página de aprobación$/i.test((el.textContent || "").trim()));
-  const chapterIndex = blocks.findIndex((el) => /^Capítulo\s+I\b/i.test((el.textContent || "").replace(/\s+/g, " ").trim()));
-  const coverEnd = approvalIndex >= 0 ? approvalIndex : (chapterIndex >= 0 ? chapterIndex : 0);
-  const bodyStart = chapterIndex >= 0 ? chapterIndex : blocks.length;
+  const texts = blocks.map(thesisBlockText);
+  const approvalIndex = texts.findIndex((text) => /^Página de aprobación$/i.test(text));
+  const firstPrelimIndex = texts.findIndex((text) => thesisIsPrelim(text));
+  const chapterIndex = texts.findIndex((text) => /^Capítulo\s+I\b/i.test(text));
+  const moduleLike = thesisLooksLikeModule(blocks);
+
+  if (chapterIndex >= 0) {
+    const coverEnd = approvalIndex > 0
+      ? approvalIndex
+      : (firstPrelimIndex > 0 ? firstPrelimIndex : chapterIndex);
+    return {
+      cover: coverEnd > 0 ? blocks.slice(0, coverEnd) : [],
+      prelim: blocks.slice(coverEnd, chapterIndex),
+      body: blocks.slice(chapterIndex),
+      mode: firstPrelimIndex >= 0 ? "full-thesis" : "body-with-chapter",
+      moduleLike,
+    };
+  }
+
+  if (firstPrelimIndex >= 0) {
+    const coverEnd = approvalIndex > 0 ? approvalIndex : (firstPrelimIndex > 0 ? firstPrelimIndex : 0);
+    return {
+      cover: coverEnd > 0 ? blocks.slice(0, coverEnd) : [],
+      prelim: blocks.slice(coverEnd),
+      body: [],
+      mode: "prelim-only",
+      moduleLike,
+    };
+  }
+
   return {
-    cover: coverEnd > 0 ? blocks.slice(0, coverEnd) : [],
-    prelim: blocks.slice(coverEnd, bodyStart),
-    body: blocks.slice(bodyStart),
+    cover: [],
+    prelim: [],
+    body: blocks,
+    mode: moduleLike ? "module-like" : "body-only",
+    moduleLike,
   };
 }
 
@@ -131,8 +179,9 @@ async function thesisConvertBlocks(blocks, api, firstBlockNoBreak = false) {
       for (const li of element.querySelectorAll(":scope > li")) {
         const text = (li.textContent || "").replace(/\s+/g, " ").trim();
         if (!text) continue;
+        const runs = thesisInlineRuns(li, api);
         children.push(new Paragraph({
-          children: thesisInlineRuns(li, api).length ? thesisInlineRuns(li, api) : [new TextRun({ text, font: "Times New Roman", size: 24 })],
+          children: runs.length ? runs : [new TextRun({ text, font: "Times New Roman", size: 24 })],
           bullet: element.tagName === "UL" ? { level: 0 } : undefined,
           numbering: element.tagName === "OL" ? { reference: "thesis-numbering", level: 0 } : undefined,
           spacing: { line: 480, after: 0, before: 0 },
@@ -171,6 +220,7 @@ async function exportThesisDocx() {
   if (split.cover.length) {
     sections.push({ properties: { page: pageBase }, children: await thesisConvertBlocks(split.cover, api, true) });
   }
+
   if (split.prelim.length) {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: split.cover.length ? 2 : 1, formatType: NumberFormat?.LOWER_ROMAN || "lowerRoman" } } },
@@ -178,6 +228,7 @@ async function exportThesisDocx() {
       children: await thesisConvertBlocks(split.prelim, api, true),
     });
   }
+
   if (split.body.length) {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
@@ -185,7 +236,14 @@ async function exportThesisDocx() {
       children: await thesisConvertBlocks(split.body, api, true),
     });
   }
-  if (!sections.length) sections.push({ properties: { page: pageBase }, children: await thesisConvertBlocks(blocks, api, true) });
+
+  if (!sections.length) {
+    sections.push({
+      properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
+      footers: { default: thesisFooter(api) },
+      children: await thesisConvertBlocks(blocks, api, true),
+    });
+  }
 
   const doc = new Document({
     numbering: { config: [{ reference: "thesis-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] },
@@ -203,8 +261,13 @@ async function exportThesisDocx() {
 
   const status = document.querySelector("#status");
   if (status) {
-    status.textContent = `DOCX de ${thesisExportProfile() === "thesis-doctoral" ? "disertación doctoral" : "tesis de maestría"} generado con perfil institucional v${THESIS_DOCX_VERSION}, márgenes 1.5\"/1\", preliminares romanos y cuerpo arábigo.`;
-    status.className = "status success";
+    let detail = "preliminares romanos y cuerpo arábigo";
+    if (split.mode === "module-like") detail = "módulo detectado: exportado como cuerpo académico con numeración arábiga desde 1";
+    else if (split.mode === "body-only") detail = "sin preliminares ni Capítulo I: cuerpo académico con numeración arábiga desde 1";
+    else if (split.mode === "body-with-chapter") detail = "cuerpo con Capítulo I: numeración arábiga desde 1";
+    else if (split.mode === "prelim-only") detail = "solo preliminares detectados: numeración romana";
+    status.textContent = `DOCX de ${thesisExportProfile() === "thesis-doctoral" ? "disertación doctoral" : "tesis de maestría"} generado con perfil institucional v${THESIS_DOCX_VERSION}; ${detail}.`;
+    status.className = split.moduleLike ? "status error" : "status success";
   }
 }
 
