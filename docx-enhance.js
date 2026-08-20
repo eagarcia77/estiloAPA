@@ -1,4 +1,4 @@
-const DOCX_ENHANCE_VERSION = "2.4";
+const DOCX_ENHANCE_VERSION = "2.5";
 
 async function waitDocx(timeoutMs = 12000) {
   const started = Date.now();
@@ -45,50 +45,81 @@ function inlineRuns(node, api, font, size, inherited = {}) {
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = { bold: inherited.bold || ["B", "STRONG"].includes(tag), italics: inherited.italics || ["I", "EM"].includes(tag), underline: inherited.underline || tag === "U" };
+  const style = {
+    bold: inherited.bold || ["B", "STRONG"].includes(tag),
+    italics: inherited.italics || ["I", "EM"].includes(tag),
+    underline: inherited.underline || tag === "U"
+  };
   if (tag === "BR") return [new TextRun({ break: 1, font, size })];
   if (tag === "A" && node.getAttribute("href") && ExternalHyperlink) {
     const text = node.textContent || node.getAttribute("href");
-    return [new ExternalHyperlink({ link: node.getAttribute("href"), children: [new TextRun({ text, font, size, color: "0563C1", underline: {}, bold: style.bold, italics: style.italics })] })];
+    return [new ExternalHyperlink({
+      link: node.getAttribute("href"),
+      children: [new TextRun({ text, font, size, color: "0563C1", underline: {}, bold: style.bold, italics: style.italics })]
+    })];
   }
   return [...node.childNodes].flatMap((child) => inlineRuns(child, api, font, size, style));
+}
+
+function detectedHeadingLevel(element, institutional) {
+  if (institutional) {
+    const dataLevel = Number(element.dataset?.apaHeadingLevel || 0);
+    if ([1, 2, 3].includes(dataLevel)) return dataLevel;
+    if (element.classList.contains("apa-heading-level-1") || element.classList.contains("references-heading")) return 1;
+    if (element.classList.contains("apa-heading-level-2") || element.classList.contains("topic-heading")) return 2;
+    if (element.classList.contains("apa-heading-level-3") || element.classList.contains("module-subheading")) return 3;
+    return 0;
+  }
+  if (element.classList.contains("level-1") || element.tagName === "H1") return 1;
+  if (element.classList.contains("level-2") || element.tagName === "H2") return 2;
+  if (element.classList.contains("level-3") || ["H3", "H4", "H5", "H6"].includes(element.tagName)) return 3;
+  return 0;
 }
 
 function paragraphFromElement(element, api, font, size, firstLineIndent, hangingReferences, institutional) {
   const { Paragraph, AlignmentType, TextRun } = api;
   const text = element.textContent.replace(/\s+/g, " ").trim();
   if (!text) return null;
+
   const isRef = element.classList.contains("apa-reference");
+  const headingLevel = detectedHeadingLevel(element, institutional);
+  const isHeading = headingLevel > 0;
   const isReferencesHeading = element.classList.contains("apa-references-heading") || element.classList.contains("references-heading");
-  const isModuleHeading = institutional && element.classList.contains("module-heading") && !isReferencesHeading;
-  const isModuleSubheading = institutional && element.classList.contains("module-subheading");
   const isModuleKeywords = institutional && element.classList.contains("module-keywords");
-  const isTableLabel = institutional && element.classList.contains("module-table-label");
-  const isTableTitle = institutional && element.classList.contains("module-table-title");
-  const isLevel1 = !institutional && (element.classList.contains("level-1") || element.tagName === "H1");
-  const isLevel2 = !institutional && (element.classList.contains("level-2") || element.tagName === "H2");
-  const isLevel3 = !institutional && (element.classList.contains("level-3") || ["H3", "H4", "H5", "H6"].includes(element.tagName));
+  const isTableLabel = element.classList.contains("module-table-label");
+  const isTableTitle = element.classList.contains("module-table-title");
   const isFigureLabel = element.classList.contains("apa-figure-label");
   const isFigureTitle = element.classList.contains("apa-figure-title");
   const isNote = element.classList.contains("apa-note");
-  const isHeading = isReferencesHeading || isModuleHeading || isLevel1 || isLevel2 || isLevel3;
-  const runSize = isModuleHeading ? 28 : size;
-  let runs = inlineRuns(element, api, font, runSize, { bold: isModuleKeywords });
-  if (!runs.length) runs = [new TextRun({ text, font, size: runSize })];
-  if (isModuleHeading) runs = [new TextRun({ text, font, size: 28, bold: true })];
-  else if (isReferencesHeading) runs = [new TextRun({ text, font, size, bold: true })];
-  else if (isLevel1 || isLevel2 || isLevel3) runs = [new TextRun({ text, font, size, bold: true, italics: isLevel3 })];
-  else if (isModuleSubheading || isTableLabel) runs = [new TextRun({ text, font, size, bold: true })];
-  else if (isFigureLabel) runs = [new TextRun({ text, font, size, bold: true })];
-  else if (isFigureTitle || isTableTitle) runs = [new TextRun({ text, font, size, italics: true })];
+
+  let runs = inlineRuns(element, api, font, size, { bold: isModuleKeywords });
+  if (!runs.length) runs = [new TextRun({ text, font, size })];
+
+  if (isHeading) {
+    runs = [new TextRun({ text, font, size, bold: true, italics: headingLevel === 3 })];
+  } else if (isTableLabel || isFigureLabel) {
+    runs = [new TextRun({ text, font, size, bold: true })];
+  } else if (isTableTitle || isFigureTitle) {
+    runs = [new TextRun({ text, font, size, italics: true })];
+  }
+
   let alignment = AlignmentType.LEFT;
-  if (isReferencesHeading || (!institutional && isLevel1)) alignment = AlignmentType.CENTER;
-  const options = { children: runs, spacing: { line: 480, after: 0, before: isModuleHeading ? 120 : 0 }, alignment };
-  if (isRef && hangingReferences) options.indent = { left: 720, hanging: 720 };
-  else {
-    const noIndent = isHeading || isModuleSubheading || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle || isNote || element.classList.contains("no-indent");
+  if (headingLevel === 1 || isReferencesHeading) alignment = AlignmentType.CENTER;
+
+  const options = {
+    children: runs,
+    spacing: { line: 480, after: 0, before: isHeading ? 120 : 0 },
+    alignment,
+    keepNext: isHeading || isTableLabel || isTableTitle || isFigureLabel || isFigureTitle,
+  };
+
+  if (isRef && hangingReferences) {
+    options.indent = { left: 720, hanging: 720 };
+  } else {
+    const noIndent = isHeading || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle || isNote || element.classList.contains("no-indent");
     if (!noIndent && firstLineIndent) options.indent = { firstLine: 720 };
   }
+
   return new Paragraph(options);
 }
 
@@ -118,17 +149,58 @@ function triggerDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function looksNumeric(text) {
+  return /^[-+]?[$€£]?\s*\d[\d,.]*(?:\s*%|\s*[A-Za-z]{0,3})?$/.test(String(text || "").trim());
+}
+
 function apaTableFromElement(element, api, font, size, institutional) {
-  const { Table, TableRow, TableCell, Paragraph, WidthType, BorderStyle } = api;
+  const { Table, TableRow, TableCell, Paragraph, WidthType, BorderStyle, AlignmentType } = api;
   const none = { style: BorderStyle?.NONE || "none", size: 0, color: "FFFFFF" };
   const single = { style: BorderStyle?.SINGLE || "single", size: 8, color: "000000" };
   const domRows = [...element.querySelectorAll("tr")];
+  if (!domRows.length) return null;
+
   const rows = domRows.map((row, rowIndex) => {
-    const isFirst = rowIndex === 0;
+    const isHeader = rowIndex === 0;
     const isLast = rowIndex === domRows.length - 1;
-    return new TableRow({ cantSplit: true, children: [...row.cells].map((cell) => new TableCell({ borders: institutional ? { top: isFirst ? single : none, bottom: (isFirst || isLast) ? single : none, left: none, right: none } : undefined, margins: { top: 80, bottom: 80, left: 80, right: 80 }, children: [new Paragraph({ children: inlineRuns(cell, api, font, size, { bold: isFirst }), spacing: { line: 360, after: 0, before: 0 } })] })) });
+    const cells = [...row.cells].map((cell, cellIndex) => {
+      const text = cell.textContent.replace(/\s+/g, " ").trim();
+      let alignment = AlignmentType.LEFT;
+      if (isHeader && cellIndex > 0) alignment = AlignmentType.CENTER;
+      else if (!isHeader && looksNumeric(text)) alignment = AlignmentType.RIGHT;
+
+      const borders = institutional ? {
+        top: isHeader ? single : none,
+        bottom: (isHeader || isLast) ? single : none,
+        left: none,
+        right: none,
+      } : undefined;
+
+      return new TableCell({
+        borders,
+        margins: { top: 80, bottom: 80, left: 90, right: 90 },
+        children: [new Paragraph({
+          alignment,
+          children: inlineRuns(cell, api, font, size, { bold: isHeader }),
+          spacing: { line: institutional ? 240 : 360, after: 0, before: 0 },
+        })]
+      });
+    });
+    return new TableRow({ cantSplit: true, tableHeader: isHeader, children: cells });
   });
-  return rows.length ? new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }) : null;
+
+  return new Table({
+    rows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: institutional ? {
+      top: none,
+      bottom: none,
+      left: none,
+      right: none,
+      insideHorizontal: none,
+      insideVertical: none,
+    } : undefined,
+  });
 }
 
 async function enhancedDocxExport() {
@@ -137,6 +209,7 @@ async function enhancedDocxExport() {
   const institutional = institutionalProfileEnabled();
   const hasFigures = Boolean(preview.querySelector("img.apa-figure-image"));
   if (!institutional && !hasFigures) return false;
+
   const api = await waitDocx();
   const { Document, Packer, Paragraph, TextRun, Header, PageNumber, AlignmentType, ImageRun } = api;
   const selectedFont = document.querySelector("#fontFamily")?.value || "Times New Roman";
@@ -147,38 +220,86 @@ async function enhancedDocxExport() {
   const hangingReferences = document.querySelector("#hangingReferences")?.checked !== false;
   const addPageNumbers = document.querySelector("#pageNumbers")?.checked !== false;
   const children = [];
+
   for (const element of topLevelBlocks(preview)) {
     if (element.tagName === "IMG" && element.classList.contains("apa-figure-image")) {
       const src = element.getAttribute("src") || "";
       if (!src.startsWith("data:image/")) continue;
       const dimensions = await imageDimensions(src);
       const alt = element.getAttribute("alt") || "Figura extraída del PDF";
-      children.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ data: dataUrlToBytes(src), type: dataUrlMime(src), transformation: dimensions, altText: { title: alt, description: alt, name: alt } })], spacing: { line: 480, after: 0, before: 0 } }));
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({
+          data: dataUrlToBytes(src),
+          type: dataUrlMime(src),
+          transformation: dimensions,
+          altText: { title: alt, description: alt, name: alt }
+        })],
+        spacing: { line: 480, after: 0, before: 0 }
+      }));
       continue;
     }
+
     if (["UL", "OL"].includes(element.tagName)) {
       for (const li of element.querySelectorAll(":scope > li")) {
         const text = li.textContent.replace(/\s+/g, " ").trim();
         if (!text) continue;
-        children.push(new Paragraph({ children: inlineRuns(li, api, font, size), bullet: element.tagName === "UL" ? { level: 0 } : undefined, numbering: element.tagName === "OL" ? { reference: "apa-numbering-v24", level: 0 } : undefined, spacing: { line: 480, after: 0, before: 0 } }));
+        children.push(new Paragraph({
+          children: inlineRuns(li, api, font, size),
+          bullet: element.tagName === "UL" ? { level: 0 } : undefined,
+          numbering: element.tagName === "OL" ? { reference: "apa-numbering-v25", level: 0 } : undefined,
+          spacing: { line: 480, after: 0, before: 0 }
+        }));
       }
       continue;
     }
+
     if (element.tagName === "TABLE") {
       const table = apaTableFromElement(element, api, font, size, institutional);
       if (table) children.push(table);
       continue;
     }
+
     const paragraph = paragraphFromElement(element, api, font, size, firstLineIndent, hangingReferences, institutional);
     if (paragraph) children.push(paragraph);
   }
-  const headers = addPageNumbers ? { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ children: [PageNumber.CURRENT], font, size })] })] }) } : undefined;
-  const doc = new Document({ numbering: { config: [{ reference: "apa-numbering-v24", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] }, sections: [{ properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, headers, children }] });
+
+  const headers = addPageNumbers ? {
+    default: new Header({
+      children: [new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [new TextRun({ children: [PageNumber.CURRENT], font, size })]
+      })]
+    })
+  } : undefined;
+
+  const doc = new Document({
+    numbering: {
+      config: [{
+        reference: "apa-numbering-v25",
+        levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }]
+      }]
+    },
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 12240, height: 15840 },
+          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+        }
+      },
+      headers,
+      children
+    }]
+  });
+
   const blob = await Packer.toBlob(doc);
-  triggerDownload(blob, institutional ? "modulo-institucional-APA7.docx" : "modulo-APA7-PDF-Smart.docx");
+  triggerDownload(blob, institutional ? "modulo-institucional-APA7-v2.5.docx" : "modulo-APA7-PDF-Smart.docx");
+
   const status = document.querySelector("#status");
   if (status) {
-    status.textContent = institutional ? `DOCX generado con perfil institucional Modulo11c v${DOCX_ENHANCE_VERSION}.` : `DOCX generado con PDF Smart v${DOCX_ENHANCE_VERSION}, incluyendo figuras y tablas detectadas.`;
+    status.textContent = institutional
+      ? `DOCX generado con headings y tablas APA 7 estrictos v${DOCX_ENHANCE_VERSION}.`
+      : `DOCX generado con PDF Smart v${DOCX_ENHANCE_VERSION}.`;
     status.className = "status success";
   }
   return true;
