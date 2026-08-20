@@ -4,10 +4,6 @@ function tableText(value) {
   return String(value || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function thesisOrModuleProfile() {
-  return document.querySelector("#formatProfile")?.value || "";
-}
-
 function createCell(tag, text) {
   const cell = document.createElement(tag);
   cell.textContent = text;
@@ -58,8 +54,9 @@ function reconstructConceptApplicationTable(preview) {
 }
 
 function candidateTableTitle(table) {
-  let previous = table.previousElementSibling;
+  const previous = table.previousElementSibling;
   if (!previous) return null;
+  if (previous.classList.contains("apa-table-title") || previous.classList.contains("thesis-table-title")) return null;
   const text = tableText(previous.textContent);
   if (!text || text.length > 120) return null;
   if (/^Tabla\s+\d+/i.test(text)) return null;
@@ -98,44 +95,60 @@ function styleApaTable(table) {
   });
 }
 
-function ensureApaTableCaption(table, tableNumber) {
-  let label = table.previousElementSibling;
-  let title = null;
-
-  if (label && /^Tabla\s+\d+/i.test(tableText(label.textContent))) {
+function styleCaption(label, title) {
+  if (label) {
     label.classList.add("apa-table-label", "thesis-table-label", "no-indent");
     label.style.fontWeight = "bold";
     label.style.textAlign = "left";
-    title = label.nextElementSibling;
-    if (title === table) title = null;
-  } else {
-    const candidate = candidateTableTitle(table);
-    const titleText = candidate ? tableText(candidate.textContent) : "";
-    if (candidate) candidate.remove();
-
-    label = document.createElement("p");
-    label.className = "apa-table-label thesis-table-label no-indent";
-    label.innerHTML = `<strong>Tabla ${tableNumber}</strong>`;
-    label.style.textAlign = "left";
-    table.before(label);
-
-    if (titleText) {
-      title = document.createElement("p");
-      title.className = "apa-table-title thesis-table-title no-indent";
-      const em = document.createElement("em");
-      em.textContent = titleText;
-      title.append(em);
-      title.style.textAlign = "left";
-      label.after(title);
-    }
+    label.style.textIndent = "0";
   }
-
-  if (title && title !== table) {
+  if (title) {
     title.classList.add("apa-table-title", "thesis-table-title", "no-indent");
     title.style.fontStyle = "italic";
     title.style.textAlign = "left";
+    title.style.textIndent = "0";
+  }
+}
+
+function ensureApaTableCaption(table, tableNumber) {
+  let previous = table.previousElementSibling;
+  let label = null;
+  let title = null;
+
+  // Tabla ya procesada: título inmediatamente antes y rótulo antes del título.
+  if (previous?.classList.contains("apa-table-title") || previous?.classList.contains("thesis-table-title")) {
+    title = previous;
+    const possibleLabel = title.previousElementSibling;
+    if (possibleLabel && /^Tabla\s+\d+/i.test(tableText(possibleLabel.textContent))) label = possibleLabel;
+  } else if (previous && /^Tabla\s+\d+/i.test(tableText(previous.textContent))) {
+    label = previous;
   }
 
+  if (label) {
+    styleCaption(label, title);
+    table.dataset.apaTableNumber = String(tableNumber);
+    return;
+  }
+
+  const candidate = candidateTableTitle(table);
+  const titleText = candidate ? tableText(candidate.textContent) : "";
+  if (candidate) candidate.remove();
+
+  label = document.createElement("p");
+  label.className = "apa-table-label thesis-table-label no-indent";
+  label.innerHTML = `<strong>Tabla ${tableNumber}</strong>`;
+  table.before(label);
+
+  if (titleText) {
+    title = document.createElement("p");
+    title.className = "apa-table-title thesis-table-title no-indent";
+    const em = document.createElement("em");
+    em.textContent = titleText;
+    title.append(em);
+    label.after(title);
+  }
+
+  styleCaption(label, title);
   table.dataset.apaTableNumber = String(tableNumber);
 }
 
@@ -160,10 +173,9 @@ function appendTableAudit() {
 
   let missingTitle = 0;
   for (const table of tables) {
-    const label = table.previousElementSibling?.classList.contains("apa-table-title")
-      ? table.previousElementSibling.previousElementSibling
-      : table.previousElementSibling;
-    const title = table.previousElementSibling?.classList.contains("apa-table-title") ? table.previousElementSibling : null;
+    const previous = table.previousElementSibling;
+    const title = previous?.classList.contains("apa-table-title") || previous?.classList.contains("thesis-table-title") ? previous : null;
+    const label = title ? title.previousElementSibling : previous;
     if (!label || !/^Tabla\s+\d+/i.test(tableText(label.textContent)) || !title || !tableText(title.textContent)) missingTitle += 1;
   }
 
