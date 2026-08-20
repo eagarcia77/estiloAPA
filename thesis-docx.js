@@ -1,4 +1,4 @@
-const THESIS_DOCX_VERSION = "2.9";
+const THESIS_DOCX_VERSION = "3.1";
 
 function thesisExportProfile() {
   return document.querySelector("#formatProfile")?.value || "";
@@ -114,6 +114,7 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
 
 function thesisPreviewBlocks() {
   const preview = document.querySelector("#preview");
+  if (typeof window.normalizeNumberedLists === "function") window.normalizeNumberedLists(preview);
   const clone = preview.cloneNode(true);
   clone.removeAttribute("contenteditable");
   clone.querySelectorAll("hr.document-separator").forEach((node) => node.remove());
@@ -224,11 +225,7 @@ function thesisApaTable(element, api) {
         })],
       });
     });
-    return new TableRow({
-      cantSplit: true,
-      tableHeader: isHeader,
-      children: cells,
-    });
+    return new TableRow({ cantSplit: true, tableHeader: isHeader, children: cells });
   });
 
   return new Table({
@@ -245,7 +242,21 @@ function thesisApaTable(element, api) {
   });
 }
 
-async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sectionRole = "body" } = {}) {
+function thesisListConfig(reference, start = 1) {
+  return {
+    reference,
+    levels: [{
+      level: 0,
+      format: "decimal",
+      text: "%1.",
+      alignment: "left",
+      start: Number.isFinite(start) && start > 0 ? start : 1,
+      style: { paragraph: { indent: { left: 720, hanging: 360 } } },
+    }],
+  };
+}
+
+async function thesisConvertBlocks(blocks, api, numberingState, { firstBlockNoBreak = false, sectionRole = "body" } = {}) {
   const { Paragraph, TextRun, ImageRun, AlignmentType } = api;
   const children = [];
 
@@ -267,6 +278,13 @@ async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sec
     }
 
     if (["UL", "OL"].includes(element.tagName)) {
+      let reference = null;
+      if (element.tagName === "OL") {
+        numberingState.counter += 1;
+        reference = `thesis-numbering-v31-${numberingState.counter}`;
+        const start = Number.parseInt(element.getAttribute("start") || "1", 10) || 1;
+        numberingState.configs.push(thesisListConfig(reference, start));
+      }
       for (const li of element.querySelectorAll(":scope > li")) {
         const text = thesisBlockText(li);
         if (!text) continue;
@@ -275,7 +293,7 @@ async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sec
           alignment: AlignmentType.LEFT,
           children: runs.length ? runs : [new TextRun({ text, font: "Times New Roman", size: 24 })],
           bullet: element.tagName === "UL" ? { level: 0 } : undefined,
-          numbering: element.tagName === "OL" ? { reference: "thesis-numbering", level: 0 } : undefined,
+          numbering: element.tagName === "OL" ? { reference, level: 0 } : undefined,
           spacing: { line: 480, after: 0, before: 0 },
         }));
       }
@@ -314,6 +332,7 @@ async function exportThesisDocx() {
   const blocks = thesisPreviewBlocks();
   const split = thesisSplitBlocks(blocks);
   const sections = [];
+  const numberingState = { counter: 0, configs: [] };
   const pageBase = {
     size: { width: 12240, height: 15840 },
     margin: { top: 1440, right: 1440, bottom: 1440, left: 2160 },
@@ -322,7 +341,7 @@ async function exportThesisDocx() {
   if (split.cover.length) {
     sections.push({
       properties: { page: pageBase },
-      children: await thesisConvertBlocks(split.cover, api, { firstBlockNoBreak: true, sectionRole: "cover" }),
+      children: await thesisConvertBlocks(split.cover, api, numberingState, { firstBlockNoBreak: true, sectionRole: "cover" }),
     });
   }
 
@@ -330,7 +349,7 @@ async function exportThesisDocx() {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: split.cover.length ? 2 : 1, formatType: NumberFormat?.LOWER_ROMAN || "lowerRoman" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(split.prelim, api, { firstBlockNoBreak: true, sectionRole: "prelim" }),
+      children: await thesisConvertBlocks(split.prelim, api, numberingState, { firstBlockNoBreak: true, sectionRole: "prelim" }),
     });
   }
 
@@ -338,7 +357,7 @@ async function exportThesisDocx() {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(split.body, api, { firstBlockNoBreak: true, sectionRole: "body" }),
+      children: await thesisConvertBlocks(split.body, api, numberingState, { firstBlockNoBreak: true, sectionRole: "body" }),
     });
   }
 
@@ -346,14 +365,12 @@ async function exportThesisDocx() {
     sections.push({
       properties: { page: { ...pageBase, pageNumbers: { start: 1, formatType: NumberFormat?.DECIMAL || "decimal" } } },
       footers: { default: thesisFooter(api) },
-      children: await thesisConvertBlocks(blocks, api, { firstBlockNoBreak: true, sectionRole: "body" }),
+      children: await thesisConvertBlocks(blocks, api, numberingState, { firstBlockNoBreak: true, sectionRole: "body" }),
     });
   }
 
   const doc = new Document({
-    numbering: {
-      config: [{ reference: "thesis-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }],
-    },
+    numbering: { config: numberingState.configs },
     sections,
   });
 
@@ -361,7 +378,7 @@ async function exportThesisDocx() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = thesisExportProfile() === "thesis-doctoral" ? "disertacion-doctoral-formateada.docx" : "tesis-maestria-formateada.docx";
+  a.download = thesisExportProfile() === "thesis-doctoral" ? "disertacion-doctoral-formateada-v3.1.docx" : "tesis-maestria-formateada-v3.1.docx";
   document.body.append(a);
   a.click();
   a.remove();
@@ -369,11 +386,11 @@ async function exportThesisDocx() {
 
   const status = document.querySelector("#status");
   if (status) {
-    let detail = "preliminares romanos y cuerpo arábigo; párrafos a la izquierda y tablas con reglas APA 7";
-    if (split.mode === "module-like") detail = "módulo detectado: cuerpo académico desde página 1; tablas con formato APA 7";
-    else if (split.mode === "body-only") detail = "cuerpo académico desde página 1; tablas con formato APA 7";
-    else if (split.mode === "body-with-chapter") detail = "Capítulo I desde página 1; tablas con formato APA 7";
-    else if (split.mode === "prelim-only") detail = "solo preliminares detectados; tablas con formato APA 7";
+    let detail = `preliminares/cuerpo conservados; ${numberingState.counter} lista(s) numerada(s) con secuencias independientes`;
+    if (split.mode === "module-like") detail = `módulo detectado: cuerpo académico desde página 1; ${numberingState.counter} lista(s) reiniciada(s) correctamente`;
+    else if (split.mode === "body-only") detail = `cuerpo académico desde página 1; ${numberingState.counter} lista(s) reiniciada(s) correctamente`;
+    else if (split.mode === "body-with-chapter") detail = `Capítulo I desde página 1; ${numberingState.counter} lista(s) reiniciada(s) correctamente`;
+    else if (split.mode === "prelim-only") detail = `solo preliminares detectados; ${numberingState.counter} lista(s) reiniciada(s) correctamente`;
     status.textContent = `DOCX generado con perfil institucional v${THESIS_DOCX_VERSION}; ${detail}.`;
     status.className = split.moduleLike ? "status error" : "status success";
   }
