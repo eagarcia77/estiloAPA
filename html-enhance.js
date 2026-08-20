@@ -1,8 +1,9 @@
 import "./figure-apa.js";
 import "./exclude-banner-v343.js";
+import "./image-editor-v344.js";
 import "./docx-banner-safe-v343.js";
 
-const HTML_ENHANCE_VERSION = "3.4.3";
+const HTML_ENHANCE_VERSION = "3.4.4";
 
 function institutionalHtmlProfileEnabled() {
   return document.querySelector("#formatProfile")?.value === "modulo11c";
@@ -19,9 +20,8 @@ function downloadInstitutionalHtml() {
   clone.removeAttribute("id");
   clone.querySelectorAll("hr.document-separator").forEach((node) => node.remove());
   clone.querySelectorAll("[data-missing-alt]").forEach((node) => node.removeAttribute("data-missing-alt"));
-  // Exclude ONLY the true start banner. Do not remove generic non-figure images,
-  // cover-like classes, or academic figures recovered from the PDF.
   clone.querySelectorAll('img[data-apa-media-role="module-banner"],img[data-apa-exclude-export="true"].apa-start-banner-excluded').forEach((node) => node.remove());
+  clone.querySelectorAll(".apa-image-selected").forEach((node) => node.classList.remove("apa-image-selected"));
 
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -46,7 +46,7 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "modulo-institucional-APA7-v3.4.3.html";
+  anchor.download = "modulo-institucional-APA7-v3.4.4.html";
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
@@ -56,7 +56,8 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
   if (status) {
     const figures = [...preview.querySelectorAll("img.apa-figure-image,img.module-figure-image")]
       .filter((img) => img.dataset.apaMediaRole !== "module-banner").length;
-    status.textContent = `HTML v${HTML_ENHANCE_VERSION} generado: banner inicial excluido y ${figures} figura(s) académica(s) conservada(s).`;
+    const manual = [...preview.querySelectorAll('img[data-apa-manual-image="true"]')].length;
+    status.textContent = `HTML v${HTML_ENHANCE_VERSION} generado: banner inicial excluido; ${figures} figura(s) conservada(s), ${manual} insertada(s) manualmente.`;
     status.className = "status success";
   }
 }
