@@ -13,6 +13,7 @@
   <script type="module" src="pdf-smart.js"></script>
   <script type="module" src="module-profile.js"></script>
   <script type="module" src="thesis-profile.js"></script>
+  <script type="module" src="thesis-alignment.js"></script>
   <script type="module" src="thesis-html.js"></script>
   <script type="module" src="thesis-docx.js"></script>
   <script type="module" src="html-enhance.js"></script>
@@ -25,9 +26,9 @@
       <div>
         <p class="eyebrow">Herramienta académica · ejecución local</p>
         <h1>APA7 Academic Formatter</h1>
-        <p class="subtitle">Formatea módulos académicos, disertaciones doctorales y tesis de maestría; detecta la estructura real antes de aplicar preliminares, capítulos, márgenes y numeración.</p>
+        <p class="subtitle">Formatea módulos académicos, disertaciones doctorales y tesis de maestría; detecta la estructura real antes de aplicar preliminares, capítulos, márgenes, alineación y numeración.</p>
       </div>
-      <span class="badge" aria-label="Versión 2.7">v2.7</span>
+      <span class="badge" aria-label="Versión 2.8">v2.8</span>
     </div>
   </header>
   <main id="main" class="layout">
@@ -40,7 +41,7 @@
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-      <p class="muted"><strong>v2.7:</strong> los perfiles de maestría y doctorado detectan portada, preliminares y <strong>Capítulo I</strong> antes de numerar. Si el archivo no contiene estructura de tesis, el sistema no convierte todo a números romanos; comienza en página 1 arábiga y muestra una advertencia. También detecta módulos académicos para evitar confundirlos con una tesis.</p>
+      <p class="muted"><strong>v2.8:</strong> en los perfiles de maestría y doctorado, todos los <strong>párrafos de contenido se alinean explícitamente a la izquierda</strong>. Solo la portada real y los encabezados institucionales que corresponden pueden quedar centrados. También se mantiene la detección de preliminares, Capítulo I y módulos académicos.</p>
       <div id="fileList" class="file-list" aria-live="polite"></div>
       <fieldset>
         <legend>Configuración de formato</legend>
@@ -89,10 +90,10 @@
         <div><p class="eyebrow">Documento editable</p><h2 id="preview-title">3. Vista previa y exportación</h2></div>
         <div class="button-row compact"><button id="downloadDocxBtn" type="button" disabled>Descargar DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Descargar HTML</button></div>
       </div>
-      <p id="previewHelp" class="muted">Puede editar el contenido directamente. En perfiles de tesis, el DOCX solo usa números romanos cuando se detectan preliminares; el cuerpo inicia en 1 arábigo.</p>
+      <p id="previewHelp" class="muted">Puede editar el contenido directamente. En perfiles de tesis, el texto corriente se mantiene alineado a la izquierda tanto en la vista previa como en el DOCX/HTML exportado.</p>
       <div class="paper-wrap"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">El contenido formateado aparecerá aquí.</p></article></div>
     </section>
   </main>
-  <footer><p>APA7 Academic Formatter v2.7 · Detección de estructura · Módulos · Disertaciones doctorales · Tesis de maestría · PDF Smart · Procesamiento local.</p></footer>
+  <footer><p>APA7 Academic Formatter v2.8 · Alineación corregida · Detección de estructura · Módulos · Disertaciones doctorales · Tesis de maestría.</p></footer>
 </body>
 </html>
