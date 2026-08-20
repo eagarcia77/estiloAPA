@@ -33,7 +33,7 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify required profiles and exports
+      - name: Verify required profiles and thesis structure safeguards
         shell: bash
         run: |
           set -e
@@ -51,13 +51,14 @@ jobs:
           grep -q 'id="formatProfile"' index.html
           grep -q 'thesis-doctoral' index.html
           grep -q 'thesis-masters' index.html
-          grep -q 'thesis-profile.js' index.html
-          grep -q 'thesis-docx.js' index.html
-          grep -q 'thesis-html.js' index.html
-          grep -q 'v2.6' index.html
-          grep -q 'THESIS_PROFILE_VERSION = "2.6"' thesis-profile.js
-          grep -q 'THESIS_DOCX_VERSION = "2.6"' thesis-docx.js
-          grep -q 'THESIS_HTML_VERSION = "2.6"' thesis-html.js
+          grep -q 'v2.7' index.html
+          grep -q 'THESIS_PROFILE_VERSION = "2.7"' thesis-profile.js
+          grep -q 'THESIS_DOCX_VERSION = "2.7"' thesis-docx.js
+          grep -q 'THESIS_HTML_VERSION = "2.7"' thesis-html.js
+          grep -q 'module-like' thesis-profile.js
+          grep -q 'body-only' thesis-docx.js
+          grep -q 'firstPrelimIndex' thesis-docx.js
+          grep -q 'pageNumbers: { start: 1' thesis-docx.js
           grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
@@ -72,6 +73,6 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v2.6 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Incluye perfiles de módulo institucional, disertación doctoral, tesis de maestría y APA 7 estándar." >> "$GITHUB_STEP_SUMMARY"
-          echo "Los perfiles de tesis validan TNR 12, doble espacio, margen izquierdo 1.5 pulgadas, preliminares romanos y cuerpo arábigo." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v2.7 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Corrige la clasificación de documentos sin Capítulo I y evita convertir módulos completos en preliminares romanos." >> "$GITHUB_STEP_SUMMARY"
+          echo "Preliminares usan romanos solo cuando se detectan; el cuerpo académico o Capítulo I inicia en 1 arábigo." >> "$GITHUB_STEP_SUMMARY"
