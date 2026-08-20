@@ -30,7 +30,7 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify required files
+      - name: Verify required files and APA strict profile
         shell: bash
         run: |
           set -e
@@ -46,7 +46,10 @@ jobs:
           grep -q 'module-profile.js' index.html
           grep -q 'html-enhance.js' index.html
           grep -q 'docx-enhance.js' index.html
-          grep -q 'Módulo institucional' index.html
+          grep -q 'v2.5' index.html
+          grep -q 'apa-heading-level-1' module-profile.js
+          grep -q 'apa7-strict-table' module-profile.js
+          grep -q 'DOCX_ENHANCE_VERSION = "2.5"' docx-enhance.js
 
       - name: Publish gh-pages branch
         shell: bash
@@ -59,5 +62,5 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Formatter v2.4 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Perfil institucional basado en Modulo11c, PDF Smart, figuras/tablas y exportación DOCX/HTML validados." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Formatter v2.5 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Headings APA 7 por nivel, tablas APA sin líneas verticales y exportación DOCX/HTML validados." >> "$GITHUB_STEP_SUMMARY"
