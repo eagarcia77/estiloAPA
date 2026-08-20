@@ -26,7 +26,6 @@ jobs:
           node --check app.js
           node --check enhancements.js
           node --check pdf-smart.js
-          node --check pdf-original-media-v33.js
           node --check apa-table-v29.js
           node --check module-profile.js
           node --check thesis-profile.js
@@ -34,6 +33,7 @@ jobs:
           node --check apa-editor-v30.js
           node --check list-normalizer-v31.js
           node --check table-figure-v32.js
+          node --check pdf-original-media-v33.js
           node --check reference-audit-v30.js
           node --check apa-editor-export-v30.js
           node --check thesis-html.js
@@ -41,7 +41,7 @@ jobs:
           node --check html-enhance.js
           node --check docx-enhance.js
 
-      - name: Verify v3.3 original PDF media and APA safeguards
+      - name: Verify v3.4 media roles and APA safeguards
         shell: bash
         run: |
           set -e
@@ -50,22 +50,16 @@ jobs:
           test -f table-figure-v32.js
           test -f list-normalizer-v31.js
           test -f scrollbar-v31.css
-          test -f thesis-docx.js
-          test -f docx-enhance.js
-          grep -q 'v3.3' index.html
-          grep -q 'pdf-original-media-v33.js' index.html
-          grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.3"' pdf-original-media-v33.js
-          grep -q 'apa-cover-image' pdf-original-media-v33.js
-          grep -q 'candidateVisualGaps' pdf-original-media-v33.js
-          grep -q 'imagen(es) de portada' pdf-original-media-v33.js
-          grep -q 'APA_MEDIA_VERSION = "3.2"' table-figure-v32.js
-          grep -q 'fontWeight = "400"' table-figure-v32.js
-          grep -q 'fontStyle = "italic"' table-figure-v32.js
+          grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.4"' pdf-original-media-v33.js
+          grep -q 'module-banner-image' pdf-original-media-v33.js
+          grep -q 'apaSelfCaptioned' pdf-original-media-v33.js
+          grep -q 'standaloneFigureLabel' pdf-original-media-v33.js
+          grep -q 'previousPageTail' pdf-original-media-v33.js
+          grep -q 'window.repairApaMediaRoles' pdf-original-media-v33.js
           grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
           grep -q 'max-height: 72vh' scrollbar-v31.css
-          grep -q 'DOCX_ENHANCE_VERSION = "3.1"' docx-enhance.js
-          grep -q 'THESIS_DOCX_VERSION = "3.1"' thesis-docx.js
           grep -q 'insideVertical: none' thesis-docx.js
+          grep -q 'left: 2160' thesis-docx.js
           grep -q 'LOWER_ROMAN' thesis-docx.js
 
       - name: Publish gh-pages branch
@@ -79,7 +73,7 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.3 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Se preservan imágenes originales ubicadas en regiones visuales de PDF; las imágenes de portada no se numeran como figuras." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las imágenes del cuerpo recuperadas pasan por revisión de figura APA 7; las figuras ya etiquetadas siguen siendo procesadas por PDF Smart." >> "$GITHUB_STEP_SUMMARY"
-          echo "Se mantiene Tabla X en negrita y título de tabla alineado a la izquierda, en cursiva y sin negrita." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "El banner superior del módulo se preserva como elemento de diseño y no consume numeración de figuras." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las figuras raster que ya contienen Figura X, título y Nota dentro de la imagen se preservan sin duplicar captions externos y conservan su numeración original." >> "$GITHUB_STEP_SUMMARY"
+          echo "La recuperación usa contexto entre páginas para detectar figuras que comienzan al inicio de una página." >> "$GITHUB_STEP_SUMMARY"
