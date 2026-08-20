@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Formateador y auditor de módulos académicos en estilo APA 7 con perfil institucional basado en Modulo11c.">
+  <meta name="description" content="Formateador y auditor de módulos académicos en estilo APA 7 con headings y tablas APA estrictos.">
   <title>APA7 Module Formatter</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
@@ -22,9 +22,9 @@
       <div>
         <p class="eyebrow">Herramienta académica · ejecución local</p>
         <h1>APA7 Module Formatter</h1>
-        <p class="subtitle">Importa módulos, reconstruye PDFs, aplica APA 7 y reproduce el patrón institucional de Modulo11c para encabezados, párrafos, figuras, tablas y referencias.</p>
+        <p class="subtitle">Importa módulos, reconstruye PDFs y aplica jerarquía de headings, tablas, figuras y referencias con formato APA 7.</p>
       </div>
-      <span class="badge" aria-label="Versión 2.4">v2.4</span>
+      <span class="badge" aria-label="Versión 2.5">v2.5</span>
     </div>
   </header>
   <main id="main" class="layout">
@@ -37,14 +37,14 @@
         <span>DOCX, PDF, TXT, MD, HTML y HTM. El contenido se procesa localmente en su navegador.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-      <p class="muted"><strong>PDF Smart v2.4:</strong> reconstruye párrafos, encabezados, listas, tablas y figuras. El perfil institucional utiliza <strong>Modulo11c</strong> como documento patrón y aplica su estructura visual a los módulos procesados.</p>
+      <p class="muted"><strong>APA 7 Strict v2.5:</strong> aplica headings por nivel y tablas APA sin líneas verticales. El perfil institucional conserva la estructura académica del patrón Modulo11c, pero utiliza reglas APA 7 más estrictas.</p>
       <div id="fileList" class="file-list" aria-live="polite"></div>
       <fieldset>
         <legend>Configuración de formato</legend>
         <label>
           Perfil de formato
           <select id="formatProfile">
-            <option value="modulo11c" selected>Módulo institucional — patrón Modulo11c</option>
+            <option value="modulo11c" selected>Módulo institucional — APA 7 estricto</option>
             <option value="apa7">APA 7 estándar</option>
           </select>
         </label>
@@ -88,6 +88,6 @@
       <div class="paper-wrap"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Vista previa editable del documento" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">El contenido formateado aparecerá aquí.</p></article></div>
     </section>
   </main>
-  <footer><p>APA7 Module Formatter v2.4 · Perfil institucional Modulo11c · PDF Smart · Procesamiento local · Sin API de IA requerida.</p></footer>
+  <footer><p>APA7 Module Formatter v2.5 · Headings y tablas APA 7 estrictos · PDF Smart · Procesamiento local.</p></footer>
 </body>
 </html>
