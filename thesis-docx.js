@@ -1,4 +1,4 @@
-const THESIS_DOCX_VERSION = "2.8";
+const THESIS_DOCX_VERSION = "2.9";
 
 function thesisExportProfile() {
   return document.querySelector("#formatProfile")?.value || "";
@@ -82,8 +82,8 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
   const isRef = element.classList.contains("thesis-reference") || element.classList.contains("apa-reference");
   const isFigureLabel = element.classList.contains("thesis-figure-label") || element.classList.contains("apa-figure-label");
   const isFigureTitle = element.classList.contains("thesis-figure-title") || element.classList.contains("apa-figure-title");
-  const isTableLabel = element.classList.contains("thesis-table-label");
-  const isTableTitle = element.classList.contains("thesis-table-title");
+  const isTableLabel = element.classList.contains("thesis-table-label") || element.classList.contains("apa-table-label");
+  const isTableTitle = element.classList.contains("thesis-table-title") || element.classList.contains("apa-table-title");
   const isNote = element.classList.contains("thesis-note") || element.classList.contains("apa-note");
 
   let runs = thesisInlineRuns(element, api);
@@ -94,8 +94,6 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
     runs = [new TextRun({ text, font: "Times New Roman", size: 24, italics: true })];
   }
 
-  // Regla v2.8: los párrafos de contenido siempre se escriben explícitamente a la izquierda.
-  // Solo la portada real y los encabezados mayores institucionales pueden ir centrados.
   let alignment = AlignmentType.LEFT;
   if (isCover || isMajor) alignment = AlignmentType.CENTER;
 
@@ -104,6 +102,7 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
     children: runs,
     spacing: { line: 480, after: 0, before: 0 },
     alignment,
+    keepNext: isMajor || isSection || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle,
   };
 
   if (isRef) options.indent = { left: 720, hanging: 720 };
@@ -187,8 +186,67 @@ function thesisSplitBlocks(blocks) {
   };
 }
 
+function thesisNumericCell(text) {
+  return /^[-+]?[$€£]?\s*\d[\d,.]*(?:\s*%|\s*[A-Za-z]{0,3})?$/.test(String(text || "").trim());
+}
+
+function thesisApaTable(element, api) {
+  const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType, BorderStyle } = api;
+  const domRows = [...element.querySelectorAll("tr")];
+  if (!domRows.length) return null;
+
+  const none = { style: BorderStyle?.NONE || "none", size: 0, color: "FFFFFF" };
+  const rule = { style: BorderStyle?.SINGLE || "single", size: 8, color: "000000" };
+
+  const rows = domRows.map((row, rowIndex) => {
+    const isHeader = rowIndex === 0;
+    const isLast = rowIndex === domRows.length - 1;
+    const cells = [...row.cells].map((cell, cellIndex) => {
+      const text = cell.textContent.replace(/\s+/g, " ").trim();
+      let alignment = AlignmentType.LEFT;
+      if (isHeader && cellIndex > 0) alignment = AlignmentType.CENTER;
+      else if (!isHeader && thesisNumericCell(text)) alignment = AlignmentType.CENTER;
+
+      const borders = {
+        top: isHeader ? rule : none,
+        bottom: (isHeader || isLast) ? rule : none,
+        left: none,
+        right: none,
+      };
+
+      return new TableCell({
+        borders,
+        margins: { top: 70, bottom: 70, left: 80, right: 80 },
+        children: [new Paragraph({
+          alignment,
+          children: [new TextRun({ text, font: "Times New Roman", size: 24, bold: isHeader })],
+          spacing: { line: 240, after: 0, before: 0 },
+        })],
+      });
+    });
+    return new TableRow({
+      cantSplit: true,
+      tableHeader: isHeader,
+      children: cells,
+    });
+  });
+
+  return new Table({
+    rows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: none,
+      bottom: none,
+      left: none,
+      right: none,
+      insideHorizontal: none,
+      insideVertical: none,
+    },
+  });
+}
+
 async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sectionRole = "body" } = {}) {
-  const { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, ImageRun, AlignmentType } = api;
+  const { Paragraph, TextRun, ImageRun, AlignmentType } = api;
   const children = [];
 
   for (let index = 0; index < blocks.length; index += 1) {
@@ -200,7 +258,7 @@ async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sec
         const dimensions = await thesisImageDimensions(src);
         const alt = element.getAttribute("alt") || "Figura de la tesis";
         children.push(new Paragraph({
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { line: 480, after: 0, before: 0 },
           children: [new ImageRun({ data: thesisBytes(src), transformation: dimensions, altText: { title: alt, description: alt, name: alt } })],
         }));
@@ -225,16 +283,8 @@ async function thesisConvertBlocks(blocks, api, { firstBlockNoBreak = false, sec
     }
 
     if (element.tagName === "TABLE") {
-      const rows = [...element.querySelectorAll("tr")].map((row, rowIndex) => new TableRow({
-        children: [...row.cells].map((cell) => new TableCell({
-          children: [new Paragraph({
-            alignment: AlignmentType.LEFT,
-            children: [new TextRun({ text: cell.textContent.trim(), font: "Times New Roman", size: 24, bold: rowIndex === 0 })],
-            spacing: { line: 360, after: 0, before: 0 },
-          })],
-        })),
-      }));
-      if (rows.length) children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+      const table = thesisApaTable(element, api);
+      if (table) children.push(table);
       continue;
     }
 
@@ -319,11 +369,11 @@ async function exportThesisDocx() {
 
   const status = document.querySelector("#status");
   if (status) {
-    let detail = "preliminares romanos y cuerpo arábigo; párrafos de contenido alineados a la izquierda";
-    if (split.mode === "module-like") detail = "módulo detectado: cuerpo académico desde página 1, con párrafos alineados a la izquierda";
-    else if (split.mode === "body-only") detail = "cuerpo académico desde página 1, con párrafos alineados a la izquierda";
-    else if (split.mode === "body-with-chapter") detail = "Capítulo I desde página 1, con párrafos alineados a la izquierda";
-    else if (split.mode === "prelim-only") detail = "solo preliminares detectados; texto corriente alineado a la izquierda";
+    let detail = "preliminares romanos y cuerpo arábigo; párrafos a la izquierda y tablas con reglas APA 7";
+    if (split.mode === "module-like") detail = "módulo detectado: cuerpo académico desde página 1; tablas con formato APA 7";
+    else if (split.mode === "body-only") detail = "cuerpo académico desde página 1; tablas con formato APA 7";
+    else if (split.mode === "body-with-chapter") detail = "Capítulo I desde página 1; tablas con formato APA 7";
+    else if (split.mode === "prelim-only") detail = "solo preliminares detectados; tablas con formato APA 7";
     status.textContent = `DOCX generado con perfil institucional v${THESIS_DOCX_VERSION}; ${detail}.`;
     status.className = split.moduleLike ? "status error" : "status success";
   }
