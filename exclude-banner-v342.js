@@ -61,6 +61,17 @@ function updateBannerExcludeUi() {
   if (help) help.innerHTML = "Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. <strong>Imágenes:</strong> las figuras académicas se conservan con formato APA 7; el banner inicial del módulo se excluye completamente de la vista formateada y de las exportaciones.";
 }
 
+const bxNativeAnchorClick = HTMLAnchorElement.prototype.click;
+if (!HTMLAnchorElement.prototype.__apaV342DownloadName) {
+  HTMLAnchorElement.prototype.click = function (...args) {
+    if (/modulo-institucional-APA7-v3\.4\.1\.docx$/i.test(this.download || "")) {
+      this.download = `modulo-institucional-APA7-v${BANNER_EXCLUDE_VERSION}.docx`;
+    }
+    return bxNativeAnchorClick.apply(this, args);
+  };
+  Object.defineProperty(HTMLAnchorElement.prototype, "__apaV342DownloadName", { value: true });
+}
+
 function initializeBannerExclusion() {
   updateBannerExcludeUi();
   const preview = bxQ("#preview");
