@@ -1,9 +1,9 @@
-// APA7 Academic Formatter v3.4.5
+// APA7 Academic Formatter v3.4.6
 // Wraps the stable DOCX exporter. The true module-start banner is removed only
-// during export and restored afterwards. Loaded and manually inserted academic
-// images are preserved. References are normalized before DOCX generation.
+// during export and restored afterwards. Loaded, PDF-recovered and manually
+// inserted academic images are preserved. References are normalized before DOCX.
 
-const DOCX_BANNER_SAFE_VERSION = "3.4.5";
+const DOCX_BANNER_SAFE_VERSION = "3.4.6";
 
 const originalDocumentAddEventListener343 = document.addEventListener.bind(document);
 document.addEventListener = function(type, listener, options) {
@@ -50,6 +50,9 @@ async function exportDocxWithoutStartBanner343() {
   const preview = dbQ("#preview");
   if (!preview || !dbInstitutional()) return false;
 
+  // Recovery runs BEFORE cloning/export so figures that were missed by the
+  // legacy PDF extractor are physically present in the editable preview.
+  if (typeof window.recoverPdfFiguresV346 === "function") await window.recoverPdfFiguresV346();
   if (typeof window.classifyEmbeddedImages === "function") window.classifyEmbeddedImages(preview);
   if (typeof window.applyApaFigureFormatting === "function") window.applyApaFigureFormatting(preview);
   if (typeof window.formatReferencesApa7 === "function") window.formatReferencesApa7(preview);
@@ -75,9 +78,10 @@ async function exportDocxWithoutStartBanner343() {
         .filter((img) => !dbTrueBanner(img)).length;
       const loaded = dbQA('img[data-apa-loaded-document-image="true"]', preview)
         .filter((img) => !dbTrueBanner(img)).length;
+      const recovered = dbQA("img.pdf-recovered-v346", preview).length;
       const manual = dbQA('img[data-apa-manual-image="true"]', preview).length;
       const refs = dbQA(".apa-reference", preview).length;
-      status.textContent = `DOCX v${DOCX_BANNER_SAFE_VERSION}: banner inicial excluido; ${figures} figura(s) conservada(s) (${loaded} desde el documento y ${manual} manuales); ${refs} referencia(s) formateada(s) en APA 7.`;
+      status.textContent = `DOCX v${DOCX_BANNER_SAFE_VERSION}: ${figures} figura(s) conservada(s), ${recovered} recuperada(s) del PDF, ${manual} manuales; banner inicial excluido; ${refs} referencia(s) APA 7.`;
       status.className = "status success";
     }
     return result;
@@ -97,7 +101,7 @@ document.addEventListener("click", (event) => {
   button.disabled = true;
   void exportDocxWithoutStartBanner343()
     .catch((error) => {
-      console.error("DOCX banner-safe v3.4.5", error);
+      console.error("DOCX banner-safe v3.4.6", error);
       const status = dbQ("#status");
       if (status) {
         status.textContent = `No se pudo generar el DOCX: ${error.message}`;
