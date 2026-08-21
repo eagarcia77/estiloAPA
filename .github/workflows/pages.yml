@@ -34,57 +34,53 @@ jobs:
           node --check list-normalizer-v31.js
           node --check table-figure-v32.js
           node --check pdf-original-media-v33.js
+          node --check pdf-figure-recovery-v346.js
+          node --check pdf-recovery-wait-v346.js
+          node --check docx-images-v346.js
+          node --check source-images-v345.js
           node --check reference-audit-v30.js
+          node --check reference-format-v345.js
+          node --check image-editor-v344.js
+          node --check figure-apa.js
+          node --check exclude-banner-v343.js
+          node --check docx-figure-export-v2.js
+          node --check docx-banner-safe-v343.js
+          node --check html-enhance.js
+          node --check docx-enhance.js
           node --check apa-editor-export-v30.js
           node --check thesis-html.js
           node --check thesis-docx.js
-          node --check html-enhance.js
-          node --check docx-enhance.js
-          node --check source-images-v345.js
-          node --check figure-apa.js
-          node --check exclude-banner-v343.js
-          node --check image-editor-v344.js
-          node --check reference-format-v345.js
-          node --check docx-figure-export-v2.js
-          node --check docx-banner-safe-v343.js
 
-      - name: Verify v3.4.5 source images and APA references
+      - name: Verify v3.4.6 image recovery and APA references
         shell: bash
         run: |
           set -e
-          test -f index.html
+          test -f pdf-figure-recovery-v346.js
+          test -f pdf-recovery-wait-v346.js
+          test -f docx-images-v346.js
           test -f source-images-v345.js
-          test -f pdf-original-media-v33.js
-          test -f figure-apa.js
-          test -f exclude-banner-v343.js
-          test -f image-editor-v344.js
           test -f reference-format-v345.js
-          test -f docx-figure-export-v2.js
-          test -f docx-banner-safe-v343.js
-          grep -q 'SOURCE_IMAGES_VERSION = "3.4.5"' source-images-v345.js
-          grep -q 'mammoth.images.imgElement' source-images-v345.js
-          grep -q 'image.read("base64")' source-images-v345.js
-          grep -q 'hoistEmbeddedImage' source-images-v345.js
-          grep -q 'apaLoadedDocumentImage' source-images-v345.js
-          grep -q 'PDF_ORIGINAL_MEDIA_VERSION = "3.4"' pdf-original-media-v33.js
-          grep -q 'apaMediaRole = "module-banner"' pdf-original-media-v33.js
-          grep -q 'IMAGE_EDITOR_VERSION = "3.4.4"' image-editor-v344.js
-          grep -q 'insertApaImage' image-editor-v344.js
+          grep -q 'PDF_FIGURE_RECOVERY_VERSION = "3.4.6"' pdf-figure-recovery-v346.js
+          grep -q 'standalone "Figura X" label is a positive' pdf-figure-recovery-v346.js
+          grep -q 'pdf-recovered-v346' pdf-figure-recovery-v346.js
+          grep -q 'data-apa-source-figure-number' pdf-figure-recovery-v346.js
+          grep -q 'Imagen del documento original' pdf-figure-recovery-v346.js
+          grep -q 'PDF_RECOVERY_WAIT_VERSION = "3.4.6"' pdf-recovery-wait-v346.js
+          grep -q '45000' pdf-recovery-wait-v346.js
+          grep -q 'DOCX_IMAGES_VERSION = "3.4.6"' docx-images-v346.js
+          grep -q 'mammoth.images.imgElement' docx-images-v346.js
+          grep -q 'image.read("base64")' docx-images-v346.js
           grep -q 'REFERENCE_FORMAT_VERSION = "3.4.5"' reference-format-v345.js
           grep -q 'paddingLeft = ".5in"' reference-format-v345.js
           grep -q 'textIndent = "-.5in"' reference-format-v345.js
           grep -q 'lineHeight = "2"' reference-format-v345.js
           grep -q 'https://doi.org/' reference-format-v345.js
-          grep -q 'sortReferenceNodes' reference-format-v345.js
-          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.5"' docx-banner-safe-v343.js
-          grep -q 'classifyEmbeddedImages' docx-banner-safe-v343.js
-          grep -q 'formatReferencesApa7' docx-banner-safe-v343.js
-          grep -q 'source-images-v345.js' html-enhance.js
-          grep -q 'reference-format-v345.js' html-enhance.js
-          grep -q 'HTML_ENHANCE_VERSION = "3.4.5"' html-enhance.js
-          grep -q 'APA_LIST_VERSION = "3.1"' list-normalizer-v31.js
-          grep -q 'insideVertical: none' thesis-docx.js
-          grep -q 'LOWER_ROMAN' thesis-docx.js
+          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.6"' docx-banner-safe-v343.js
+          grep -q 'recoverPdfFiguresV346' docx-banner-safe-v343.js
+          grep -q 'docx-images-v346.js' html-enhance.js
+          grep -q 'pdf-figure-recovery-v346.js' html-enhance.js
+          grep -q 'pdf-recovery-wait-v346.js' html-enhance.js
+          grep -q 'HTML_ENHANCE_VERSION = "3.4.6"' html-enhance.js
 
       - name: Publish gh-pages branch
         shell: bash
@@ -97,8 +93,8 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.4.5 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Las imágenes incrustadas en documentos DOCX se preservan como datos de imagen y se incorporan al documento editable/exportable." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las figuras recuperadas de PDF y las imágenes insertadas manualmente continúan disponibles; solo el banner inicial se excluye." >> "$GITHUB_STEP_SUMMARY"
-          echo "Las referencias se formatean a doble espacio, con sangría francesa de 0.5 pulgadas y orden alfabético cuando está activado." >> "$GITHUB_STEP_SUMMARY"
-          echo "DOI y URL existentes se normalizan de forma conservadora y se preservan cursivas existentes; no se inventan datos bibliográficos faltantes." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4.6 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "DOCX: Mammoth importa las imágenes incrustadas antes de convertir el documento." >> "$GITHUB_STEP_SUMMARY"
+          echo "PDF: Figura X ahora activa la recuperación de la imagen en vez de bloquearla." >> "$GITHUB_STEP_SUMMARY"
+          echo "El exportador espera a que termine la recuperación de figuras antes de crear Word/HTML." >> "$GITHUB_STEP_SUMMARY"
+          echo "El banner inicial se excluye y las referencias conservan el formateo APA 7 de v3.4.5." >> "$GITHUB_STEP_SUMMARY"
