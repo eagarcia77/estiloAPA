@@ -1,10 +1,9 @@
-// APA7 Academic Formatter v3.4.4
-// Wraps the stable v3.4.1 DOCX exporter. The true module-start banner is
-// removed only during export and restored immediately afterwards. Manually
-// inserted preview figures are preserved because they use the same top-level
-// APA figure/image structure as recovered figures.
+// APA7 Academic Formatter v3.4.5
+// Wraps the stable DOCX exporter. The true module-start banner is removed only
+// during export and restored afterwards. Loaded and manually inserted academic
+// images are preserved. References are normalized before DOCX generation.
 
-const DOCX_BANNER_SAFE_VERSION = "3.4.4";
+const DOCX_BANNER_SAFE_VERSION = "3.4.5";
 
 const originalDocumentAddEventListener343 = document.addEventListener.bind(document);
 document.addEventListener = function(type, listener, options) {
@@ -23,8 +22,9 @@ function dbQA(selector, root = document) { return [...root.querySelectorAll(sele
 function dbInstitutional() { return dbQ("#formatProfile")?.value === "modulo11c"; }
 
 function dbTrueBanner(img) {
+  if (img?.dataset?.apaMediaRole === "module-banner") return true;
   if (typeof window.isTrueModuleStartBanner === "function") return window.isTrueModuleStartBanner(img);
-  return img?.dataset?.apaMediaRole === "module-banner";
+  return false;
 }
 
 function detachTrueBanners(preview) {
@@ -50,7 +50,9 @@ async function exportDocxWithoutStartBanner343() {
   const preview = dbQ("#preview");
   if (!preview || !dbInstitutional()) return false;
 
+  if (typeof window.classifyEmbeddedImages === "function") window.classifyEmbeddedImages(preview);
   if (typeof window.applyApaFigureFormatting === "function") window.applyApaFigureFormatting(preview);
+  if (typeof window.formatReferencesApa7 === "function") window.formatReferencesApa7(preview);
   if (typeof window.markModuleStartBanner === "function") window.markModuleStartBanner(preview);
 
   const banners = detachTrueBanners(preview);
@@ -71,8 +73,11 @@ async function exportDocxWithoutStartBanner343() {
     if (status) {
       const figures = dbQA("img.apa-figure-image,img.module-figure-image", preview)
         .filter((img) => !dbTrueBanner(img)).length;
+      const loaded = dbQA('img[data-apa-loaded-document-image="true"]', preview)
+        .filter((img) => !dbTrueBanner(img)).length;
       const manual = dbQA('img[data-apa-manual-image="true"]', preview).length;
-      status.textContent = `DOCX v${DOCX_BANNER_SAFE_VERSION} generado: banner inicial excluido; ${figures} figura(s) conservada(s), ${manual} insertada(s) manualmente.`;
+      const refs = dbQA(".apa-reference", preview).length;
+      status.textContent = `DOCX v${DOCX_BANNER_SAFE_VERSION}: banner inicial excluido; ${figures} figura(s) conservada(s) (${loaded} desde el documento y ${manual} manuales); ${refs} referencia(s) formateada(s) en APA 7.`;
       status.className = "status success";
     }
     return result;
@@ -92,7 +97,7 @@ document.addEventListener("click", (event) => {
   button.disabled = true;
   void exportDocxWithoutStartBanner343()
     .catch((error) => {
-      console.error("DOCX banner-safe v3.4.4", error);
+      console.error("DOCX banner-safe v3.4.5", error);
       const status = dbQ("#status");
       if (status) {
         status.textContent = `No se pudo generar el DOCX: ${error.message}`;
