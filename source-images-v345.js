@@ -60,6 +60,33 @@ function sectionIntroHeading(section) {
   return siQA("h1,h2,h3,h4,h5,h6,p", section).find((node) => /^Introducci[oó]n$/i.test(siText(node.textContent))) || null;
 }
 
+function wrapperContainsOnlyImage(wrapper, image) {
+  if (!wrapper || !image) return false;
+  for (const node of wrapper.childNodes) {
+    if (node === image) continue;
+    if (node.nodeType === Node.TEXT_NODE && !siText(node.nodeValue)) continue;
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") continue;
+    return false;
+  }
+  return true;
+}
+
+function hoistEmbeddedImage(image) {
+  const parent = image?.parentElement;
+  if (!parent || !["P", "DIV", "FIGURE"].includes(parent.tagName)) return image;
+  if (!wrapperContainsOnlyImage(parent, image)) return image;
+  parent.replaceWith(image);
+  return image;
+}
+
+function normalizeEmbeddedImageBlocks(section) {
+  const images = siQA("img", section);
+  for (const image of images) {
+    if (image.dataset.pdfOriginalMediaV34 || image.dataset.pdfSourcePage) continue;
+    hoistEmbeddedImage(image);
+  }
+}
+
 function classifyEmbeddedImages(root = siQ("#preview")) {
   if (!root || root.querySelector(".placeholder") || !siInstitutional()) return { embedded: 0, figures: 0, banners: 0 };
 
@@ -70,6 +97,7 @@ function classifyEmbeddedImages(root = siQ("#preview")) {
   const containers = sections.length ? sections : [root];
 
   for (const section of containers) {
+    normalizeEmbeddedImageBlocks(section);
     const images = siQA("img", section);
     if (!images.length) continue;
     const intro = sectionIntroHeading(section);
@@ -89,7 +117,7 @@ function classifyEmbeddedImages(root = siQ("#preview")) {
         image.dataset.apaExcludeExport = "true";
         image.dataset.apaNonFigure = "true";
         image.classList.add("apa-cover-image", "module-banner-image", "apa-start-banner-excluded");
-        image.classList.remove("apa-figure-image", "module-figure-image");
+        image.classList.remove("apa-figure-image", "module-figure-image", "apa-loaded-document-image");
         image.alt = image.alt?.trim() || "Banner inicial del módulo — excluido de la exportación";
         banners += 1;
         return;
