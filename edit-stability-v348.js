@@ -3,9 +3,13 @@
 // must not rewrite or move DOM nodes while the user is actively editing text.
 
 const APA_EDIT_STABILITY_VERSION = "3.4.8";
+const aesNativeSetTimeout = window.setTimeout.bind(window);
+const aesNativeClearTimeout = window.clearTimeout.bind(window);
 let apaEditForceDepth = 0;
 let apaEditIdleTimer = null;
 let apaEditComposing = false;
+let aesPendingNormalizationId = 0;
+const aesPendingNormalizations = new Map();
 
 function aesPreview() {
   return document.querySelector("#preview");
@@ -41,13 +45,57 @@ function apaShouldDeferNormalization() {
   return aesSelectionInsidePreview();
 }
 
+function aesLooksLikeNormalization(callback) {
+  if (typeof callback !== "function") return false;
+  let source = "";
+  try { source = Function.prototype.toString.call(callback); } catch { return false; }
+  return /(applyModuleProfile|markModuleSemantics|normalizeMedia|normalizeApaMedia|normalizeFigures|normalizeTableCaptions|normalizeNumberedLists|recoverParagraphNumberRuns|applyApaFigureFormatting|classifyEmbeddedImages|repairMediaRoles|preserveOriginalPdfMedia|recoverPdfFiguresV34\d|formatReferencesApa7|scheduleSourceImages|scheduleApaFigureFormatting|scheduleListNormalization|scheduleMediaNormalization)/.test(source);
+}
+
+function aesQueueNormalization(callback, args) {
+  const id = ++aesPendingNormalizationId;
+  aesPendingNormalizations.set(id, { callback, args });
+  return id;
+}
+
+function aesFlushPendingNormalizations() {
+  if (apaShouldDeferNormalization() || !aesPendingNormalizations.size) return;
+  const tasks = [...aesPendingNormalizations.values()];
+  aesPendingNormalizations.clear();
+  apaWithForcedNormalization(() => {
+    for (const task of tasks) {
+      try { task.callback(...task.args); }
+      catch (error) { console.error("APA v3.4.8 normalización diferida", error); }
+    }
+  });
+}
+
+// Existing modules use short setTimeout calls after every DOM/input mutation.
+// Intercept only callbacks that are clearly document normalizers. Other timers,
+// including typing audit debounce and UI feedback, keep their normal behavior.
+window.setTimeout = function(callback, delay = 0, ...args) {
+  if (!aesLooksLikeNormalization(callback)) {
+    return aesNativeSetTimeout(callback, delay, ...args);
+  }
+  return aesNativeSetTimeout(() => {
+    if (apaShouldDeferNormalization()) {
+      aesQueueNormalization(callback, args);
+      return;
+    }
+    callback(...args);
+  }, delay);
+};
+window.clearTimeout = function(timerId) {
+  aesNativeClearTimeout(timerId);
+};
+
 function aesMarkEditing() {
-  clearTimeout(apaEditIdleTimer);
+  aesNativeClearTimeout(apaEditIdleTimer);
   aesSetEditing(true);
 }
 
 function aesFinishEditing({ dispatch = true } = {}) {
-  clearTimeout(apaEditIdleTimer);
+  aesNativeClearTimeout(apaEditIdleTimer);
   apaEditComposing = false;
   aesSetEditing(false);
   if (dispatch) {
@@ -56,11 +104,12 @@ function aesFinishEditing({ dispatch = true } = {}) {
       detail: { version: APA_EDIT_STABILITY_VERSION }
     }));
   }
+  aesNativeSetTimeout(aesFlushPendingNormalizations, 20);
 }
 
 function aesScheduleFinish(delay = 320) {
-  clearTimeout(apaEditIdleTimer);
-  apaEditIdleTimer = setTimeout(() => {
+  aesNativeClearTimeout(apaEditIdleTimer);
+  apaEditIdleTimer = aesNativeSetTimeout(() => {
     const root = aesPreview();
     const toolbar = aesToolbar();
     const active = document.activeElement;
@@ -100,8 +149,22 @@ function aesInstallStyles() {
   document.head.append(style);
 }
 
+function aesUpdateUi() {
+  const badge = document.querySelector(".badge");
+  if (badge) {
+    badge.textContent = `v${APA_EDIT_STABILITY_VERSION}`;
+    badge.setAttribute("aria-label", `Versión ${APA_EDIT_STABILITY_VERSION}`);
+  }
+  const help = document.querySelector("#previewHelp");
+  if (help) {
+    help.innerHTML = "<strong>Edición protegida v3.4.8:</strong> puede escribir, borrar, cortar y pegar directamente en esta vista previa sin que los normalizadores reconstruyan el texto mientras el cursor está activo. Las reglas APA 7 se reanudan al salir del editor, volver a auditar o exportar.";
+  }
+}
+
 function aesInitialize() {
   aesInstallStyles();
+  aesUpdateUi();
+  aesNativeSetTimeout(aesUpdateUi, 1600);
   const root = aesPreview();
   if (!root) return;
 
@@ -125,8 +188,6 @@ function aesInitialize() {
     aesScheduleFinish();
   }, true);
 
-  // Actions outside the editable paper intentionally end the protected editing
-  // session so audits, imports and exports may normalize the document once.
   document.addEventListener("pointerdown", (event) => {
     const action = event.target?.closest?.(
       "#formatBtn,#demoBtn,#clearBtn,#reauditBtn,#downloadDocxBtn,#downloadHtmlBtn,#downloadAuditBtn,#formatReferenceList,#auditReferencesNow"
@@ -136,9 +197,10 @@ function aesInitialize() {
   }, true);
 
   root.addEventListener("apa-editor-idle", () => {
+    aesFlushPendingNormalizations();
     const status = document.querySelector("#status");
     if (status?.dataset?.apaEditStatus === "true") {
-      status.textContent = "Edición guardada en la vista previa. El documento puede normalizarse o exportarse.";
+      status.textContent = "Cambios de texto conservados. La vista previa salió del modo de edición protegida.";
       status.className = "status success";
       delete status.dataset.apaEditStatus;
     }
@@ -153,6 +215,7 @@ function aesInitialize() {
 window.apaShouldDeferNormalization = apaShouldDeferNormalization;
 window.apaWithForcedNormalization = apaWithForcedNormalization;
 window.apaFinishProtectedEditing = aesFinishEditing;
+window.apaFlushPendingNormalizations = aesFlushPendingNormalizations;
 window.APA_EDIT_STABILITY_VERSION = APA_EDIT_STABILITY_VERSION;
 
 if (document.readyState === "loading") {
