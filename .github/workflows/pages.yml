@@ -34,8 +34,7 @@ jobs:
           node --check list-normalizer-v31.js
           node --check table-figure-v32.js
           node --check pdf-original-media-v33.js
-          node --check pdf-figure-recovery-v346.js
-          node --check pdf-recovery-wait-v346.js
+          node --check pdf-figure-recovery-v347.js
           node --check docx-images-v346.js
           node --check source-images-v345.js
           node --check reference-audit-v30.js
@@ -51,22 +50,25 @@ jobs:
           node --check thesis-html.js
           node --check thesis-docx.js
 
-      - name: Verify v3.4.6 image recovery and APA references
+      - name: Verify v3.4.7 image recovery and APA references
         shell: bash
         run: |
           set -e
-          test -f pdf-figure-recovery-v346.js
-          test -f pdf-recovery-wait-v346.js
+          test -f pdf-figure-recovery-v347.js
           test -f docx-images-v346.js
           test -f source-images-v345.js
           test -f reference-format-v345.js
-          grep -q 'PDF_FIGURE_RECOVERY_VERSION = "3.4.6"' pdf-figure-recovery-v346.js
-          grep -q 'standalone "Figura X" label is a positive' pdf-figure-recovery-v346.js
-          grep -q 'pdf-recovered-v346' pdf-figure-recovery-v346.js
-          grep -q 'data-apa-source-figure-number' pdf-figure-recovery-v346.js
-          grep -q 'Imagen del documento original' pdf-figure-recovery-v346.js
-          grep -q 'PDF_RECOVERY_WAIT_VERSION = "3.4.6"' pdf-recovery-wait-v346.js
-          grep -q '45000' pdf-recovery-wait-v346.js
+          grep -q 'PDF_FIGURE_RECOVERY_VERSION = "3.4.7"' pdf-figure-recovery-v347.js
+          grep -q 'pfrSplitBrParagraph' pdf-figure-recovery-v347.js
+          grep -q 'trailing: true' pdf-figure-recovery-v347.js
+          grep -q 'pfrPageHasImage' pdf-figure-recovery-v347.js
+          grep -q 'paintImageXObject' pdf-figure-recovery-v347.js
+          grep -q 'pdf-recovered-v347' pdf-figure-recovery-v347.js
+          grep -q 'apa-self-captioned-figure' pdf-figure-recovery-v347.js
+          grep -q 'apaSelfCaptioned = "true"' pdf-figure-recovery-v347.js
+          grep -q 'data-apa-source-figure-number' pdf-figure-recovery-v347.js
+          grep -q 'pageNumber === 1' pdf-figure-recovery-v347.js
+          grep -q 'introduccion' pdf-figure-recovery-v347.js
           grep -q 'DOCX_IMAGES_VERSION = "3.4.6"' docx-images-v346.js
           grep -q 'mammoth.images.imgElement' docx-images-v346.js
           grep -q 'image.read("base64")' docx-images-v346.js
@@ -75,12 +77,12 @@ jobs:
           grep -q 'textIndent = "-.5in"' reference-format-v345.js
           grep -q 'lineHeight = "2"' reference-format-v345.js
           grep -q 'https://doi.org/' reference-format-v345.js
-          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.6"' docx-banner-safe-v343.js
-          grep -q 'recoverPdfFiguresV346' docx-banner-safe-v343.js
+          grep -q 'DOCX_BANNER_SAFE_VERSION = "3.4.7"' docx-banner-safe-v343.js
+          grep -q 'recoverPdfFiguresV347' docx-banner-safe-v343.js
           grep -q 'docx-images-v346.js' html-enhance.js
-          grep -q 'pdf-figure-recovery-v346.js' html-enhance.js
-          grep -q 'pdf-recovery-wait-v346.js' html-enhance.js
-          grep -q 'HTML_ENHANCE_VERSION = "3.4.6"' html-enhance.js
+          grep -q 'pdf-figure-recovery-v347.js' html-enhance.js
+          if grep -q 'pdf-figure-recovery-v346.js' html-enhance.js; then echo 'v3.4.7 must not load the obsolete v3.4.6 PDF recovery module' >&2; exit 1; fi
+          grep -q 'HTML_ENHANCE_VERSION = "3.4.7"' html-enhance.js
 
       - name: Publish gh-pages branch
         shell: bash
@@ -93,8 +95,8 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "### APA7 Academic Formatter v3.4.6 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "DOCX: Mammoth importa las imágenes incrustadas antes de convertir el documento." >> "$GITHUB_STEP_SUMMARY"
-          echo "PDF: Figura X ahora activa la recuperación de la imagen en vez de bloquearla." >> "$GITHUB_STEP_SUMMARY"
-          echo "El exportador espera a que termine la recuperación de figuras antes de crear Word/HTML." >> "$GITHUB_STEP_SUMMARY"
-          echo "El banner inicial se excluye y las referencias conservan el formateo APA 7 de v3.4.5." >> "$GITHUB_STEP_SUMMARY"
+          echo "### APA7 Academic Formatter v3.4.7 publicado" >> "$GITHUB_STEP_SUMMARY"
+          echo "PDF: la recuperación entiende páginas importadas como un solo párrafo con saltos BR y divide el bloque en la posición real de la figura." >> "$GITHUB_STEP_SUMMARY"
+          echo "PDF: también se recuperan figuras ubicadas después de la última línea de una página y se filtran páginas sin objetos de imagen." >> "$GITHUB_STEP_SUMMARY"
+          echo "Las figuras con Figura X, título y Nota integrados se preservan como una sola imagen sin duplicar caption; el banner inicial se excluye." >> "$GITHUB_STEP_SUMMARY"
+          echo "DOCX mantiene importación de imágenes incrustadas antes de Mammoth y referencias APA 7 conservadoras." >> "$GITHUB_STEP_SUMMARY"
