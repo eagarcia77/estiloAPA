@@ -1,8 +1,7 @@
 // APA7 Academic Formatter v3.4.6
-// Robust fallback for PDF figures. Unlike the legacy v3.4 extractor, a
-// standalone "Figura X" label is a positive signal, not a reason to suppress
-// the visual gap that contains the figure. The module never exports the start
-// banner and never reorders text blocks.
+// Robust fallback for PDF figures. A standalone "Figura X" label is a positive
+// signal for recovering the visual gap that follows it. The start banner is
+// ignored. Recovered raster content is kept separate from the APA caption.
 
 const PDF_FIGURE_RECOVERY_VERSION = "3.4.6";
 const PFR_PDFJS_VERSION = "6.1.200";
@@ -34,11 +33,7 @@ async function pfrPdfJs() {
 
 function pfrFontSize(transform, fallback = 0) {
   if (!Array.isArray(transform) || transform.length < 4) return fallback || 0;
-  return Math.max(
-    Math.hypot(transform[0], transform[1]),
-    Math.hypot(transform[2], transform[3]),
-    fallback || 0
-  );
+  return Math.max(Math.hypot(transform[0], transform[1]), Math.hypot(transform[2], transform[3]), fallback || 0);
 }
 
 function pfrGroupLines(items, pageHeight) {
@@ -73,13 +68,11 @@ async function pfrPageModel(page) {
   for (const raw of content.items) {
     if (!("str" in raw) || !raw.str?.trim()) continue;
     const transform = raw.transform || [];
-    const fontSize = pfrFontSize(transform, Number(raw.height || 0));
-    const y = Number(transform[5] || 0);
     items.push({
       text: raw.str.trim(),
       x: Number(transform[4] || 0),
-      fontSize,
-      screenY: viewport.height - y,
+      fontSize: pfrFontSize(transform, Number(raw.height || 0)),
+      screenY: viewport.height - Number(transform[5] || 0),
     });
   }
   return { viewport, lines: pfrGroupLines(items, viewport.height) };
@@ -92,6 +85,16 @@ function pfrFigureNumber(text) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
+function pfrFigureTitleFromContext(text, number) {
+  if (!number) return "";
+  const marker = new RegExp(`(?:Figura|Figure)\\s+${number}[A-Za-z]?\\s*\\.?\\s*`, "ig");
+  const parts = String(text || "").split(marker);
+  const tail = pfrText(parts[parts.length - 1] || "");
+  if (!tail || tail.length > 240) return "";
+  if (/^(nota\.|tema\s+\d+|objetivos|contenido|conclusi[oó]n|referencias)/i.test(tail)) return "";
+  return tail;
+}
+
 function pfrCandidateGaps(lines, pageHeight, previousTail = "") {
   const gaps = [];
   const minimum = Math.max(68, pageHeight * 0.072);
@@ -99,14 +102,7 @@ function pfrCandidateGaps(lines, pageHeight, previousTail = "") {
 
   const first = lines[0];
   if (first.top > minimum) {
-    gaps.push({
-      top: 5,
-      bottom: first.top - 4,
-      before: previousTail,
-      after: first.text,
-      leading: true,
-      labelNumber: pfrFigureNumber(previousTail),
-    });
+    gaps.push({ top: 5, bottom: first.top - 4, before: previousTail, after: first.text, leading: true, labelNumber: pfrFigureNumber(previousTail) });
   }
 
   for (let i = 0; i < lines.length - 1; i += 1) {
@@ -123,22 +119,9 @@ function pfrCandidateGaps(lines, pageHeight, previousTail = "") {
     const before = beforeLines.map((line) => line.text).join(" ");
     const after = afterLines.map((line) => line.text).join(" ");
     const labelNumber = pfrFigureNumber(before);
-
-    // A standalone Figura X immediately before a large visual gap is a strong
-    // positive signal. The legacy extractor incorrectly suppressed this case.
     const strongFigureSignal = beforeLines.some((line) => /^\s*(?:figura|figure)\s+\d{1,3}[a-z]?\s*\.?\s*$/i.test(line.text));
 
-    gaps.push({
-      top,
-      bottom,
-      before,
-      after: next.text,
-      afterContext: after,
-      leading: false,
-      labelNumber,
-      strongFigureSignal,
-      height,
-    });
+    gaps.push({ top, bottom, before, after: next.text, afterContext: after, leading: false, labelNumber, strongFigureSignal, height });
   }
   return gaps;
 }
@@ -151,21 +134,15 @@ function pfrInkBox(imageData, width, height) {
   const data = imageData.data;
   const stepX = Math.max(1, Math.floor(width / 420));
   const stepY = Math.max(1, Math.floor(height / 420));
-  let minX = width;
-  let minY = height;
-  let maxX = -1;
-  let maxY = -1;
-  let samples = 0;
+  let minX = width, minY = height, maxX = -1, maxY = -1, samples = 0;
 
   for (let y = 0; y < height; y += stepY) {
     for (let x = 0; x < width; x += stepX) {
       const idx = (y * width + x) * 4;
       if (!pfrPixelInk(data, idx)) continue;
       samples += 1;
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
     }
   }
 
@@ -176,10 +153,8 @@ function pfrInkBox(imageData, width, height) {
 
   const padX = Math.max(8, Math.round(width * 0.012));
   const padY = Math.max(8, Math.round(height * 0.018));
-  const x1 = Math.max(0, minX - padX);
-  const y1 = Math.max(0, minY - padY);
-  const x2 = Math.min(width - 1, maxX + padX);
-  const y2 = Math.min(height - 1, maxY + padY);
+  const x1 = Math.max(0, minX - padX), y1 = Math.max(0, minY - padY);
+  const x2 = Math.min(width - 1, maxX + padX), y2 = Math.min(height - 1, maxY + padY);
   return { x: x1, y: y1, width: x2 - x1 + 1, height: y2 - y1 + 1 };
 }
 
@@ -202,20 +177,9 @@ async function pfrRenderGap(page, gap) {
   if (!box) return "";
 
   const out = document.createElement("canvas");
-  out.width = box.width;
-  out.height = box.height;
+  out.width = box.width; out.height = box.height;
   const outCtx = out.getContext("2d", { alpha: false });
-  outCtx.drawImage(
-    canvas,
-    box.x,
-    sourceTop + box.y,
-    box.width,
-    box.height,
-    0,
-    0,
-    box.width,
-    box.height
-  );
+  outCtx.drawImage(canvas, box.x, sourceTop + box.y, box.width, box.height, 0, 0, box.width, box.height);
   return out.toDataURL("image/jpeg", 0.94);
 }
 
@@ -223,8 +187,7 @@ function pfrPreviewAnchor(section, text) {
   const target = pfrNorm(text);
   if (!target) return null;
   const prefix = target.slice(0, Math.min(54, target.length));
-  const candidates = pfrQA("h1,h2,h3,h4,h5,h6,p,li", section);
-  return candidates.find((node) => pfrNorm(node.textContent).startsWith(prefix)) || null;
+  return pfrQA("h1,h2,h3,h4,h5,h6,p,li", section).find((node) => pfrNorm(node.textContent).startsWith(prefix)) || null;
 }
 
 function pfrFindFigureLabel(section, number) {
@@ -237,15 +200,17 @@ function pfrInsertionPoint(section, gap, number) {
   const label = pfrFindFigureLabel(section, number);
   if (label) {
     let point = label;
+    let title = "";
     const next = label.nextElementSibling;
     const nextText = pfrText(next?.textContent);
     if (next && !["IMG", "TABLE", "OL", "UL"].includes(next.tagName) && nextText && nextText.length <= 240 && !/^Nota\./i.test(nextText)) {
       point = next;
+      title = nextText;
     }
-    return { mode: "after", node: point };
+    return { mode: "after", node: point, title };
   }
   const anchor = pfrPreviewAnchor(section, gap.after);
-  return anchor ? { mode: "before", node: anchor } : null;
+  return anchor ? { mode: "before", node: anchor, title: "" } : null;
 }
 
 function pfrExisting(section, pageNumber, number, gapIndex) {
@@ -256,8 +221,7 @@ function pfrExisting(section, pageNumber, number, gapIndex) {
 
 function pfrLooksLikeStartBanner(pageNumber, gap) {
   if (pageNumber !== 1) return false;
-  const after = pfrNorm(gap.after);
-  return gap.leading && /^(introduccion|introduction)$/.test(after);
+  return gap.leading && /^(introduccion|introduction)$/.test(pfrNorm(gap.after));
 }
 
 function pfrInsert(section, dataUrl, fileName, pageNumber, gap, gapIndex) {
@@ -268,6 +232,7 @@ function pfrInsert(section, dataUrl, fileName, pageNumber, gap, gapIndex) {
   const insertion = pfrInsertionPoint(section, gap, number);
   if (!insertion?.node) return null;
 
+  const title = insertion.title || pfrFigureTitleFromContext(gap.before, number);
   const image = document.createElement("img");
   image.src = dataUrl;
   image.className = "apa-figure-image module-figure-image pdf-recovered-v346";
@@ -276,11 +241,12 @@ function pfrInsert(section, dataUrl, fileName, pageNumber, gap, gapIndex) {
   image.dataset.pdfSourcePage = String(pageNumber);
   image.dataset.apaMediaRole = "recovered-figure";
   image.dataset.apaLoadedDocumentImage = "true";
-  image.alt = number ? `Figura ${number} recuperada del documento PDF original` : "Figura recuperada del documento PDF original";
+  image.alt = "Imagen del documento original";
   if (number) {
     image.dataset.apaSourceFigureNumber = String(number);
     image.dataset.apaFigureNumber = String(number);
-  }
+    image.dataset.figureTitle = title || `Título de la figura ${number} [revisar]`;
+  } else if (title) image.dataset.figureTitle = title;
 
   if (insertion.mode === "after") insertion.node.after(image);
   else insertion.node.before(image);
@@ -298,12 +264,9 @@ async function pfrRecoverFile(file, section) {
     const page = await pdf.getPage(pageNumber);
     const { viewport, lines } = await pfrPageModel(page);
     const gaps = pfrCandidateGaps(lines, viewport.height, previousTail);
-
     for (let index = 0; index < gaps.length; index += 1) {
-      const gap = gaps[index];
-      const dataUrl = await pfrRenderGap(page, gap);
-      if (!dataUrl) continue;
-      if (pfrInsert(section, dataUrl, file.name, pageNumber, gap, index)) inserted += 1;
+      const dataUrl = await pfrRenderGap(page, gaps[index]);
+      if (dataUrl && pfrInsert(section, dataUrl, file.name, pageNumber, gaps[index], index)) inserted += 1;
     }
     previousTail = lines.slice(-7).map((line) => line.text).join(" ");
   }
@@ -311,8 +274,7 @@ async function pfrRecoverFile(file, section) {
 }
 
 function pfrAudit(inserted) {
-  const preview = pfrQ("#preview");
-  const list = pfrQ("#auditList");
+  const preview = pfrQ("#preview"), list = pfrQ("#auditList");
   if (!preview || !list) return;
   list.querySelectorAll('[data-pdf-recovery-audit="v346"]').forEach((node) => node.remove());
   const figures = pfrQA("img.pdf-recovered-v346", preview).length;
@@ -323,7 +285,6 @@ function pfrAudit(inserted) {
     ? `Recuperación PDF v${PDF_FIGURE_RECOVERY_VERSION}: ${figures} figura(s) visual(es) incorporada(s) desde el PDF; el banner inicial se excluye.`
     : `Recuperación PDF v${PDF_FIGURE_RECOVERY_VERSION}: no se recuperaron figuras visuales; puede usar + Insertar imagen como respaldo manual.`;
   list.append(li);
-
   if (inserted > 0) {
     preview.dispatchEvent(new Event("input", { bubbles: true }));
     const status = pfrQ("#status");
@@ -336,10 +297,8 @@ function pfrAudit(inserted) {
 
 async function recoverPdfFiguresV346() {
   if (pfrBusy || !pfrInstitutional()) return;
-  const preview = pfrQ("#preview");
-  const input = pfrQ("#files");
+  const preview = pfrQ("#preview"), input = pfrQ("#files");
   if (!preview || !input || preview.querySelector(".placeholder")) return;
-
   const files = [...(input.files || [])].filter((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
   if (!files.length) return;
 
@@ -374,9 +333,7 @@ function pfrSchedule(delay = 700) {
 
 function pfrInitialize() {
   const preview = pfrQ("#preview");
-  if (preview) {
-    new MutationObserver(() => pfrSchedule(900)).observe(preview, { childList: true, subtree: true });
-  }
+  if (preview) new MutationObserver(() => pfrSchedule(900)).observe(preview, { childList: true, subtree: true });
   pfrQ("#files")?.addEventListener("change", () => {
     pfrQA("section[data-source-file]", preview || document).forEach((section) => delete section.dataset.pdfFigureRecoveryV346);
     pfrSchedule(1300);
