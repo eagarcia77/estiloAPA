@@ -100,13 +100,22 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-      - name: Publish gh-pages branch
+      - name: Publish gh-pages branch and downloadable ZIP
         shell: bash
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          PACKAGE="$RUNNER_TEMP/APA7-Academic-Formatter-v3.4.8-completo.zip"
+          cp APA7-Academic-Formatter-v3.4.8-completo.zip "$PACKAGE"
+
           git branch -f gh-pages "$GITHUB_SHA"
+          git switch gh-pages
+          mkdir -p downloads
+          cp "$PACKAGE" downloads/APA7-Academic-Formatter-v3.4.8-completo.zip
+          git add downloads/APA7-Academic-Formatter-v3.4.8-completo.zip
+          git commit -m "publish: paquete completo v3.4.8" || true
           git push --force origin gh-pages
 
       - name: Publication summary
@@ -116,3 +125,4 @@ jobs:
           echo "Los normalizadores de estructura, listas, tablas, figuras, referencias e imágenes se aplazan y se ejecutan al terminar la edición o exportar." >> "$GITHUB_STEP_SUMMARY"
           echo "Se conservan la recuperación PDF v3.4.7, la importación de imágenes DOCX y el formato APA 7 de referencias." >> "$GITHUB_STEP_SUMMARY"
           echo "Se generó el artefacto APA7-Academic-Formatter-v3.4.8-completo con todos los archivos versionados y la guía de instalación local." >> "$GITHUB_STEP_SUMMARY"
+          echo "Descarga web: /downloads/APA7-Academic-Formatter-v3.4.8-completo.zip" >> "$GITHUB_STEP_SUMMARY"
