@@ -78,6 +78,16 @@ async function pfrPageModel(page) {
   return { viewport, lines: pfrGroupLines(items, viewport.height) };
 }
 
+async function pfrPageHasImage(page, pdfjs) {
+  const ops = await page.getOperatorList();
+  const imageOps = new Set([
+    pdfjs.OPS.paintImageXObject,
+    pdfjs.OPS.paintInlineImageXObject,
+    pdfjs.OPS.paintImageMaskXObject,
+  ].filter((value) => value !== undefined));
+  return ops.fnArray.some((fn) => imageOps.has(fn));
+}
+
 function pfrFigureNumber(text) {
   const matches = [...String(text || "").matchAll(/\b(?:figura|figure)\s+(\d{1,3})\b/gi)];
   if (!matches.length) return null;
@@ -97,7 +107,9 @@ function pfrCandidateGaps(lines, pageHeight, previousTail = "") {
       bottom: first.top - 3,
       before: previousTail,
       after: first.text,
+      beforeLast: "",
       leading: true,
+      trailing: false,
       labelNumber: pfrFigureNumber(previousTail),
       standaloneLabel: false,
     });
@@ -119,8 +131,32 @@ function pfrCandidateGaps(lines, pageHeight, previousTail = "") {
       bottom,
       before,
       after: next.text,
+      beforeLast: current.text,
       afterContext,
       leading: false,
+      trailing: false,
+      labelNumber: pfrFigureNumber(before),
+      standaloneLabel: beforeLines.some((line) => /^\s*(?:figura|figure)\s+\d{1,3}[a-z]?\s*\.?\s*$/i.test(line.text)),
+    });
+  }
+
+  // Important for figures such as Figura 7 in the validation PDF: the image
+  // may occupy the remainder of the page after the last textual line.
+  const last = lines[lines.length - 1];
+  const trailingTop = last.bottom + 3;
+  const trailingBottom = pageHeight - 4;
+  if (trailingBottom - trailingTop >= minimum) {
+    const beforeLines = lines.slice(Math.max(0, lines.length - 7));
+    const before = beforeLines.map((line) => line.text).join(" ");
+    gaps.push({
+      top: trailingTop,
+      bottom: trailingBottom,
+      before,
+      after: "",
+      beforeLast: last.text,
+      afterContext: "",
+      leading: false,
+      trailing: true,
       labelNumber: pfrFigureNumber(before),
       standaloneLabel: beforeLines.some((line) => /^\s*(?:figura|figure)\s+\d{1,3}[a-z]?\s*\.?\s*$/i.test(line.text)),
     });
@@ -194,7 +230,8 @@ function pfrPlainTextFromHtml(html) {
 
 function pfrSplitBrParagraph(node, targetText) {
   if (!node || !["P", "DIV"].includes(node.tagName) || !node.querySelector("br")) return null;
-  const prefix = pfrNorm(targetText).slice(0, Math.min(54, pfrNorm(targetText).length));
+  const target = pfrNorm(targetText);
+  const prefix = target.slice(0, Math.min(54, target.length));
   if (!prefix) return null;
   const parts = node.innerHTML.split(/<br\s*\/?>/i);
   const index = parts.findIndex((part) => pfrPlainTextFromHtml(part).startsWith(prefix));
@@ -242,12 +279,21 @@ function pfrInsertion(section, gap, number) {
     if (next && !["IMG", "TABLE", "OL", "UL"].includes(next.tagName) && nextText && nextText.length <= 240 && !/^Nota\./i.test(nextText)) point = next;
     return { mode: "after", node: point };
   }
+
+  if (gap.trailing && gap.beforeLast) {
+    const lastBlock = pfrPreviewAnchor(section, gap.beforeLast);
+    return lastBlock ? { mode: "after", node: lastBlock } : null;
+  }
+
   const anchor = pfrPreviewAnchor(section, gap.after);
   return anchor ? { mode: "before", node: anchor } : null;
 }
 
 function pfrLooksLikeStartBanner(pageNumber, gap) {
-  return pageNumber === 1 && gap.leading && /^(introduccion|introduction)$/.test(pfrNorm(gap.after));
+  // In the validation PDF the banner is an internal gap between the title and
+  // Introducción, not a leading page gap. Therefore "after = Introducción" is
+  // the reliable banner signature on page 1.
+  return pageNumber === 1 && /^(introduccion|introduction)$/.test(pfrNorm(gap.after));
 }
 
 function pfrExisting(section, number, pageNumber, gapIndex) {
@@ -278,7 +324,7 @@ function pfrInsert(section, dataUrl, fileName, pageNumber, gap, gapIndex) {
 
   // If the PDF text layer does NOT contain a standalone Figura X label, the
   // source raster normally already contains Figura X + title + Nota. Preserve
-  // that complete image and prevent the APA formatter from duplicating caption.
+  // that complete image and prevent the formatter from duplicating the caption.
   if (number && !gap.standaloneLabel) {
     image.classList.add("apa-self-captioned-figure");
     image.dataset.apaSelfCaptioned = "true";
@@ -304,13 +350,16 @@ async function pfrRecoverFile(file, section) {
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
+    const hasImage = await pfrPageHasImage(page, pdfjs);
     const { viewport, lines } = await pfrPageModel(page);
-    const gaps = pfrCandidateGaps(lines, viewport.height, previousTail);
-    if (gaps.length) {
-      const rendered = await pfrRenderPage(page);
-      for (let index = 0; index < gaps.length; index += 1) {
-        const dataUrl = pfrCropGap(rendered, gaps[index]);
-        if (pfrInsert(section, dataUrl, file.name, pageNumber, gaps[index], index)) inserted += 1;
+    if (hasImage) {
+      const gaps = pfrCandidateGaps(lines, viewport.height, previousTail);
+      if (gaps.length) {
+        const rendered = await pfrRenderPage(page);
+        for (let index = 0; index < gaps.length; index += 1) {
+          const dataUrl = pfrCropGap(rendered, gaps[index]);
+          if (pfrInsert(section, dataUrl, file.name, pageNumber, gaps[index], index)) inserted += 1;
+        }
       }
     }
     previousTail = lines.slice(-7).map((line) => line.text).join(" ");
