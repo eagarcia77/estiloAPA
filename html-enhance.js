@@ -1,20 +1,22 @@
 import "./source-images-v345.js";
+import "./pdf-figure-recovery-v346.js";
 import "./figure-apa.js";
 import "./exclude-banner-v343.js";
 import "./image-editor-v344.js";
 import "./reference-format-v345.js";
 import "./docx-banner-safe-v343.js";
 
-const HTML_ENHANCE_VERSION = "3.4.5";
+const HTML_ENHANCE_VERSION = "3.4.6";
 
 function institutionalHtmlProfileEnabled() {
   return document.querySelector("#formatProfile")?.value === "modulo11c";
 }
 
-function downloadInstitutionalHtml() {
+async function downloadInstitutionalHtml() {
   const preview = document.querySelector("#preview");
   if (!preview) return;
 
+  if (typeof window.recoverPdfFiguresV346 === "function") await window.recoverPdfFiguresV346();
   if (typeof window.classifyEmbeddedImages === "function") window.classifyEmbeddedImages(preview);
   if (typeof window.applyApaFigureFormatting === "function") window.applyApaFigureFormatting(preview);
   if (typeof window.formatReferencesApa7 === "function") window.formatReferencesApa7(preview);
@@ -40,7 +42,7 @@ section[data-source-file] { display: contents; } p { margin: 0; text-indent: .5i
 ul,ol { margin: 0 0 .6em .45in; padding-left: .25in; } li { margin: 0; padding: 0; }
 .apa-figure-label,.module-table-label { font-weight: 700; text-indent: 0; text-align:left; margin: .85em 0 0; }
 .apa-figure-title,.module-table-title { font-style: italic; font-weight:400; text-indent: 0; text-align:left; margin: 0 0 .35em; }
-img.apa-figure-image,.module-figure-image,img.apa-loaded-document-image { display:block; max-width:100%; width:auto; height:auto; margin:.35em auto; break-inside:avoid; page-break-inside:avoid; }
+img.apa-figure-image,.module-figure-image,img.apa-loaded-document-image,img.pdf-recovered-v346 { display:block; max-width:100%; width:auto; height:auto; margin:.35em auto; break-inside:avoid; page-break-inside:avoid; }
 .apa-note,.apa-figure-note { text-indent:0; text-align:left; margin:.15em 0 .7em; }
 table { width:100%; border-collapse:collapse; border-top:1px solid #000; border-bottom:1px solid #000; margin:.35em 0 .55em; break-inside:avoid; }
 th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:first-child { border-bottom:1px solid #000; } th { font-weight:700; }
@@ -52,7 +54,7 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "modulo-institucional-APA7-v3.4.5.html";
+  anchor.download = "modulo-institucional-APA7-v3.4.6.html";
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
@@ -64,9 +66,10 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
       .filter((img) => img.dataset.apaMediaRole !== "module-banner").length;
     const loaded = [...preview.querySelectorAll('img[data-apa-loaded-document-image="true"]')]
       .filter((img) => img.dataset.apaMediaRole !== "module-banner").length;
+    const recovered = [...preview.querySelectorAll("img.pdf-recovered-v346")].length;
     const manual = [...preview.querySelectorAll('img[data-apa-manual-image="true"]')].length;
     const refs = [...preview.querySelectorAll(".apa-reference")].length;
-    status.textContent = `HTML v${HTML_ENHANCE_VERSION}: banner inicial excluido; ${figures} figura(s) conservada(s) (${loaded} desde el documento y ${manual} manuales); ${refs} referencia(s) en formato APA 7.`;
+    status.textContent = `HTML v${HTML_ENHANCE_VERSION}: ${figures} figura(s) conservada(s), ${recovered} recuperada(s) directamente del PDF, ${manual} manuales; banner inicial excluido; ${refs} referencia(s) APA 7.`;
     status.className = "status success";
   }
 }
@@ -77,5 +80,15 @@ document.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  downloadInstitutionalHtml();
+  button.disabled = true;
+  void downloadInstitutionalHtml()
+    .catch((error) => {
+      console.error("HTML v3.4.6", error);
+      const status = document.querySelector("#status");
+      if (status) {
+        status.textContent = `No se pudo generar el HTML: ${error.message}`;
+        status.className = "status error";
+      }
+    })
+    .finally(() => { button.disabled = false; });
 }, true);
