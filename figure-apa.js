@@ -1,7 +1,8 @@
-// APA7 Academic Formatter v3.4.1
-// Figure formatting patch. It formats figures without changing document order.
+// APA7 Academic Formatter v3.4.5
+// Formats figures without changing document order. Embedded DOCX images are
+// normalized into top-level image blocks before captions are applied.
 
-const FIGURE_APA_VERSION = "3.4.1";
+const FIGURE_APA_VERSION = "3.4.5";
 let figureApaTimer = null;
 
 const figureQ = (selector, root = document) => root.querySelector(selector);
@@ -14,6 +15,7 @@ function figureModuleProfileEnabled() {
 
 function isApaBannerImage(img) {
   if (!img) return false;
+  if (img.dataset.apaMediaRole === "module-banner") return true;
   if (img.dataset.banner === "true") return true;
   if (img.dataset.apaNonFigure === "true" || img.dataset.apaNonfigure === "true") return true;
   if (img.classList.contains("apa-cover-image") || img.classList.contains("module-banner-image") || img.classList.contains("module-banner")) return true;
@@ -21,7 +23,7 @@ function isApaBannerImage(img) {
   const alt = figureText(img.getAttribute("alt")).toLowerCase();
   const title = figureText(img.getAttribute("title")).toLowerCase();
   const src = String(img.getAttribute("src") || "").toLowerCase();
-  return alt.includes("banner") || alt.includes("módulo") || alt.includes("modulo") || title.includes("banner") || src.includes("banner");
+  return alt.includes("banner") || title.includes("banner") || src.includes("banner");
 }
 
 function isIntegratedApaFigure(img) {
@@ -31,6 +33,25 @@ function isIntegratedApaFigure(img) {
   if (img.classList.contains("figure-integrated-caption")) return true;
   const alt = figureText(img.getAttribute("alt"));
   return /\b(?:figura|figure)\s+\d{1,3}\b/i.test(alt) && /(?:título|titulo|documento original|ecosistema|modelo|beneficio|producto|inteligencia|confianza|canal|sistema)/i.test(alt);
+}
+
+function wrapperOnlyContainsImage(wrapper, image) {
+  if (!wrapper || !image) return false;
+  for (const node of wrapper.childNodes) {
+    if (node === image) continue;
+    if (node.nodeType === Node.TEXT_NODE && !figureText(node.nodeValue)) continue;
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") continue;
+    return false;
+  }
+  return true;
+}
+
+function normalizeFigureImageBlock(img) {
+  const parent = img?.parentElement;
+  if (!parent || !["P", "DIV", "FIGURE"].includes(parent.tagName)) return img;
+  if (!wrapperOnlyContainsImage(parent, img)) return img;
+  parent.replaceWith(img);
+  return img;
 }
 
 function figureNumberFromImage(img) {
@@ -85,7 +106,7 @@ function descriptiveFigureTitle(img, number) {
   if (explicit) return explicit.replace(/^Figura\s+\d+[:.\s-]*/i, "");
 
   const alt = figureText(img.getAttribute("alt"));
-  if (alt && !/^Figura\s+\d+(?:\s+del documento original)?$/i.test(alt) && !/^Imagen(?:\s+del documento original)?$/i.test(alt)) {
+  if (alt && !/^Figura\s+\d+(?:\s+del documento original)?$/i.test(alt) && !/^Imagen(?:\s+del documento original)?$/i.test(alt) && !/^Imagen incorporada desde el documento original$/i.test(alt)) {
     return alt.replace(/^Figura\s+\d+[:.\s-]*/i, "");
   }
   return `Título de la figura ${number} [revisar]`;
@@ -121,7 +142,9 @@ function createFigureCaption(img, root) {
 function applyApaFigureFormatting(root = figureQ("#preview")) {
   if (!root || root.querySelector(".placeholder") || !figureModuleProfileEnabled()) return;
 
-  for (const img of figureQA("img", root)) {
+  for (const originalImage of figureQA("img", root)) {
+    const img = normalizeFigureImageBlock(originalImage);
+
     if (isApaBannerImage(img)) {
       img.classList.add("apa-cover-image", "module-banner-image");
       img.classList.remove("apa-figure-image", "module-figure-image");
@@ -142,9 +165,9 @@ function applyApaFigureFormatting(root = figureQ("#preview")) {
 }
 
 function installFigureApaStyles() {
-  if (figureQ("#figure-apa-v341-styles")) return;
+  if (figureQ("#figure-apa-v345-styles")) return;
   const style = document.createElement("style");
-  style.id = "figure-apa-v341-styles";
+  style.id = "figure-apa-v345-styles";
   style.textContent = `
     .apa-paper .apa-figure-label{margin:.75em 0 0!important;text-indent:0!important;text-align:left!important;font-weight:700!important;font-style:normal!important;}
     .apa-paper .apa-figure-title{margin:0 0 .3em!important;text-indent:0!important;text-align:left!important;font-weight:400!important;font-style:italic!important;}
@@ -166,8 +189,6 @@ function updateFigurePatchUi() {
     badge.textContent = `v${FIGURE_APA_VERSION}`;
     badge.setAttribute("aria-label", `Versión ${FIGURE_APA_VERSION}`);
   }
-  const help = figureQ("#previewHelp");
-  if (help) help.innerHTML = "Seleccione texto o coloque el cursor en un párrafo y use la barra APA 7 para editar. <strong>Figuras APA 7:</strong> número en negrita, título en cursiva, imagen y Nota cuando corresponda. Los banners del módulo no se numeran y las figuras que ya contienen su rótulo dentro de la imagen no duplican captions.";
 }
 
 function initializeFigureApa() {
