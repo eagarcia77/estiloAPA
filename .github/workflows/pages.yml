@@ -51,11 +51,14 @@ jobs:
           node --check thesis-html.js
           node --check thesis-docx.js
 
-      - name: Verify v3.4.8 protected editing
+      - name: Verify v3.4.8 protected editing and local installation files
         shell: bash
         run: |
           set -e
           test -f edit-stability-v348.js
+          test -f INSTALACION_SERVIDOR_LOCAL.md
+          test -f run-local.bat
+          test -f run-local.ps1
           grep -q 'APA_EDIT_STABILITY_VERSION = "3.4.8"' edit-stability-v348.js
           grep -q 'apaShouldDeferNormalization' edit-stability-v348.js
           grep -q 'aesLooksLikeNormalization' edit-stability-v348.js
@@ -72,6 +75,30 @@ jobs:
           grep -q 'PDF_FIGURE_RECOVERY_VERSION = "3.4.7"' pdf-figure-recovery-v347.js
           grep -q 'DOCX_IMAGES_VERSION = "3.4.6"' docx-images-v346.js
           grep -q 'REFERENCE_FORMAT_VERSION = "3.4.5"' reference-format-v345.js
+          grep -q 'APA7 Academic Formatter v3.4.8' run-local.bat
+          grep -q 'APA7 Academic Formatter v3.4.8' run-local.ps1
+          grep -q 'XAMPP / Apache' INSTALACION_SERVIDOR_LOCAL.md
+          grep -q 'Microsoft IIS' INSTALACION_SERVIDOR_LOCAL.md
+
+      - name: Build complete v3.4.8 source ZIP
+        shell: bash
+        run: |
+          set -e
+          git archive \
+            --format=zip \
+            --prefix=APA7-Academic-Formatter-v3.4.8/ \
+            --output=APA7-Academic-Formatter-v3.4.8-completo.zip \
+            "$GITHUB_SHA"
+          unzip -l APA7-Academic-Formatter-v3.4.8-completo.zip | head -80
+
+      - name: Upload complete source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: APA7-Academic-Formatter-v3.4.8-completo
+          path: APA7-Academic-Formatter-v3.4.8-completo.zip
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
 
       - name: Publish gh-pages branch
         shell: bash
@@ -88,3 +115,4 @@ jobs:
           echo "Vista previa: escribir, borrar, cortar y pegar ya no dispara normalizadores destructivos mientras el cursor está activo." >> "$GITHUB_STEP_SUMMARY"
           echo "Los normalizadores de estructura, listas, tablas, figuras, referencias e imágenes se aplazan y se ejecutan al terminar la edición o exportar." >> "$GITHUB_STEP_SUMMARY"
           echo "Se conservan la recuperación PDF v3.4.7, la importación de imágenes DOCX y el formato APA 7 de referencias." >> "$GITHUB_STEP_SUMMARY"
+          echo "Se generó el artefacto APA7-Academic-Formatter-v3.4.8-completo con todos los archivos versionados y la guía de instalación local." >> "$GITHUB_STEP_SUMMARY"
