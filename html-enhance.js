@@ -1,5 +1,7 @@
+import "./docx-images-v346.js";
 import "./source-images-v345.js";
 import "./pdf-figure-recovery-v346.js";
+import "./pdf-recovery-wait-v346.js";
 import "./figure-apa.js";
 import "./exclude-banner-v343.js";
 import "./image-editor-v344.js";
@@ -10,6 +12,22 @@ const HTML_ENHANCE_VERSION = "3.4.6";
 
 function institutionalHtmlProfileEnabled() {
   return document.querySelector("#formatProfile")?.value === "modulo11c";
+}
+
+function updateV346Ui() {
+  const badge = document.querySelector(".badge");
+  if (badge) {
+    badge.textContent = `v${HTML_ENHANCE_VERSION}`;
+    badge.setAttribute("aria-label", `Versión ${HTML_ENHANCE_VERSION}`);
+  }
+  const footer = document.querySelector("footer p");
+  if (footer) {
+    footer.textContent = `APA7 Academic Formatter v${HTML_ENHANCE_VERSION} · Imágenes DOCX/PDF incorporadas · Banner inicial excluido · Figuras APA 7 · Referencias APA 7.`;
+  }
+  const help = document.querySelector("#previewHelp");
+  if (help) {
+    help.innerHTML = "El documento permanece editable. <strong>Imágenes:</strong> la v3.4.6 incorpora imágenes incrustadas en DOCX y recupera figuras visuales del PDF; el banner inicial se excluye. También puede usar <strong>+ Insertar imagen</strong>. Las referencias se normalizan al formato APA 7 sin inventar datos bibliográficos.";
+  }
 }
 
 async function downloadInstitutionalHtml() {
@@ -64,8 +82,6 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
   if (status) {
     const figures = [...preview.querySelectorAll("img.apa-figure-image,img.module-figure-image")]
       .filter((img) => img.dataset.apaMediaRole !== "module-banner").length;
-    const loaded = [...preview.querySelectorAll('img[data-apa-loaded-document-image="true"]')]
-      .filter((img) => img.dataset.apaMediaRole !== "module-banner").length;
     const recovered = [...preview.querySelectorAll("img.pdf-recovered-v346")].length;
     const manual = [...preview.querySelectorAll('img[data-apa-manual-image="true"]')].length;
     const refs = [...preview.querySelectorAll(".apa-reference")].length;
@@ -92,3 +108,6 @@ document.addEventListener("click", (event) => {
     })
     .finally(() => { button.disabled = false; });
 }, true);
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", updateV346Ui, { once: true });
+else updateV346Ui();
