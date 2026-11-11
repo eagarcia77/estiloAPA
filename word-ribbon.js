@@ -175,7 +175,7 @@ function initWordRibbon() {
   statusLine.setAttribute("aria-live", "off");
   function updateDocumentStats() {
     const content = (preview.textContent || "").trim();
-    const words = content ? content.split(/\\s+/u).length : 0;
+    const words = content ? content.split(/\s+/u).length : 0;
     const chars = content.length;
     statusLine.textContent = `${words} palabras · ${chars} caracteres · Zoom ${Math.round(zoom * 100)} %`;
   }
