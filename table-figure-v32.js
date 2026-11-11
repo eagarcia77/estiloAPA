@@ -307,7 +307,7 @@ function initializeMediaNormalizer() {
   document.addEventListener("click", (event) => {
     if (event.target?.closest?.("#downloadDocxBtn,#downloadHtmlBtn")) normalizeMedia();
   }, true);
-  setTimeout(() => { normalizeMedia(); mediaAudit(); }, 300);
+  mediaAudit();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeMediaNormalizer);
