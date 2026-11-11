@@ -81,3 +81,66 @@ select { width: 100%; padding: .55rem; border: 1px solid #aebbb8; border-radius:
 footer { max-width: 1240px; margin: 0 auto; padding: 0 1.25rem 2rem; color: var(--muted); font-size: .9rem; }
 @media (max-width: 820px) { .layout { grid-template-columns: 1fr; }.preview-panel { grid-column: auto; }.header-inner { flex-direction: column; }.apa-paper { padding: .65in; }.metrics { grid-template-columns: 1fr; } }
 @media print { body { background: white; }.site-header, .controls, .audit, .preview-toolbar, .muted, footer { display: none !important; }.layout, .panel, .paper-wrap { display: block; margin: 0; padding: 0; border: 0; box-shadow: none; background: white; }.apa-paper { width: 8.5in; min-height: 11in; margin: 0; box-shadow: none; padding: 1in; } }
+
+
+/* Responsive, device-wide editing workspace. The document itself is fluid by
+   default; print and Page View retain the physical US Letter dimensions. */
+html, body { max-width: 100%; }
+.layout {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-inline: clamp(.35rem, 1.3vw, 1.5rem);
+}
+.layout > .panel, .preview-panel, .paper-wrap { min-width: 0; }
+.preview-panel { width: 100%; grid-column: 1 / -1; }
+.paper-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: clamp(.25rem, .8vw, .85rem);
+}
+.apa-paper {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: min(11in, 85vh);
+  padding: clamp(.55rem, 3vw, 1.15in);
+  margin-inline: auto;
+}
+.apa-paper img, .apa-paper svg, .apa-paper video {
+  max-width: 100%;
+  height: auto;
+}
+.apa-paper table { max-width: 100%; }
+.apa-paper pre, .apa-paper code { overflow-wrap: anywhere; }
+body.apa-page-view .paper-wrap { background: #dfe5e3; }
+body.apa-page-view .apa-paper {
+  width: min(8.5in, 100%);
+  max-width: 8.5in;
+  min-height: 11in;
+  padding: min(1in, 9%);
+}
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .preview-panel { grid-column: 1; }
+}
+@media (max-width: 480px) {
+  .layout { padding: .35rem; gap: .5rem; }
+  .panel { padding: .55rem; border-radius: 9px; }
+  .paper-wrap { padding: .1rem; }
+  .apa-paper { padding: clamp(.45rem, 3.5vw, .85rem); min-height: 60vh; }
+}
+@media print {
+  .layout, .preview-panel, .paper-wrap {
+    width: auto !important; max-width: none !important;
+    overflow: visible !important;
+  }
+  .apa-paper {
+    box-sizing: border-box;
+    width: 8.5in !important; max-width: none !important;
+    min-height: 11in !important;
+    padding: 1in !important;
+    margin: 0 !important;
+    zoom: 1 !important;
+  }
+}
