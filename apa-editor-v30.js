@@ -199,6 +199,65 @@ function applyAlignment(value) {
   dispatchEditorChange(`Alignment: ${value} (${blocks.length} paragraph(s)).`);
 }
 
+// Single source of truth for explicit indent commands. Automatic APA profile
+// formatters may update class/style asynchronously, but must not overwrite the
+// user's direct Ribbon choice. Mutations are corrected only if a value changed.
+function enforceEditorIndent(block) {
+  if (!block || !block.dataset) return false;
+  const indent = block.dataset.apaEditorIndent;
+  if (!["none", "first", "hanging"].includes(indent)) return false;
+  const expectedText = indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0";
+  const expectedLeft = indent === "hanging" ? ".5in" : "0";
+  let changed = false;
+  for (const [property, expected] of [["text-indent", expectedText], ["padding-left", expectedLeft]]) {
+    if (block.style.getPropertyValue(property) !== expected ||
+        block.style.getPropertyPriority(property) !== "important") {
+      block.style.setProperty(property, expected, "important");
+      changed = true;
+    }
+  }
+  if (indent === "none" && (block.style.getPropertyValue("margin-left") !== "0" ||
+    block.style.getPropertyPriority("margin-left") !== "important")) {
+    block.style.setProperty("margin-left", "0", "important");
+    changed = true;
+  }
+  return changed;
+}
+
+function initializeIndentPersistence() {
+  const root = preview();
+  if (!root || typeof MutationObserver !== "function") return;
+  const active = new Set();
+  let enforcing = false;
+  const track = (node) => {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+    if (node.matches?.("[data-apa-editor-indent]")) active.add(node);
+    node.querySelectorAll?.("[data-apa-editor-indent]").forEach(el => active.add(el));
+  };
+  track(root);
+  const observer = new MutationObserver(records => {
+    if (enforcing) return;
+    enforcing = true;
+    try {
+      for (const record of records) {
+        if (record.type === "childList") {
+          record.addedNodes.forEach(track);
+        } else {
+          track(record.target);
+        }
+      }
+      for (const block of active) {
+        if (!root.contains(block)) { active.delete(block); continue; }
+        enforceEditorIndent(block);
+      }
+    } finally { enforcing = false; }
+  });
+  observer.observe(root, {
+    subtree: true, attributes: true, childList: true,
+    attributeFilter: ["style", "class", "data-apa-editor-indent"]
+  });
+}
+
 function applyIndent(value) {
   if (!["first", "hanging", "none"].includes(value)) return;
   const blocks = selectedBlocks();
@@ -225,7 +284,9 @@ function applyIndent(value) {
     } else {
       block.style.setProperty("padding-left", "0", "important");
       block.style.setProperty("text-indent", "0", "important");
+      block.style.setProperty("margin-left", "0", "important");
     }
+    enforceEditorIndent(block);
   }
   markRibbonButtonState("data-indent", value);
   const labels = { none: "No Indent", first: "First Line Indent", hanging: "Hanging Indent" };
@@ -537,6 +598,7 @@ function initializeApaEditor() {
   document.addEventListener("selectionchange", saveEditorSelection);
   preview()?.addEventListener("keyup", saveEditorSelection);
   preview()?.addEventListener("mouseup", saveEditorSelection);
+  initializeIndentPersistence();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeApaEditor);
