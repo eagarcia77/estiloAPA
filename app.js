@@ -1,4 +1,4 @@
-const APP_VERSION = "2.0";
+const APP_VERSION = "3.4.8";
 const PDFJS_VERSION = "6.1.200";
 const PDFJS_URL = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.mjs`;
 const PDFJS_WORKER_URL = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.mjs`;
@@ -573,6 +573,7 @@ async function formatSelectedFiles() {
         wrapper.append(separator);
       }
     }
+    window.apaResetProtectedDocument?.();
     els.preview.replaceChildren(...wrapper.childNodes);
     applyPreviewStyles();
     renderAudit(auditDocument(els.preview));
@@ -599,6 +600,7 @@ function loadDemo() {
     <p>García, E. A. (2026). Innovación educativa y uso responsable de inteligencia artificial. Editorial Académica.</p>
     <p>López, M., & Rivera, J. (2025). Diseño universal y tecnología educativa. Revista de Innovación Educativa, 12(2), 20–35. https://doi.org/10.1000/ejemplo</p>`;
   applyApaRules(demo);
+  window.apaResetProtectedDocument?.();
   els.preview.replaceChildren(demo);
   applyPreviewStyles();
   renderAudit(auditDocument(els.preview));
@@ -618,6 +620,7 @@ function enableDownloads() {
 }
 
 function clearAll() {
+  window.apaResetProtectedDocument?.();
   selectedFiles = [];
   lastAudit = null;
   els.files.value = "";
