@@ -297,8 +297,12 @@ function initializeMediaNormalizer() {
   addMediaStyles();
   const root = mediaRoot();
   if (!root) return;
-  new MutationObserver(scheduleMediaNormalization).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
-  root.addEventListener("input", scheduleMediaNormalization);
+  // Media formatting runs on new document import or explicit export, not
+  // after each keystroke or class change in the contenteditable editor.
+  root.addEventListener("apa-document-loaded", () => {
+    normalizeMedia();
+    mediaAudit();
+  });
   document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(mediaAudit, 120));
   document.addEventListener("click", (event) => {
     if (event.target?.closest?.("#downloadDocxBtn,#downloadHtmlBtn")) normalizeMedia();
