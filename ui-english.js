@@ -191,9 +191,13 @@ const UI_ENGLISH_REPLACEMENTS = [
   ["lista(s)", "list(s)"],
 ];
 
+// Match longer expressions first so short terms never interrupt a complete sentence.
+const UI_ENGLISH_SORTED = [...UI_ENGLISH_REPLACEMENTS]
+  .sort((a, b) => b[0].length - a[0].length);
+
 function uiEnglishText(source) {
   let translated = source;
-  for (const [spanish, english] of UI_ENGLISH_REPLACEMENTS) {
+  for (const [spanish, english] of UI_ENGLISH_SORTED) {
     if (translated.includes(spanish)) translated = translated.split(spanish).join(english);
   }
   return translated;
