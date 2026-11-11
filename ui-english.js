@@ -118,11 +118,14 @@ function uiEnglishExcluded(element) {
 
 function uiEnglishTranslate(root) {
   if (!root || root.nodeType !== Node.ELEMENT_NODE || uiEnglishExcluded(root)) return;
-  for (const attribute of ["title", "aria-label", "placeholder"]) {
-    const before = root.getAttribute(attribute);
-    if (before) {
-      const after = uiEnglishText(before);
-      if (after !== before) root.setAttribute(attribute, after);
+  for (const element of [root, ...root.querySelectorAll("*")]) {
+    if (uiEnglishExcluded(element)) continue;
+    for (const attribute of ["title", "aria-label", "placeholder"]) {
+      const before = element.getAttribute(attribute);
+      if (before) {
+        const after = uiEnglishText(before);
+        if (after !== before) element.setAttribute(attribute, after);
+      }
     }
   }
   // Work with text nodes only; do not replace buttons or rebind event listeners.
@@ -135,7 +138,6 @@ function uiEnglishTranslate(root) {
     const after = uiEnglishText(before);
     if (after !== before) node.nodeValue = after;
   }
-  // Text-node walking skips root-level option content only when root is a text node.
 }
 
 function initEnglishInterface() {
