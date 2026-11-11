@@ -8,8 +8,12 @@ const aesNativeClearTimeout = window.clearTimeout.bind(window);
 let apaEditForceDepth = 0;
 let apaEditIdleTimer = null;
 let apaEditComposing = false;
-let aesPendingNormalizationId = 0;
 const aesPendingNormalizations = new Map();
+let aesDocumentGeneration = 0;
+let aesBeforeDeleteSnapshot = null;
+let aesDeletionCheckId = null;
+let aesRestoringDelete = false;
+let aesDeleteSnapshotExpiry = null;
 
 function aesPreview() {
   return document.querySelector("#preview");
@@ -42,7 +46,9 @@ function apaShouldDeferNormalization() {
   if (apaEditComposing) return true;
   if (root.dataset.apaUserEditing === "true") return true;
   if (root.contains(document.activeElement)) return true;
-  return aesSelectionInsidePreview();
+  // A stale selection can remain in #preview after focus has moved elsewhere.
+  // Selection alone must never block deferred normalizations indefinitely.
+  return false;
 }
 
 function aesLooksLikeNormalization(callback) {
@@ -52,10 +58,11 @@ function aesLooksLikeNormalization(callback) {
   return /(applyModuleProfile|markModuleSemantics|normalizeMedia|normalizeApaMedia|normalizeFigures|normalizeTableCaptions|normalizeNumberedLists|recoverParagraphNumberRuns|applyApaFigureFormatting|classifyEmbeddedImages|repairMediaRoles|preserveOriginalPdfMedia|recoverPdfFiguresV34\d|formatReferencesApa7|scheduleSourceImages|scheduleApaFigureFormatting|scheduleListNormalization|scheduleMediaNormalization)/.test(source);
 }
 
-function aesQueueNormalization(callback, args) {
-  const id = ++aesPendingNormalizationId;
-  aesPendingNormalizations.set(id, { callback, args });
-  return id;
+function aesQueueNormalization(timerId, callback, args, generation) {
+  // Retain the original browser timer ID so clearTimeout can cancel a queued task.
+  if (generation === aesDocumentGeneration) {
+    aesPendingNormalizations.set(timerId, { callback, args, generation });
+  }
 }
 
 function aesFlushPendingNormalizations() {
@@ -64,6 +71,7 @@ function aesFlushPendingNormalizations() {
   aesPendingNormalizations.clear();
   apaWithForcedNormalization(() => {
     for (const task of tasks) {
+      if (task.generation !== aesDocumentGeneration) continue;
       try { task.callback(...task.args); }
       catch (error) { console.error("APA v3.4.8 normalización diferida", error); }
     }
@@ -77,17 +85,117 @@ window.setTimeout = function(callback, delay = 0, ...args) {
   if (!aesLooksLikeNormalization(callback)) {
     return aesNativeSetTimeout(callback, delay, ...args);
   }
-  return aesNativeSetTimeout(() => {
+  const generation = aesDocumentGeneration;
+  const timerId = aesNativeSetTimeout(() => {
+    if (generation !== aesDocumentGeneration) return;
     if (apaShouldDeferNormalization()) {
-      aesQueueNormalization(callback, args);
+      aesQueueNormalization(timerId, callback, args, generation);
       return;
     }
     callback(...args);
   }, delay);
+  return timerId;
 };
 window.clearTimeout = function(timerId) {
+  aesPendingNormalizations.delete(timerId);
   aesNativeClearTimeout(timerId);
 };
+
+// Use before replacing the entire document (new import, demo, clear).
+// Invalidate both pending and not-yet-fired normalization callbacks.
+function aesResetDocument() {
+  aesDocumentGeneration += 1;
+  aesBeforeDeleteSnapshot = null;
+  aesNativeClearTimeout(aesDeletionCheckId);
+  aesNativeClearTimeout(aesDeleteSnapshotExpiry);
+  aesNativeClearTimeout(aesDeleteSnapshotExpiry);
+  aesPendingNormalizations.clear();
+  aesNativeClearTimeout(apaEditIdleTimer);
+  apaEditComposing = false;
+  aesSetEditing(false);
+}
+
+
+// Safety net: retain the complete document before a user-initiated deletion.
+// If a single Backspace/Delete unexpectedly removes almost all document text,
+// restore the snapshot instead of allowing irreversible data loss.
+function aesDocumentTextLength(root) {
+  return (root?.textContent || "").trim().length;
+}
+
+function aesIsDeleteIntent(event) {
+  return (event.type === "beforeinput" && /^delete/i.test(event.inputType || "")) ||
+    (event.type === "keydown" && ["Backspace", "Delete"].includes(event.key));
+}
+
+function aesDeletionCoversWholeDocument(root) {
+  const selection = window.getSelection?.();
+  if (!selection || !selection.rangeCount || selection.isCollapsed) return false;
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return false;
+  try {
+    const selectedLength = range.toString().trim().length;
+    const documentLength = aesDocumentTextLength(root);
+    return documentLength > 100 && selectedLength >= documentLength * 0.9;
+  } catch { return false; }
+}
+
+function aesRecordDeleteIntent(event) {
+  const root = aesPreview();
+  if (!root || aesRestoringDelete || !aesIsDeleteIntent(event)) return;
+  const length = aesDocumentTextLength(root);
+  if (length < 100) return;
+  if (aesDeletionCoversWholeDocument(root)) {
+    event.preventDefault();
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = "Se bloqueó el borrado de casi todo el documento. Seleccione y elimine fragmentos más pequeños o utilice Limpiar.";
+      status.className = "status error";
+    }
+    return;
+  }
+  // Duplicate beforeinput/keydown events must retain the earliest pre-deletion copy.
+  if (!aesBeforeDeleteSnapshot || aesBeforeDeleteSnapshot.generation !== aesDocumentGeneration) {
+    aesBeforeDeleteSnapshot = { generation: aesDocumentGeneration, html: root.innerHTML, length };
+  }
+}
+
+function aesCheckDeleteIntegrity() {
+  if (!aesBeforeDeleteSnapshot || aesRestoringDelete) return;
+  const snapshot = aesBeforeDeleteSnapshot;
+  const root = aesPreview();
+  if (!root || snapshot.generation !== aesDocumentGeneration) {
+    aesBeforeDeleteSnapshot = null;
+    return;
+  }
+  const remaining = aesDocumentTextLength(root);
+  // Only restore catastrophic loss, not ordinary paragraph or multi-line deletes.
+  const catastrophic = snapshot.length >= 100 && remaining < snapshot.length * 0.15 &&
+    snapshot.length - remaining > 100;
+  if (!catastrophic) return;
+  aesBeforeDeleteSnapshot = null;
+  aesRestoringDelete = true;
+  try {
+    aesResetDocument();
+    root.innerHTML = snapshot.html;
+    root.focus?.();
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = "Protección Backspace: se restauró el documento tras detectar un borrado masivo.";
+      status.className = "status error";
+    }
+  } finally {
+    aesRestoringDelete = false;
+  }
+}
+
+function aesScheduleDeleteCheck() {
+  if (!aesBeforeDeleteSnapshot) return;
+  aesNativeClearTimeout(aesDeletionCheckId);
+  aesDeletionCheckId = aesNativeSetTimeout(aesCheckDeleteIntegrity, 0);
+  aesNativeClearTimeout(aesDeleteSnapshotExpiry);
+  aesDeleteSnapshotExpiry = aesNativeSetTimeout(() => { aesBeforeDeleteSnapshot = null; }, 950);
+}
 
 function aesMarkEditing() {
   aesNativeClearTimeout(apaEditIdleTimer);
@@ -113,7 +221,7 @@ function aesScheduleFinish(delay = 320) {
     const root = aesPreview();
     const toolbar = aesToolbar();
     const active = document.activeElement;
-    if (root?.contains(active) || toolbar?.contains(active) || aesSelectionInsidePreview()) return;
+    if (root?.contains(active) || toolbar?.contains(active)) return;
     aesFinishEditing();
   }, delay);
 }
@@ -168,6 +276,14 @@ function aesInitialize() {
   const root = aesPreview();
   if (!root) return;
 
+  root.addEventListener("keydown", aesRecordDeleteIntent, true);
+  root.addEventListener("beforeinput", aesRecordDeleteIntent, true);
+  root.addEventListener("input", aesScheduleDeleteCheck, true);
+  // Observers in the formatting pipeline may rewrite nodes after the native input.
+  new MutationObserver(() => {
+    if (aesBeforeDeleteSnapshot) aesScheduleDeleteCheck();
+  }).observe(root, { childList: true, subtree: true, characterData: true });
+
   for (const eventName of ["focusin", "beforeinput", "input", "keydown", "paste", "cut"]) {
     root.addEventListener(eventName, aesMarkEditing, true);
   }
@@ -183,6 +299,14 @@ function aesInitialize() {
   }, true);
 
   root.addEventListener("focusout", (event) => {
+    const next = event.relatedTarget;
+    if (next && (root.contains(next) || aesToolbar()?.contains(next))) return;
+    aesScheduleFinish();
+  }, true);
+
+  // Leaving toolbar must also release the guard: preview focusout intentionally
+  // retained it while toolbar controls were in use.
+  aesToolbar()?.addEventListener("focusout", (event) => {
     const next = event.relatedTarget;
     if (next && (root.contains(next) || aesToolbar()?.contains(next))) return;
     aesScheduleFinish();
@@ -216,6 +340,8 @@ window.apaShouldDeferNormalization = apaShouldDeferNormalization;
 window.apaWithForcedNormalization = apaWithForcedNormalization;
 window.apaFinishProtectedEditing = aesFinishEditing;
 window.apaFlushPendingNormalizations = aesFlushPendingNormalizations;
+window.apaResetProtectedDocument = aesResetDocument;
+window.apaCheckDeleteIntegrity = aesCheckDeleteIntegrity;
 window.APA_EDIT_STABILITY_VERSION = APA_EDIT_STABILITY_VERSION;
 
 if (document.readyState === "loading") {
