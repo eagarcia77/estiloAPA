@@ -9,6 +9,7 @@ let apaEditForceDepth = 0;
 let apaEditIdleTimer = null;
 let apaEditComposing = false;
 const aesPendingNormalizations = new Map();
+let aesDocumentGeneration = 0;
 
 function aesPreview() {
   return document.querySelector("#preview");
@@ -53,9 +54,11 @@ function aesLooksLikeNormalization(callback) {
   return /(applyModuleProfile|markModuleSemantics|normalizeMedia|normalizeApaMedia|normalizeFigures|normalizeTableCaptions|normalizeNumberedLists|recoverParagraphNumberRuns|applyApaFigureFormatting|classifyEmbeddedImages|repairMediaRoles|preserveOriginalPdfMedia|recoverPdfFiguresV34\d|formatReferencesApa7|scheduleSourceImages|scheduleApaFigureFormatting|scheduleListNormalization|scheduleMediaNormalization)/.test(source);
 }
 
-function aesQueueNormalization(timerId, callback, args) {
+function aesQueueNormalization(timerId, callback, args, generation) {
   // Retain the original browser timer ID so clearTimeout can cancel a queued task.
-  aesPendingNormalizations.set(timerId, { callback, args });
+  if (generation === aesDocumentGeneration) {
+    aesPendingNormalizations.set(timerId, { callback, args, generation });
+  }
 }
 
 function aesFlushPendingNormalizations() {
@@ -64,6 +67,7 @@ function aesFlushPendingNormalizations() {
   aesPendingNormalizations.clear();
   apaWithForcedNormalization(() => {
     for (const task of tasks) {
+      if (task.generation !== aesDocumentGeneration) continue;
       try { task.callback(...task.args); }
       catch (error) { console.error("APA v3.4.8 normalización diferida", error); }
     }
@@ -77,9 +81,11 @@ window.setTimeout = function(callback, delay = 0, ...args) {
   if (!aesLooksLikeNormalization(callback)) {
     return aesNativeSetTimeout(callback, delay, ...args);
   }
+  const generation = aesDocumentGeneration;
   const timerId = aesNativeSetTimeout(() => {
+    if (generation !== aesDocumentGeneration) return;
     if (apaShouldDeferNormalization()) {
-      aesQueueNormalization(timerId, callback, args);
+      aesQueueNormalization(timerId, callback, args, generation);
       return;
     }
     callback(...args);
@@ -90,6 +96,16 @@ window.clearTimeout = function(timerId) {
   aesPendingNormalizations.delete(timerId);
   aesNativeClearTimeout(timerId);
 };
+
+// Use before replacing the entire document (new import, demo, clear).
+// Invalidate both pending and not-yet-fired normalization callbacks.
+function aesResetDocument() {
+  aesDocumentGeneration += 1;
+  aesPendingNormalizations.clear();
+  aesNativeClearTimeout(apaEditIdleTimer);
+  apaEditComposing = false;
+  aesSetEditing(false);
+}
 
 function aesMarkEditing() {
   aesNativeClearTimeout(apaEditIdleTimer);
@@ -226,6 +242,7 @@ window.apaShouldDeferNormalization = apaShouldDeferNormalization;
 window.apaWithForcedNormalization = apaWithForcedNormalization;
 window.apaFinishProtectedEditing = aesFinishEditing;
 window.apaFlushPendingNormalizations = aesFlushPendingNormalizations;
+window.apaResetProtectedDocument = aesResetDocument;
 window.APA_EDIT_STABILITY_VERSION = APA_EDIT_STABILITY_VERSION;
 
 if (document.readyState === "loading") {
