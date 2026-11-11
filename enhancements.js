@@ -164,7 +164,8 @@ function ensureStyles() {
 }
 
 function ensurePanel() {
-  const audit = document.querySelector("section.audit");
+  const audit = document.querySelector("section.audit .simple-details-inner") ||
+    document.querySelector("section.audit");
   if (!audit) return null;
   let panel = document.querySelector("#advancedApaAudit");
   if (panel) return panel;
