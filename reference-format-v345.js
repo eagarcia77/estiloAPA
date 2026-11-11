@@ -196,18 +196,30 @@ function formatReferencesApa7(root = rfQ("#preview"), { announce = false } = {})
   const nodes = rfReferenceNodes(root);
 
   for (const node of nodes) {
+    // An explicit Ribbon indent overrides automatic APA formatting. The delayed
+    // formatter (including its 1250ms click timer) must never reset it.
+    const manualIndent = ["none", "first", "hanging"].includes(node.dataset.apaEditorIndent)
+      ? node.dataset.apaEditorIndent : null;
     node.classList.add("apa-reference", "no-indent");
     node.dataset.apaReference = "true";
     node.dataset.apaEditorStyle = "reference";
     node.dataset.apaEditorAlign = "left";
-    node.dataset.apaEditorIndent = "hanging";
+    if (!manualIndent) node.dataset.apaEditorIndent = "hanging";
     node.dataset.apaEditorLine = "2";
     node.style.fontFamily = "Arial, Helvetica, sans-serif";
     node.style.fontSize = "12pt";
     node.style.lineHeight = "2";
     node.style.textAlign = "left";
-    node.style.paddingLeft = ".5in";
-    node.style.textIndent = "-.5in";
+    if (manualIndent === "none") {
+      node.style.setProperty("padding-left", "0", "important");
+      node.style.setProperty("text-indent", "0", "important");
+    } else if (manualIndent === "first") {
+      node.style.setProperty("padding-left", "0", "important");
+      node.style.setProperty("text-indent", ".5in", "important");
+    } else {
+      node.style.setProperty("padding-left", ".5in", "important");
+      node.style.setProperty("text-indent", "-.5in", "important");
+    }
     node.style.margin = "0";
     applyReferenceTypography(node);
   }
