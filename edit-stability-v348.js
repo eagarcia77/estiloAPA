@@ -261,11 +261,11 @@ function aesUpdateUi() {
   const badge = document.querySelector(".badge");
   if (badge) {
     badge.textContent = `v${APA_EDIT_STABILITY_VERSION}`;
-    badge.setAttribute("aria-label", `Versión ${APA_EDIT_STABILITY_VERSION}`);
+    badge.setAttribute("aria-label", `Version ${APA_EDIT_STABILITY_VERSION}`);
   }
   const help = document.querySelector("#previewHelp");
   if (help) {
-    help.innerHTML = "<strong>Edición protegida v3.4.8:</strong> puede escribir, borrar, cortar y pegar directamente en esta vista previa sin que los normalizadores reconstruyan el texto mientras el cursor está activo. Las reglas APA 7 se reanudan al salir del editor, volver a auditar o exportar.";
+    help.innerHTML = "<strong>APA 7 Editing:</strong> opening a file applies APA 7 formatting automatically. You can then type, delete, paste, and change styles without automatic reformatting. Use Reapply APA 7 only if you want to replace your edits with the original document.";
   }
 }
 
