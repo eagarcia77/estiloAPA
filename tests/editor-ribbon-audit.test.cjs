@@ -49,6 +49,7 @@ function editorHarness() {
   const document = {
     readyState: "loading",
     addEventListener() {},
+    querySelectorAll() { return []; },
     querySelector(selector) {
       if (selector === "#preview") return preview;
       if (selector === "#status") return status;
