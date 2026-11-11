@@ -29,3 +29,50 @@
   background: #deebfc;
   border-color: #6ca7e8;
 }
+
+/* Always-accessible responsive controls for Ribbon and distraction-free editing. */
+.word-ribbon-view-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:.4rem;
+  padding:.4rem .65rem;
+  background:#eef3fb;
+  border-bottom:1px solid #cbd6e7;
+}
+.word-ribbon-view-actions .word-ribbon-action {
+  min-height:36px;
+  font-weight:650;
+}
+.word-ribbon-collapsed .word-ribbon-panels { display:none !important; }
+.word-ribbon-collapsed .word-ribbon-tabs { border-bottom:0; }
+body.apa-focus-mode .site-header,
+body.apa-focus-mode .layout > .controls,
+body.apa-focus-mode .layout > .audit,
+body.apa-focus-mode footer { display:none !important; }
+body.apa-focus-mode .layout {
+  display:block;
+  width:100%;
+  max-width:none;
+  padding:.25rem !important;
+}
+body.apa-focus-mode .preview-panel {
+  width:100%;
+  max-width:none;
+  margin:0;
+  border-radius:8px;
+  box-shadow:none;
+}
+body.apa-focus-mode .paper-wrap { width:100%; }
+body.apa-focus-mode:not(.apa-page-view) .apa-paper { min-height:calc(100dvh - 215px); }
+@media (max-width:760px) {
+  .word-ribbon-view-actions { justify-content:space-between; padding:.28rem .35rem; }
+  .word-ribbon-view-actions .word-ribbon-action { flex:1 1 auto; font-size:12px; min-height:42px; }
+  body.apa-focus-mode .preview-panel { padding:.4rem; }
+  body.apa-focus-mode:not(.apa-page-view) .apa-paper { min-height:calc(100dvh - 160px); }
+}
+@media print {
+  .word-ribbon-view-actions, .word-ribbon-tabs, .word-ribbon-panels, .word-ribbon-status { display:none !important; }
+  body.apa-focus-mode .layout { padding:0 !important; }
+}

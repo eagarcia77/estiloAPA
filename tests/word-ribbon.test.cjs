@@ -20,6 +20,14 @@ class Element {
     this.classList = {
       add: (...names) => { for (const name of names) if (!this.className.split(/\s+/).includes(name)) this.className += " " + name; },
       contains: name => this.className.split(/\s+/).includes(name),
+      remove: (...names) => { this.className = this.className.split(/\s+/).filter(n => n && !names.includes(n)).join(" "); },
+      toggle: (name, force) => {
+        const has = this.classList.contains(name);
+        const add = force === undefined ? !has : Boolean(force);
+        if (add) this.classList.add(name);
+        else this.classList.remove(name);
+        return add;
+      },
     };
   }
   append(...elements) {
@@ -59,6 +67,9 @@ function setup() {
 
   const document = {
     readyState: "complete",
+    body: new Element("body"),
+    listeners: {},
+    addEventListener(name, listener) { (this.listeners[name] ||= []).push(listener); },
     createElement: tag => new Element(tag),
     getElementById: id => els.get(id) || null,
     querySelector: () => null,
@@ -67,7 +78,7 @@ function setup() {
   const window = {};
   const code = fs.readFileSync(path.join(__dirname, "../word-ribbon.js"), "utf8");
   vm.runInNewContext(code, { document, window, MutationObserver });
-  return { shell, toolbar, preview, initialGroups, els, window };
+  return { shell, toolbar, preview, initialGroups, els, window, document };
 }
 
 test("six ribbon tabs are created with Inicio selected", () => {
@@ -93,7 +104,7 @@ test("Archivo proxy runs the original DOCX export action", () => {
   const h = setup();
   const panels = h.shell.children.find(child => child.id === "wordRibbonPanels");
   const filePanel = panels.children.find(panel => panel.id === "word-ribbon-panel-archivo");
-  const downloadButton = filePanel.children.flatMap(g => g.children).find(b => b.textContent === "Descargar Word");
+  const downloadButton = filePanel.children.flatMap(g => g.children).find(b => b.textContent === "Export to Word");
   assert.ok(downloadButton);
   downloadButton.click();
   assert.equal(h.els.get("downloadDocxBtn").called, 1);
@@ -106,4 +117,50 @@ test("ribbon switches tabs without modifying preview content", () => {
   const panels = h.shell.children.find(child => child.id === "wordRibbonPanels");
   assert.equal(panels.children.find(panel => !panel.hidden).id, "word-ribbon-panel-insertar");
   assert.equal(h.preview.textContent, "Texto de prueba intacto.");
+});
+
+test("Collapse Ribbon preserves tabs, editor content and original command nodes", () => {
+  const h = setup();
+  h.preview.textContent = "Preserved content.";
+  const actions = h.shell.children.find(child => child.id === "wordRibbonActions");
+  assert.ok(actions);
+  const collapse = actions.children.find(child => child.id === "wordRibbonCollapse");
+  assert.ok(collapse);
+  collapse.click();
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), true);
+  assert.equal(collapse.getAttribute("aria-expanded"), "false");
+  assert.equal(h.preview.textContent, "Preserved content.");
+  assert.equal(h.toolbar.children.length, 0);
+  h.window.EstiloAPARibbon.activate("insertar");
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), false);
+  assert.equal(collapse.getAttribute("aria-expanded"), "true");
+});
+
+test("Focus Mode hides secondary panels through body class and can be exited", () => {
+  const h = setup();
+  h.preview.textContent = "Academic document stays intact";
+  const actions = h.shell.children.find(child => child.id === "wordRibbonActions");
+  const focus = actions.children.find(child => child.id === "wordRibbonFocus");
+  assert.ok(focus);
+  focus.click();
+  assert.equal(h.document.body.classList.contains("apa-focus-mode"), true);
+  assert.equal(focus.getAttribute("aria-pressed"), "true");
+  assert.equal(focus.textContent, "Exit Focus Mode");
+  const esc = { key: "Escape" };
+  for (const listener of h.document.listeners.keydown || []) listener(esc);
+  assert.equal(h.document.body.classList.contains("apa-focus-mode"), false);
+  assert.equal(focus.getAttribute("aria-pressed"), "false");
+  assert.equal(h.preview.textContent, "Academic document stays intact");
+});
+
+test("Focus Mode and Ribbon state can be controlled independently", () => {
+  const h = setup();
+  h.window.EstiloAPARibbon.setCollapsed(true);
+  h.window.EstiloAPARibbon.setFocusMode(true);
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), true);
+  assert.equal(h.document.body.classList.contains("apa-focus-mode"), true);
+  h.window.EstiloAPARibbon.setFocusMode(false);
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), true);
+  h.window.EstiloAPARibbon.setCollapsed(false);
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), false);
 });
