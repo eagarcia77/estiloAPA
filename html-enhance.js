@@ -7,7 +7,7 @@ import "./image-editor-v344.js";
 import "./reference-format-v345.js";
 import "./docx-banner-safe-v343.js";
 
-const HTML_ENHANCE_VERSION = "3.4.7";
+const HTML_ENHANCE_VERSION = "3.4.8";
 
 function institutionalHtmlProfileEnabled() {
   return document.querySelector("#formatProfile")?.value === "modulo11c";
@@ -22,7 +22,7 @@ function updateV347Ui() {
   const footer = document.querySelector("footer p");
   if (footer) footer.textContent = `APA7 Academic Formatter v${HTML_ENHANCE_VERSION} · Imágenes DOCX/PDF incorporadas · Banner inicial excluido · Figuras APA 7 · Referencias APA 7.`;
   const help = document.querySelector("#previewHelp");
-  if (help) help.innerHTML = "El documento permanece editable. <strong>v3.4.7:</strong> incorpora imágenes de DOCX y recupera figuras del PDF incluso cuando cada página llega como un solo párrafo con saltos de línea. Las figuras que ya contienen Figura X, título y Nota dentro de la imagen se conservan sin duplicar caption. El banner inicial se excluye.";
+  if (help) help.innerHTML = "El documento permanece editable. <strong>v3.4.8:</strong> protege la edición del texto e incorpora imágenes de DOCX y recupera figuras del PDF incluso cuando cada página llega como un solo párrafo con saltos de línea. Las figuras que ya contienen Figura X, título y Nota dentro de la imagen se conservan sin duplicar caption. El banner inicial se excluye.";
 }
 
 async function downloadInstitutionalHtml() {
@@ -67,7 +67,7 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "modulo-institucional-APA7-v3.4.7.html";
+  anchor.download = "modulo-institucional-APA7-v3.4.8.html";
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
@@ -94,7 +94,7 @@ document.addEventListener("click", (event) => {
   button.disabled = true;
   void downloadInstitutionalHtml()
     .catch((error) => {
-      console.error("HTML v3.4.7", error);
+      console.error("HTML v3.4.8", error);
       const status = document.querySelector("#status");
       if (status) {
         status.textContent = `No se pudo generar el HTML: ${error.message}`;
