@@ -107,6 +107,7 @@ function applyEditorBlockStyle(styleName) {
     delete block.dataset.apaEditorIndent;
     block.style.removeProperty("text-indent");
     block.style.removeProperty("padding-left");
+    block.style.removeProperty("text-align");
     block.dataset.apaEditorStyle = styleName;
     block.style.fontWeight = "";
     block.style.fontStyle = "";
@@ -172,6 +173,9 @@ function applyEditorBlockStyle(styleName) {
       const indent = block.dataset.apaEditorIndent;
       block.style.setProperty("padding-left", indent === "hanging" ? ".5in" : "0", "important");
       block.style.setProperty("text-indent", indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0", "important");
+    }
+    if (block.dataset.apaEditorAlign) {
+      block.style.setProperty("text-align", block.dataset.apaEditorAlign, "important");
     }
   }
   dispatchEditorChange(`APA 7 v${APA_EDITOR_VERSION}: estilo aplicado a ${blocks.length} bloque(s).`);
@@ -350,10 +354,10 @@ function applyApaParagraphPreset() {
     block.dataset.apaEditorAlign = "left";
     block.dataset.apaEditorIndent = "first";
     block.dataset.apaEditorLine = "2";
-    block.style.textAlign = "left";
-    block.style.textIndent = ".5in";
-    block.style.paddingLeft = "";
-    block.style.lineHeight = "2";
+    block.style.setProperty("text-align", "left", "important");
+    block.style.setProperty("text-indent", ".5in", "important");
+    block.style.setProperty("padding-left", "0", "important");
+    block.style.setProperty("line-height", "2", "important");
   }
   dispatchEditorChange("Párrafo APA 7 aplicado: izquierda, doble espacio y sangría inicial de 0.5 pulg.");
 }
@@ -367,10 +371,10 @@ function applyApaReferencePreset() {
     block.dataset.apaEditorAlign = "left";
     block.dataset.apaEditorIndent = "hanging";
     block.dataset.apaEditorLine = "2";
-    block.style.textAlign = "left";
-    block.style.paddingLeft = ".5in";
-    block.style.textIndent = "-.5in";
-    block.style.lineHeight = "2";
+    block.style.setProperty("text-align", "left", "important");
+    block.style.setProperty("padding-left", ".5in", "important");
+    block.style.setProperty("text-indent", "-.5in", "important");
+    block.style.setProperty("line-height", "2", "important");
   }
   dispatchEditorChange("Referencia APA 7 aplicada: doble espacio y sangría francesa de 0.5 pulg.");
 }
