@@ -27,6 +27,8 @@ function harness(initial = "A".repeat(500), selection = null) {
     readyState: "complete", activeElement: root,
     querySelector(selector) { return selector === "#preview" ? root : selector === "#status" ? status : null; },
     addEventListener() {},
+    createElement() { return { id: "", textContent: "" }; },
+    head: { append() {} },
   };
   const window = {
     setTimeout(fn) { const id = ++next; timers.set(id, fn); return id; },
