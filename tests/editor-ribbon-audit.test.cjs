@@ -134,3 +134,25 @@ test("the Ribbon preserves all six tabs and original button handlers", () => {
   }
   assert.match(source, /target\.append\(group\)/);
 });
+
+test("APA Paragraph preset overrides earlier No Indent and Right Align", () => {
+  const h = editorHarness();
+  vm.runInContext('applyIndent("none")', h.context);
+  vm.runInContext('applyAlignment("right")', h.context);
+  vm.runInContext('applyApaParagraphPreset()', h.context);
+  assert.equal(h.block.dataset.apaEditorIndent, "first");
+  assert.equal(h.css.get("text-indent").value, ".5in");
+  assert.equal(h.css.get("padding-left").value, "0");
+  assert.equal(h.css.get("text-align").value, "left");
+  assert.equal(h.css.get("line-height").value, "2");
+});
+
+test("APA Reference preset applies hanging indentation", () => {
+  const h = editorHarness();
+  vm.runInContext('applyIndent("none")', h.context);
+  vm.runInContext('applyApaReferencePreset()', h.context);
+  assert.equal(h.block.dataset.apaEditorIndent, "hanging");
+  assert.equal(h.css.get("text-indent").value, "-.5in");
+  assert.equal(h.css.get("padding-left").value, ".5in");
+  assert.equal(h.css.get("text-align").value, "left");
+});
