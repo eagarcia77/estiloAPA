@@ -1,12 +1,12 @@
 // EstiloAPA - Word-style ribbon that reuses the existing, tested editor commands.
 // All legacy controls are moved, never cloned, so their event handlers survive.
 const RIBBON_TABS = [
-  ["archivo", "Archivo"],
-  ["inicio", "Inicio"],
-  ["insertar", "Insertar"],
-  ["diseno", "Diseño APA"],
-  ["revisar", "Revisar"],
-  ["vista", "Vista"],
+  ["archivo", "File"],
+  ["inicio", "Home"],
+  ["insertar", "Insert"],
+  ["diseno", "APA Layout"],
+  ["revisar", "Review"],
+  ["vista", "View"],
 ];
 
 function ribbonButton(label, action, options = {}) {
@@ -55,7 +55,7 @@ function initWordRibbon() {
   tabs.id = "wordRibbonTabs";
   tabs.className = "word-ribbon-tabs";
   tabs.setAttribute("role", "tablist");
-  tabs.setAttribute("aria-label", "Cinta de opciones de EstiloAPA");
+  tabs.setAttribute("aria-label", "EstiloAPA Ribbon");
 
   const panels = document.createElement("div");
   panels.id = "wordRibbonPanels";
@@ -127,38 +127,38 @@ function initWordRibbon() {
   const insertImage = document.getElementById("insertManualImage") ||
     document.querySelector("#apaEditorShell button[title*='imagen'],#apaEditorShell button[title*='Imagen']");
   if (insertImage) {
-    const group = ribbonGroup("Imágenes");
-    group.append(ribbonButton("Insertar imagen", () => insertImage.click()));
+    const group = ribbonGroup("Images");
+    group.append(ribbonButton("Insert Picture", () => insertImage.click()));
     insertPanel.append(group);
   }
 
   const designPanel = panelMap.get("diseno");
   moveGroup(5, designPanel);
   moveGroup(7, designPanel);
-  const profileGroup = ribbonGroup("Perfil académico");
-  profileGroup.append(ribbonButton("Seleccionar perfil", () => document.getElementById("formatProfile")?.focus()));
-  profileGroup.append(ribbonButton("Fuente del documento", () => document.getElementById("fontFamily")?.focus()));
+  const profileGroup = ribbonGroup("Academic Profile");
+  profileGroup.append(ribbonButton("Choose Profile", () => document.getElementById("formatProfile")?.focus()));
+  profileGroup.append(ribbonButton("Document Font", () => document.getElementById("fontFamily")?.focus()));
   designPanel.append(profileGroup);
 
   const filePanel = panelMap.get("archivo");
-  const fileGroup = ribbonGroup("Documentos");
-  fileGroup.append(ribbonProxy("Aplicar formato", "formatBtn"));
-  fileGroup.append(ribbonProxy("Probar ejemplo", "demoBtn"));
-  fileGroup.append(ribbonProxy("Descargar Word", "downloadDocxBtn"));
-  fileGroup.append(ribbonProxy("Exportar HTML", "downloadHtmlBtn"));
-  fileGroup.append(ribbonProxy("Limpiar documento", "clearBtn"));
+  const fileGroup = ribbonGroup("Documents");
+  fileGroup.append(ribbonProxy("Apply Formatting", "formatBtn"));
+  fileGroup.append(ribbonProxy("Try Sample", "demoBtn"));
+  fileGroup.append(ribbonProxy("Export to Word", "downloadDocxBtn"));
+  fileGroup.append(ribbonProxy("Export HTML", "downloadHtmlBtn"));
+  fileGroup.append(ribbonProxy("Clear Document", "clearBtn"));
   filePanel.append(fileGroup);
 
-  const reviewGroup = ribbonGroup("Revisión académica");
-  reviewGroup.append(ribbonProxy("Auditar APA 7", "reauditBtn"));
-  reviewGroup.append(ribbonProxy("Descargar informe", "downloadAuditBtn"));
+  const reviewGroup = ribbonGroup("Academic Review");
+  reviewGroup.append(ribbonProxy("Review APA 7", "reauditBtn"));
+  reviewGroup.append(ribbonProxy("Download Report", "downloadAuditBtn"));
   panelMap.get("revisar").append(reviewGroup);
 
-  const viewGroup = ribbonGroup("Vista del documento");
-  viewGroup.append(ribbonButton("Enfocar editor", () => preview.focus()));
-  viewGroup.append(ribbonButton("Acercar", () => setZoom(0.1)));
-  viewGroup.append(ribbonButton("Alejar", () => setZoom(-0.1)));
-  viewGroup.append(ribbonButton("100 %", () => setZoom(0)));
+  const viewGroup = ribbonGroup("Document View");
+  viewGroup.append(ribbonButton("Focus Editor", () => preview.focus()));
+  viewGroup.append(ribbonButton("Zoom In", () => setZoom(0.1)));
+  viewGroup.append(ribbonButton("Zoom Out", () => setZoom(-0.1)));
+  viewGroup.append(ribbonButton("100%", () => setZoom(0)));
   panelMap.get("vista").append(viewGroup);
   let zoom = 1;
   function setZoom(delta) {
@@ -177,7 +177,7 @@ function initWordRibbon() {
     const content = (preview.textContent || "").trim();
     const words = content ? content.split(/\s+/u).length : 0;
     const chars = content.length;
-    statusLine.textContent = `${words} palabras · ${chars} caracteres · Zoom ${Math.round(zoom * 100)} %`;
+    statusLine.textContent = `${words} words · ${chars} characters · Zoom ${Math.round(zoom * 100)} %`;
   }
   preview.addEventListener("input", updateDocumentStats);
   new MutationObserver(() => updateDocumentStats()).observe(preview, { childList: true, subtree: true, characterData: true });
