@@ -172,7 +172,7 @@ function initializeListNormalizer() {
     if (!event.target?.closest?.("#downloadDocxBtn,#downloadHtmlBtn")) return;
     normalizeNumberedLists();
   }, true);
-  setTimeout(() => { normalizeNumberedLists(); listAudit(); }, 250);
+  listAudit();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeListNormalizer);
