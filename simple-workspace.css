@@ -139,3 +139,27 @@ body { --editor-bar-height: 56px; }
   .simple-tools-menu { display:none !important; }
   .preview-toolbar { position:static; }
 }
+
+/* Review UI lives entirely inside its own native <details> element. */
+section.audit > .advanced-audit,
+section.audit > .reference-format-audit { display:none !important; }
+#simpleReviewDetails:not([open]) .simple-details-inner { display:none !important; }
+#simpleReviewDetails .simple-details-inner { min-width:0; }
+.simple-close-review {
+  display:block;
+  margin:0 0 .65rem auto;
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#fff;
+  border:1px solid #aebbb8;
+  min-height:40px;
+}
+@media (min-width:1080px) {
+  /* Floating panel exists only while explicitly open; never covers editor afterward. */
+  .layout > .audit:has(#simpleReviewDetails:not([open])) {
+    position:static !important;
+    width:auto !important;
+    box-shadow:none !important;
+  }
+}
