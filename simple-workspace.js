@@ -46,6 +46,31 @@
     reviewButton.setAttribute("aria-controls", "simpleReviewDetails");
     reviewButton.setAttribute("aria-expanded", String(review.open));
     review.addEventListener("toggle", () => reviewButton.setAttribute("aria-expanded", String(review.open)));
+    // A permanent, visible exit inside the review panel.
+    const closeReview = button("simpleCloseReviewBtn", "Close Review", () => {
+      review.open = false;
+      reviewButton.setAttribute("aria-expanded", "false");
+      reviewButton.focus?.();
+    });
+    closeReview.className = "simple-close-review";
+    closeReview.setAttribute("aria-label", "Close APA 7 Review panel");
+    const reviewInner = review.querySelector?.(".simple-details-inner");
+    if (reviewInner) reviewInner.prepend(closeReview);
+
+    // Dismiss floating side panels when the user resumes editing the document.
+    // No changes to #preview, selections, or academic formatting.
+    document.addEventListener("pointerdown", event => {
+      const target = event.target;
+      if (review.open && !review.contains(target) && !reviewButton.contains(target)) {
+        review.open = false;
+        reviewButton.setAttribute("aria-expanded", "false");
+      }
+      if (setup.open && !setup.contains(target) && !settings.contains(target) &&
+          !open.contains(target)) {
+        setup.open = false;
+        settings.setAttribute("aria-expanded", "false");
+      }
+    });
 
     // One compact command bar. Secondary commands remain the ORIGINAL
     // control nodes, moved inside a lightweight expandable tools tray.
