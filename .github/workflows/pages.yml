@@ -56,7 +56,7 @@ jobs:
 
       - name: Test Word-style ribbon behavior
         run: |
-          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs
+          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs tests/no-automatic-restyling.test.cjs
 
       - name: Verify v3.4.8 protected editing and local installation files
         shell: bash
