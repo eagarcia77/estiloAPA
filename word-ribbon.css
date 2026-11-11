@@ -19,3 +19,5 @@
   .word-ribbon-panel { max-height:240px; overflow:auto; }
   .word-ribbon-tabs [role="tab"] { padding:7px 10px; font-size:13px; }
 }
+
+.word-ribbon-status { padding:7px 13px; border-top:1px solid #d9e2ed; background:#f6f9ff; color:#52647c; font-size:12px; font-variant-numeric:tabular-nums; }
