@@ -34,3 +34,16 @@ test("does not replace command identifiers or hyperlinks", () => {
   assert.equal(vm.runInContext('uiEnglishText("formatBtn")', context), "formatBtn");
   assert.equal(vm.runInContext('uiEnglishText("https://doi.org/10.1234/example")', context), "https://doi.org/10.1234/example");
 });
+
+test("longer Spanish messages translate before individual terms", () => {
+  assert.equal(vm.runInContext('uiEnglishText("Referencias detectadas")', context), "References detected");
+  assert.equal(vm.runInContext('uiEnglishText("Vista previa y exportación")', context), "Document Editor and Export");
+  assert.equal(vm.runInContext('uiEnglishText("Seleccione por lo menos un archivo o use “Probar ejemplo”.")', context),
+    "Select at least one file or use “Try Sample”.");
+});
+
+test("English text is left untouched and editable content remains excluded", () => {
+  assert.equal(vm.runInContext('uiEnglishText("File Home Insert Review View")', context), "File Home Insert Review View");
+  context.editableMock = { closest(selector) { return selector.includes("#preview") ? {} : null; } };
+  assert.equal(vm.runInContext('uiEnglishExcluded(editableMock)', context), true);
+});
