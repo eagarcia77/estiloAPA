@@ -266,7 +266,11 @@ function ieInstallStyles() {
 function ieInstallToolbarControls() {
   const toolbar = ieQ("#apaEditorToolbar");
   if (!toolbar || ieQ("#insertApaImage")) return false;
-  const insertGroup = ieQA(".tool-group", toolbar).find((group) => group.getAttribute("aria-label") === "Insertar") || toolbar.lastElementChild;
+  // In Ribbon mode the original Insertar group moves into its tab.
+  // Never append controls to an empty, hidden legacy toolbar.
+  const insertGroup = ieQ("#word-ribbon-panel-insertar .word-ribbon-legacy-group") ||
+    ieQA(".tool-group", toolbar).find((group) => group.getAttribute("aria-label") === "Insertar") ||
+    toolbar.lastElementChild;
   if (!insertGroup) return false;
 
   const insert = document.createElement("button");
