@@ -32,6 +32,7 @@ jobs:
           node --check thesis-profile.js
           node --check thesis-alignment.js
           node --check apa-editor-v30.js
+          node --check word-ribbon.js
           node --check list-normalizer-v31.js
           node --check table-figure-v32.js
           node --check pdf-original-media-v33.js
@@ -50,6 +51,10 @@ jobs:
           node --check apa-editor-export-v30.js
           node --check thesis-html.js
           node --check thesis-docx.js
+
+      - name: Test Word-style ribbon behavior
+        run: |
+          node --test tests/word-ribbon.test.cjs
 
       - name: Verify v3.4.8 protected editing and local installation files
         shell: bash
