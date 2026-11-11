@@ -47,13 +47,42 @@
     reviewButton.setAttribute("aria-expanded", String(review.open));
     review.addEventListener("toggle", () => reviewButton.setAttribute("aria-expanded", String(review.open)));
 
+    // One compact command bar. Secondary commands remain the ORIGINAL
+    // control nodes, moved inside a lightweight expandable tools tray.
+    const tools = document.createElement("details");
+    tools.id = "simpleToolsMenu";
+    tools.className = "simple-tools-menu";
+    const toolsLabel = document.createElement("summary");
+    toolsLabel.textContent = "More";
+    toolsLabel.setAttribute("aria-label", "More document tools");
+    const toolsContent = document.createElement("div");
+    toolsContent.className = "simple-tools-content";
+    tools.append(toolsLabel, toolsContent);
+
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      if (tools.open) { tools.open = false; return; }
+      if (setup.open) { setup.open = false; return; }
+      if (review.open) review.open = false;
+    });
     actions.prepend(open);
-    if (sample) actions.append(sample);
     if (format) actions.append(format);
-    // Keep export buttons in their original DOM scope, with native enabled state.
     if (exportDocx) actions.append(exportDocx);
-    if (exportHtml) actions.append(exportHtml);
-    actions.append(settings, reviewButton);
+    actions.append(tools);
+    if (sample) toolsContent.append(sample);
+    if (exportHtml) toolsContent.append(exportHtml);
+    const clear = document.getElementById("clearBtn");
+    if (clear) toolsContent.append(clear);
+    toolsContent.append(settings, reviewButton);
+
+    // Keep advanced sections accessible next to the editor, not behind an
+    // arbitrary scroll position. They never wrap or replace the document.
+    setup.addEventListener("toggle", () => {
+      document.body.classList.toggle("simple-setup-open", setup.open);
+    });
+    review.addEventListener("toggle", () => {
+      document.body.classList.toggle("simple-review-open", review.open);
+    });
 
     const quickStatus = document.getElementById("simpleQuickStatus");
     const status = document.getElementById("status");
@@ -70,6 +99,7 @@
       openDocument: () => open.click(),
       toggleSettings: () => settings.click(),
       toggleReview: () => reviewButton.click(),
+      toggleTools: () => { tools.open = !tools.open; },
     };
   }
   if (document.readyState === "loading") {
