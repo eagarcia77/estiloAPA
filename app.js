@@ -353,10 +353,13 @@ function applyPreviewStyles() {
   els.preview.style.fontFamily = `"${font}", serif`;
   els.preview.style.fontSize = fontSettings[font].cssSize;
   for (const p of els.preview.querySelectorAll("p")) {
+    // Do not undo direct Ribbon commands during font/format updates.
+    if (["none", "first", "hanging"].includes(p.dataset.apaEditorIndent)) continue;
     const exempt = p.matches(".apa-reference,.apa-title,.apa-heading,.apa-figure-label,.apa-figure-title,.apa-note,.no-indent");
     p.style.textIndent = !exempt && els.firstLineIndent.checked ? ".5in" : "0";
   }
   for (const ref of els.preview.querySelectorAll(".apa-reference")) {
+    if (["none", "first", "hanging"].includes(ref.dataset.apaEditorIndent)) continue;
     if (els.hangingReferences.checked) {
       ref.style.paddingLeft = ".5in";
       ref.style.textIndent = "-.5in";
