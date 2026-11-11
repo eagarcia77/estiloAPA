@@ -1,0 +1,62 @@
+/* Single-focus document-first workspace.
+   Retains the full APA functionality in accessible collapsible sections. */
+.site-header .header-inner {
+  max-width: none;
+  width: 100%;
+  padding: .6rem clamp(.6rem,1.6vw,1.5rem);
+  align-items: center;
+}
+.site-header h1 { font-size: clamp(1.1rem, 2.5vw, 1.85rem); margin:0; }
+.site-header .subtitle { font-size:.84rem; max-width: 70ch; }
+.site-header .eyebrow { font-size:.66rem; }
+.layout { gap: clamp(.35rem, .9vw, .8rem); padding-block:.45rem 1.5rem; }
+.preview-panel { padding: clamp(.5rem, 1.2vw, 1rem); }
+.preview-toolbar { align-items:center; gap:.35rem; }
+.preview-toolbar #preview-title { font-size:1.05rem; margin:0; }
+.preview-toolbar .eyebrow { display:none; }
+.simple-primary-actions { justify-content:flex-end; gap:.35rem; margin:0; }
+.simple-primary-actions button { min-height:39px; padding:.45rem .7rem; font-size:.83rem; }
+.simple-primary-actions #simpleOpenBtn { order:-5; }
+.simple-primary-actions #demoBtn { order:-4; }
+.simple-primary-actions #formatBtn { order:-3; }
+.simple-primary-actions #downloadDocxBtn { order:-2; }
+.simple-primary-actions #downloadHtmlBtn { order:-1; }
+.simple-quick-status:empty { display:none; }
+.simple-quick-status .status { margin:.4rem 0; }
+.preview-panel #previewHelp { margin:.35rem 0 .55rem; font-size:.8rem; }
+.simple-secondary {
+  padding:0;
+  overflow:visible;
+  border-radius:10px;
+  box-shadow:none;
+}
+.simple-secondary details > summary {
+  cursor:pointer;
+  padding:.65rem 1rem;
+  font-weight:700;
+  color:var(--green-dark);
+  list-style-position:inside;
+}
+.simple-secondary details > summary:hover { background:#f4faf7; }
+.simple-secondary .simple-details-inner { padding: .35rem 1rem 1.1rem; }
+.simple-secondary .drop-zone { min-height:100px; margin:.6rem 0; }
+.simple-secondary .drop-zone .drop-icon { font-size:1.25rem; }
+.simple-secondary .button-row { gap:.5rem; }
+.simple-secondary #fileList { margin:.4rem 0; }
+.simple-secondary fieldset { margin-block:.5rem; }
+.simple-secondary .section-heading { margin:.25rem 0; }
+/* Keep the document-first sequence full-width. */
+.layout > .simple-secondary { grid-column:1 / -1; }
+body.apa-focus-mode .simple-secondary { display:none !important; }
+@media (max-width:760px) {
+  .site-header .subtitle { display:none; }
+  .preview-toolbar { flex-direction:column; align-items:stretch; }
+  .simple-primary-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .simple-primary-actions button { width:100%; }
+  .simple-primary-actions #simpleOpenBtn,
+  .simple-primary-actions #downloadDocxBtn { font-weight:750; }
+  .simple-secondary .simple-details-inner { padding:.5rem; }
+}
+@media print {
+  .simple-primary-actions, .simple-secondary, .simple-quick-status, #previewHelp { display:none!important; }
+}

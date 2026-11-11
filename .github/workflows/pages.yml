@@ -33,6 +33,7 @@ jobs:
           node --check thesis-alignment.js
           node --check apa-editor-v30.js
           node --check word-ribbon.js
+          node --check simple-workspace.js
           node --check ui-english.js
           node --check list-normalizer-v31.js
           node --check table-figure-v32.js
@@ -55,7 +56,7 @@ jobs:
 
       - name: Test Word-style ribbon behavior
         run: |
-          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs
+          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs
 
       - name: Verify v3.4.8 protected editing and local installation files
         shell: bash
