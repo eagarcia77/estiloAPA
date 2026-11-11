@@ -10,6 +10,9 @@ let apaEditIdleTimer = null;
 let apaEditComposing = false;
 const aesPendingNormalizations = new Map();
 let aesDocumentGeneration = 0;
+let aesBeforeDeleteSnapshot = null;
+let aesDeletionCheckId = null;
+let aesRestoringDelete = false;
 
 function aesPreview() {
   return document.querySelector("#preview");
@@ -101,10 +104,92 @@ window.clearTimeout = function(timerId) {
 // Invalidate both pending and not-yet-fired normalization callbacks.
 function aesResetDocument() {
   aesDocumentGeneration += 1;
+  aesBeforeDeleteSnapshot = null;
+  aesNativeClearTimeout(aesDeletionCheckId);
   aesPendingNormalizations.clear();
   aesNativeClearTimeout(apaEditIdleTimer);
   apaEditComposing = false;
   aesSetEditing(false);
+}
+
+
+// Safety net: retain the complete document before a user-initiated deletion.
+// If a single Backspace/Delete unexpectedly removes almost all document text,
+// restore the snapshot instead of allowing irreversible data loss.
+function aesDocumentTextLength(root) {
+  return (root?.textContent || "").trim().length;
+}
+
+function aesIsDeleteIntent(event) {
+  return (event.type === "beforeinput" && /^delete/i.test(event.inputType || "")) ||
+    (event.type === "keydown" && ["Backspace", "Delete"].includes(event.key));
+}
+
+function aesDeletionCoversWholeDocument(root) {
+  const selection = window.getSelection?.();
+  if (!selection || !selection.rangeCount || selection.isCollapsed) return false;
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return false;
+  try {
+    const selectedLength = range.toString().trim().length;
+    const documentLength = aesDocumentTextLength(root);
+    return documentLength > 100 && selectedLength >= documentLength * 0.9;
+  } catch { return false; }
+}
+
+function aesRecordDeleteIntent(event) {
+  const root = aesPreview();
+  if (!root || aesRestoringDelete || !aesIsDeleteIntent(event)) return;
+  const length = aesDocumentTextLength(root);
+  if (length < 100) return;
+  if (aesDeletionCoversWholeDocument(root)) {
+    event.preventDefault();
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = "Se bloqueó el borrado de casi todo el documento. Seleccione y elimine fragmentos más pequeños o utilice Limpiar.";
+      status.className = "status error";
+    }
+    return;
+  }
+  // Duplicate beforeinput/keydown events must retain the earliest pre-deletion copy.
+  if (!aesBeforeDeleteSnapshot || aesBeforeDeleteSnapshot.generation !== aesDocumentGeneration) {
+    aesBeforeDeleteSnapshot = { generation: aesDocumentGeneration, html: root.innerHTML, length };
+  }
+}
+
+function aesCheckDeleteIntegrity() {
+  if (!aesBeforeDeleteSnapshot || aesRestoringDelete) return;
+  const snapshot = aesBeforeDeleteSnapshot;
+  const root = aesPreview();
+  if (!root || snapshot.generation !== aesDocumentGeneration) {
+    aesBeforeDeleteSnapshot = null;
+    return;
+  }
+  const remaining = aesDocumentTextLength(root);
+  // Only restore catastrophic loss, not ordinary paragraph or multi-line deletes.
+  const catastrophic = snapshot.length >= 100 && remaining < snapshot.length * 0.15 &&
+    snapshot.length - remaining > 100;
+  aesBeforeDeleteSnapshot = null;
+  if (!catastrophic) return;
+  aesRestoringDelete = true;
+  try {
+    aesResetDocument();
+    root.innerHTML = snapshot.html;
+    root.focus?.();
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = "Protección Backspace: se restauró el documento tras detectar un borrado masivo.";
+      status.className = "status error";
+    }
+  } finally {
+    aesRestoringDelete = false;
+  }
+}
+
+function aesScheduleDeleteCheck() {
+  if (!aesBeforeDeleteSnapshot) return;
+  aesNativeClearTimeout(aesDeletionCheckId);
+  aesDeletionCheckId = aesNativeSetTimeout(aesCheckDeleteIntegrity, 0);
 }
 
 function aesMarkEditing() {
@@ -186,6 +271,10 @@ function aesInitialize() {
   const root = aesPreview();
   if (!root) return;
 
+  root.addEventListener("keydown", aesRecordDeleteIntent, true);
+  root.addEventListener("beforeinput", aesRecordDeleteIntent, true);
+  root.addEventListener("input", aesScheduleDeleteCheck, true);
+
   for (const eventName of ["focusin", "beforeinput", "input", "keydown", "paste", "cut"]) {
     root.addEventListener(eventName, aesMarkEditing, true);
   }
@@ -243,6 +332,7 @@ window.apaWithForcedNormalization = apaWithForcedNormalization;
 window.apaFinishProtectedEditing = aesFinishEditing;
 window.apaFlushPendingNormalizations = aesFlushPendingNormalizations;
 window.apaResetProtectedDocument = aesResetDocument;
+window.apaCheckDeleteIntegrity = aesCheckDeleteIntegrity;
 window.APA_EDIT_STABILITY_VERSION = APA_EDIT_STABILITY_VERSION;
 
 if (document.readyState === "loading") {
