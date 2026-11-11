@@ -181,6 +181,12 @@ function applyEditorBlockStyle(styleName) {
   dispatchEditorChange(`APA 7 v${APA_EDITOR_VERSION}: estilo aplicado a ${blocks.length} bloque(s).`);
 }
 
+function markRibbonButtonState(attribute, value) {
+  document.querySelectorAll(`#apaEditorShell [${attribute}]`).forEach(button => {
+    button.setAttribute("aria-pressed", String(button.getAttribute(attribute) === value));
+  });
+}
+
 function applyAlignment(value) {
   if (!["left", "center", "right"].includes(value)) return;
   const blocks = selectedBlocks();
@@ -189,7 +195,8 @@ function applyAlignment(value) {
     block.dataset.apaEditorAlign = value;
     block.style.setProperty("text-align", value, "important");
   }
-  dispatchEditorChange();
+  markRibbonButtonState("data-align", value);
+  dispatchEditorChange(`Alignment: ${value} (${blocks.length} paragraph(s)).`);
 }
 
 function applyIndent(value) {
@@ -220,7 +227,9 @@ function applyIndent(value) {
       block.style.setProperty("text-indent", "0", "important");
     }
   }
-  dispatchEditorChange();
+  markRibbonButtonState("data-indent", value);
+  const labels = { none: "No Indent", first: "First Line Indent", hanging: "Hanging Indent" };
+  dispatchEditorChange(`${labels[value]} applied to ${blocks.length} paragraph(s).`);
 }
 
 function applyLineSpacing(value) {
@@ -231,7 +240,7 @@ function applyLineSpacing(value) {
     block.dataset.apaEditorLine = value;
     block.style.setProperty("line-height", value, "important");
   }
-  dispatchEditorChange();
+  dispatchEditorChange(`Line Spacing: ${value} (${blocks.length} paragraph(s)).`);
 }
 
 function nextNumber(kind) {
