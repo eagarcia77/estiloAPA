@@ -168,10 +168,12 @@ function applyEditorBlockStyle(styleName) {
 }
 
 function applyAlignment(value) {
+  if (!["left", "center", "right"].includes(value)) return;
   const blocks = selectedBlocks();
+  if (!blocks.length) return;
   for (const block of blocks) {
     block.dataset.apaEditorAlign = value;
-    block.style.textAlign = value;
+    block.style.setProperty("text-align", value, "important");
   }
   dispatchEditorChange();
 }
@@ -208,10 +210,12 @@ function applyIndent(value) {
 }
 
 function applyLineSpacing(value) {
+  if (!["1", "1.5", "2"].includes(value)) return;
   const blocks = selectedBlocks();
+  if (!blocks.length) return;
   for (const block of blocks) {
     block.dataset.apaEditorLine = value;
-    block.style.lineHeight = value;
+    block.style.setProperty("line-height", value, "important");
   }
   dispatchEditorChange();
 }
@@ -242,10 +246,10 @@ function insertAfter(anchor, nodes) {
 }
 
 function insertApaTable() {
-  const title = window.prompt("Título de la tabla (APA 7):", "Título descriptivo de la tabla");
+  const title = window.prompt("APA 7 table title:", "Descriptive table title");
   if (title === null) return;
-  const rows = Math.max(2, Math.min(20, Number(window.prompt("Cantidad de filas, incluyendo encabezado:", "4")) || 4));
-  const cols = Math.max(2, Math.min(8, Number(window.prompt("Cantidad de columnas:", "3")) || 3));
+  const rows = Math.max(2, Math.min(20, Number(window.prompt("Number of rows, including the header:", "4")) || 4));
+  const cols = Math.max(2, Math.min(8, Number(window.prompt("Number of columns:", "3")) || 3));
   const number = nextNumber("table");
   const label = document.createElement("p");
   label.className = "apa-table-label thesis-table-label no-indent";
@@ -282,7 +286,7 @@ function insertApaTable() {
 }
 
 function insertFigureCaption() {
-  const title = window.prompt("Título de la figura:", "Título descriptivo de la figura");
+  const title = window.prompt("Figure title:", "Descriptive figure title");
   if (title === null) return;
   const number = nextNumber("figure");
   const label = document.createElement("p");
@@ -300,7 +304,7 @@ function insertFigureCaption() {
 
 function insertLink() {
   restoreEditorSelection();
-  const url = window.prompt("URL del enlace (https://...):", "https://");
+  const url = window.prompt("Link URL (https://...):", "https://");
   if (!url) return;
   document.execCommand("createLink", false, url);
   dispatchEditorChange();
