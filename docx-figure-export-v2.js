@@ -26,7 +26,35 @@ function dxDataUrlBytes(dataUrl) {
 }
 
 function dxDataUrlType(dataUrl) {
-  return /^data:image\/png/i.test(dataUrl) ? "png" : "jpg";
+  if (/^data:image\/png;base64,/i.test(dataUrl)) return "png";
+  if (/^data:image\/(?:jpeg|jpg);base64,/i.test(dataUrl)) return "jpg";
+  throw new Error("Imagen no compatible para DOCX. Utilice PNG o JPEG incrustado; no se exportó un archivo incompleto.");
+}
+
+// Fail closed rather than silently dropping embedded media or merged cells.
+function dxValidateExportBlocks(preview, blocks) {
+  const expectedImages = [...preview.querySelectorAll("img")];
+  const exportedImages = blocks.filter((block) => block.tagName === "IMG");
+  if (expectedImages.length !== exportedImages.length) {
+    throw new Error(`Hay ${expectedImages.length - exportedImages.length} imagen(es) dentro de contenedores que el exportador DOCX no puede conservar. Sepárelas en bloques independientes.`);
+  }
+  for (const image of exportedImages) {
+    const src = image.getAttribute("src") || "";
+    dxDataUrlType(src);
+    if (!/^data:image\/(?:png|jpeg|jpg);base64,[A-Za-z0-9+/]+={0,2}$/i.test(src)) {
+      throw new Error("Una imagen no contiene datos PNG/JPEG incrustados válidos. No se exportó un DOCX incompleto.");
+    }
+  }
+  for (const table of blocks.filter((block) => block.tagName === "TABLE")) {
+    for (const cell of table.querySelectorAll("th,td")) {
+      if (cell.colSpan > 1 || cell.rowSpan > 1) {
+        throw new Error("Una tabla contiene celdas combinadas (colspan/rowspan) que el DOCX actual no reproduce. Revise la tabla antes de exportar.");
+      }
+      if (cell.querySelector("img,table")) {
+        throw new Error("Una celda contiene una imagen o tabla anidada que el DOCX actual no reproduce.");
+      }
+    }
+  }
 }
 
 async function dxImageDimensions(src, banner = false) {
@@ -192,7 +220,7 @@ function dxOrderedListConfig(reference, start = 1) {
 async function dxImageParagraph(element, api, font, size) {
   const { Paragraph, AlignmentType, ImageRun } = api;
   const src = element.getAttribute("src") || "";
-  if (!src.startsWith("data:image/")) return null;
+  const imageType = dxDataUrlType(src);
   const banner = typeof window.isApaBannerImage === "function"
     ? window.isApaBannerImage(element)
     : element.classList.contains("apa-cover-image") || element.classList.contains("module-banner-image");
@@ -203,7 +231,7 @@ async function dxImageParagraph(element, api, font, size) {
     spacing: { line: 480, before: 0, after: banner ? 120 : 0 },
     children: [new ImageRun({
       data: dxDataUrlBytes(src),
-      type: dxDataUrlType(src),
+      type: imageType,
       transformation: dimensions,
       altText: { title: alt, description: alt, name: alt }
     })]
@@ -228,6 +256,8 @@ async function buildApaDocxFigureV2() {
   if (typeof window.applyApaFigureFormatting === "function") window.applyApaFigureFormatting(preview);
   if (typeof window.normalizeNumberedLists === "function") window.normalizeNumberedLists(preview);
 
+  const blocks = dxTopLevelBlocks(preview);
+  dxValidateExportBlocks(preview, blocks);
   const api = await dxWaitDocx();
   const { Document, Packer, Paragraph, Header, PageNumber, TextRun, AlignmentType } = api;
   const font = "Arial";
@@ -239,7 +269,7 @@ async function buildApaDocxFigureV2() {
   const numberingConfigs = [];
   let listCounter = 0;
 
-  for (const element of dxTopLevelBlocks(preview)) {
+  for (const element of blocks) {
     if (element.tagName === "IMG") {
       const imageParagraph = await dxImageParagraph(element, api, font, size);
       if (imageParagraph) children.push(imageParagraph);
