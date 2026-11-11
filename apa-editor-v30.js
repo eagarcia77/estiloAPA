@@ -350,6 +350,7 @@ function insertReferencesHeading() {
 function applyApaParagraphPreset() {
   const blocks = selectedBlocks();
   for (const block of blocks) {
+    block.classList.remove("no-indent");
     block.dataset.apaEditorStyle = "normal";
     block.dataset.apaEditorAlign = "left";
     block.dataset.apaEditorIndent = "first";
