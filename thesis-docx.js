@@ -105,7 +105,11 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
     keepNext: isMajor || isSection || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle,
   };
 
-  if (isRef) options.indent = { left: 720, hanging: 720 };
+  const userIndent = element.dataset.apaEditorIndent;
+  if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
+  else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
+  else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
+  else if (isRef) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent) options.indent = { firstLine: 720 };
 
   if (allowPageBreak && element.classList.contains("thesis-page-start")) options.pageBreakBefore = true;
