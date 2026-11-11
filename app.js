@@ -353,10 +353,13 @@ function applyPreviewStyles() {
   els.preview.style.fontFamily = `"${font}", serif`;
   els.preview.style.fontSize = fontSettings[font].cssSize;
   for (const p of els.preview.querySelectorAll("p")) {
+    // Do not undo direct Ribbon commands during font/format updates.
+    if (["none", "first", "hanging"].includes(p.dataset.apaEditorIndent)) continue;
     const exempt = p.matches(".apa-reference,.apa-title,.apa-heading,.apa-figure-label,.apa-figure-title,.apa-note,.no-indent");
     p.style.textIndent = !exempt && els.firstLineIndent.checked ? ".5in" : "0";
   }
   for (const ref of els.preview.querySelectorAll(".apa-reference")) {
+    if (["none", "first", "hanging"].includes(ref.dataset.apaEditorIndent)) continue;
     if (els.hangingReferences.checked) {
       ref.style.paddingLeft = ".5in";
       ref.style.textIndent = "-.5in";
@@ -734,7 +737,11 @@ function domBlockToDocxParagraph(element, api, font, size) {
     spacing: { line: 480, after: 0, before: 0 },
     alignment: isLevel1 ? AlignmentType.CENTER : AlignmentType.LEFT,
   };
-  if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
+  const userIndent = element.dataset.apaEditorIndent;
+  if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
+  else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
+  else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
+  else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked) options.indent = { firstLine: 720 };
   return new Paragraph(options);
 }
