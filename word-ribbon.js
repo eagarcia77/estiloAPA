@@ -156,6 +156,15 @@ function initWordRibbon() {
 
   const viewGroup = ribbonGroup("Document View");
   viewGroup.append(ribbonButton("Focus Editor", () => preview.focus()));
+  const layoutButton = ribbonButton("Page View", () => {
+    const enabled = document.body.classList.toggle("apa-page-view");
+    layoutButton.textContent = enabled ? "Full Width" : "Page View";
+    layoutButton.setAttribute("aria-pressed", String(enabled));
+    layoutButton.title = enabled ? "Expand document to available screen width" : "Show US Letter page preview";
+  });
+  layoutButton.setAttribute("aria-pressed", "false");
+  layoutButton.title = "Show US Letter page preview";
+  viewGroup.append(layoutButton);
   viewGroup.append(ribbonButton("Zoom In", () => setZoom(0.1)));
   viewGroup.append(ribbonButton("Zoom Out", () => setZoom(-0.1)));
   viewGroup.append(ribbonButton("100%", () => setZoom(0)));
