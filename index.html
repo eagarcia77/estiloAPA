@@ -52,7 +52,7 @@
         <div class="button-row compact simple-primary-actions" id="simplePrimaryActions"><button id="downloadDocxBtn" type="button" disabled>Download DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Download HTML</button></div>
       </div>
       <div id="simpleQuickStatus" class="simple-quick-status" role="status" aria-live="polite"></div>
-      <p id="previewHelp" class="muted">Edit your document here. Open Document Setup for APA 7 options or Review for detailed checks.</p>
+      <p id="previewHelp" class="muted">Open a document to apply APA 7 automatically, then edit it freely. Review does not change your text.</p>
       <div class="paper-wrap" tabindex="0" aria-label="Scrollable document editor area"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Editable document preview" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">Formatted content will appear here.</p></article></div>
     </section>
     <section class="panel controls simple-secondary" aria-labelledby="upload-title">
@@ -60,7 +60,7 @@
         <summary>Document Setup &amp; Advanced Options</summary>
         <div class="simple-details-inner">
       <h2 id="upload-title">Document Settings</h2>
-      <p>Select one or more documents. To try the application without uploading files, choose <strong>Try Sample</strong>.</p>
+      <p>Files are formatted automatically when opened. You can edit the document afterward. To try without uploading, choose <strong>Try Sample</strong>.</p>
       <label class="drop-zone" for="files" id="dropZone">
         <span class="drop-icon" aria-hidden="true">⇧</span>
         <strong>Select or drag files here</strong>
@@ -74,10 +74,10 @@
         <label>
           Document Profile
           <select id="formatProfile">
-            <option value="modulo11c" selected>Institutional Module — Strict APA 7</option>
+            <option value="modulo11c">Institutional Module — Strict APA 7</option>
             <option value="thesis-doctoral">Doctoral Dissertation — Institutional Template</option>
             <option value="thesis-masters">Master's Thesis — Institutional Format</option>
-            <option value="apa7">Standard APA 7</option>
+            <option value="apa7" selected>Standard APA 7</option>
           </select>
         </label>
         <label>
@@ -95,7 +95,7 @@
         <label class="checkbox-row"><input id="pageNumbers" type="checkbox" checked> Add page numbers to the DOCX</label>
       </fieldset>
       <div class="button-row">
-        <button id="formatBtn" class="primary" type="button">Apply Formatting</button>
+        <button id="formatBtn" type="button">Reapply APA 7</button>
         <button id="demoBtn" type="button">Try Sample</button>
         <button id="clearBtn" type="button">Clear</button>
       </div>

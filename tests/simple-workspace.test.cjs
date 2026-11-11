@@ -43,10 +43,10 @@ function boot(){
 test("workflow exposes one original instance of each command",()=>{
   const h=boot();
   const ids=h.actions.children.map(n=>n.id);
-  assert.deepEqual(ids,["simpleOpenBtn","formatBtn","downloadDocxBtn","simpleToolsMenu"]);
+  assert.deepEqual(ids,["simpleOpenBtn","downloadDocxBtn","simpleToolsMenu"]);
   const more=h.actions.children.find(n=>n.id==="simpleToolsMenu");
   const extras=more.children[1].children.map(n=>n.id);
-  assert.deepEqual(extras,["demoBtn","downloadHtmlBtn","clearBtn","simpleSettingsBtn","simpleReviewBtn"]);
+  assert.deepEqual(extras,["demoBtn","formatBtn","downloadHtmlBtn","clearBtn","simpleSettingsBtn","simpleReviewBtn"]);
   assert.equal(h.nodes.get("demoBtn"),h.find("demoBtn"));
   assert.equal(h.nodes.get("formatBtn"),h.find("formatBtn"));
   assert.equal(h.nodes.get("downloadDocxBtn"),h.find("downloadDocxBtn"));

@@ -66,10 +66,10 @@
       if (review.open) review.open = false;
     });
     actions.prepend(open);
-    if (format) actions.append(format);
     if (exportDocx) actions.append(exportDocx);
     actions.append(tools);
     if (sample) toolsContent.append(sample);
+    if (format) toolsContent.append(format);
     if (exportHtml) toolsContent.append(exportHtml);
     const clear = document.getElementById("clearBtn");
     if (clear) toolsContent.append(clear);
