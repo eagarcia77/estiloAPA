@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="scrollbar-v31.css">
   <link rel="stylesheet" href="word-ribbon.css">
+  <link rel="stylesheet" href="simple-workspace.css">
   <script defer src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js"></script>
   <script type="module" src="app.js"></script>
@@ -30,22 +31,35 @@
   <script type="module" src="html-enhance.js"></script>
   <script type="module" src="docx-enhance.js"></script>
   <script type="module" src="ui-english.js"></script>
+  <script type="module" src="simple-workspace.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="site-header">
     <div class="header-inner">
       <div>
-        <p class="eyebrow">Academic tool · local processing</p>
+        <p class="eyebrow">Simple APA 7 workspace · local processing</p>
         <h1>APA7 Academic Formatter</h1>
-        <p class="subtitle">Academic document editor with APA 7 formatting, image preservation, protected editing, and DOCX/HTML export.</p>
+        <p class="subtitle">Open a document, edit it, and export. Advanced APA 7 settings are available when you need them.</p>
       </div>
       <span class="badge" aria-label="Version 3.4.8">v3.4.8</span>
     </div>
   </header>
   <main id="main" class="layout">
-    <section class="panel controls" aria-labelledby="upload-title">
-      <h2 id="upload-title">1. Open and Format</h2>
+    <section class="panel preview-panel" aria-labelledby="preview-title">
+      <div class="preview-toolbar">
+        <div><p class="eyebrow">Editable Document</p><h2 id="preview-title">Document Editor</h2></div>
+        <div class="button-row compact simple-primary-actions" id="simplePrimaryActions"><button id="downloadDocxBtn" type="button" disabled>Download DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Download HTML</button></div>
+      </div>
+      <div id="simpleQuickStatus" class="simple-quick-status" role="status" aria-live="polite"></div>
+      <p id="previewHelp" class="muted">Edit your document here. Open Document Setup for APA 7 options or Review for detailed checks.</p>
+      <div class="paper-wrap" tabindex="0" aria-label="Scrollable document editor area"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Editable document preview" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">Formatted content will appear here.</p></article></div>
+    </section>
+    <section class="panel controls simple-secondary" aria-labelledby="upload-title">
+      <details id="simpleDocumentOptions">
+        <summary>Document Setup &amp; Advanced Options</summary>
+        <div class="simple-details-inner">
+      <h2 id="upload-title">Document Settings</h2>
       <p>Select one or more documents. To try the application without uploading files, choose <strong>Try Sample</strong>.</p>
       <label class="drop-zone" for="files" id="dropZone">
         <span class="drop-icon" aria-hidden="true">⇧</span>
@@ -53,7 +67,7 @@
         <span>DOCX, PDF, TXT, MD, HTML, and HTM. Files are processed locally in your browser.</span>
         <input id="files" type="file" multiple accept=".docx,.pdf,.txt,.md,.html,.htm,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html">
       </label>
-      <p class="muted"><strong>v3.4.8:</strong> includes image preservation and protected document editing to reduce unexpected changes during typing.</p>
+
       <div id="fileList" class="file-list" aria-live="polite"></div>
       <fieldset>
         <legend>Formatting Settings</legend>
@@ -86,24 +100,23 @@
         <button id="clearBtn" type="button">Clear</button>
       </div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
+        </div>
+      </details>
     </section>
-    <section class="panel audit" aria-labelledby="audit-title">
+    <section class="panel audit simple-secondary" aria-labelledby="audit-title">
+      <details id="simpleReviewDetails">
+        <summary>APA 7 Review &amp; Report</summary>
+        <div class="simple-details-inner">
       <div class="section-heading">
-        <div><p class="eyebrow">Automated Review</p><h2 id="audit-title">2. APA 7 and Structure Review</h2></div>
+        <div><p class="eyebrow">Automated Review</p><h2 id="audit-title">APA 7 Review</h2></div>
         <span id="score" class="score" aria-live="polite">—</span>
       </div>
       <p class="muted">The score is heuristic. The review checks citations, structure, references, lists, tables, figures, and original media.</p>
       <div id="metrics" class="metrics" aria-label="Review Metrics"></div>
       <div class="button-row compact"><button id="reauditBtn" type="button" disabled>Run Review Again</button><button id="downloadAuditBtn" type="button" disabled>Download Report</button></div>
       <ul id="auditList" class="audit-list"><li>Select one or more files or click “Try Sample”.</li></ul>
-    </section>
-    <section class="panel preview-panel" aria-labelledby="preview-title">
-      <div class="preview-toolbar">
-        <div><p class="eyebrow">Editable Document</p><h2 id="preview-title">3. Document Editor and Export</h2></div>
-        <div class="button-row compact"><button id="downloadDocxBtn" type="button" disabled>Download DOCX</button><button id="downloadHtmlBtn" type="button" disabled>Download HTML</button></div>
-      </div>
-      <p id="previewHelp" class="muted"><strong>Protected Editing v3.4.8:</strong> type, delete, cut, and paste directly in this editor. APA 7 normalization resumes when editing ends, when you run a review, or when you export.</p>
-      <div class="paper-wrap" tabindex="0" aria-label="Scrollable document editor area"><article id="preview" class="apa-paper" contenteditable="true" aria-label="Editable document preview" aria-describedby="previewHelp" spellcheck="true"><p class="placeholder">Formatted content will appear here.</p></article></div>
+        </div>
+      </details>
     </section>
   </main>
   <footer><p>APA7 Academic Formatter v3.4.8 · Base v3.4 · Protected Editing · DOCX/PDF Images · APA 7 Figures · APA Tables · APA References.</p></footer>
