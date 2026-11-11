@@ -145,7 +145,7 @@ function initWordRibbon() {
 
   const filePanel = panelMap.get("archivo");
   const fileGroup = ribbonGroup("Documents");
-  fileGroup.append(ribbonProxy("Apply Formatting", "formatBtn"));
+  fileGroup.append(ribbonProxy("Reapply APA 7", "formatBtn"));
   fileGroup.append(ribbonProxy("Try Sample", "demoBtn"));
   fileGroup.append(ribbonProxy("Export to Word", "downloadDocxBtn"));
   fileGroup.append(ribbonProxy("Export HTML", "downloadHtmlBtn"));
