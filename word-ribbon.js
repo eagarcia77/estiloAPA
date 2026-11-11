@@ -164,12 +164,29 @@ function initWordRibbon() {
   function setZoom(delta) {
     zoom = delta === 0 ? 1 : Math.min(1.5, Math.max(0.7, Math.round((zoom + delta) * 10) / 10));
     preview.style.zoom = String(zoom);
+    updateDocumentStats();
   }
 
+  // Word-like document statistics, updated without rewriting editable content.
+  const statusLine = document.createElement("div");
+  statusLine.className = "word-ribbon-status";
+  statusLine.id = "wordRibbonStatus";
+  statusLine.setAttribute("role", "status");
+  statusLine.setAttribute("aria-live", "off");
+  function updateDocumentStats() {
+    const content = (preview.textContent || "").trim();
+    const words = content ? content.split(/\\s+/u).length : 0;
+    const chars = content.length;
+    statusLine.textContent = `${words} palabras · ${chars} caracteres · Zoom ${Math.round(zoom * 100)} %`;
+  }
+  preview.addEventListener("input", updateDocumentStats);
+  new MutationObserver(() => updateDocumentStats()).observe(preview, { childList: true, subtree: true, characterData: true });
+  updateDocumentStats();
   // Existing shell remains the editing parent. Hide the now-empty toolbar.
   toolbar.hidden = true;
   shell.prepend(panels);
   shell.prepend(tabs);
+  shell.append(statusLine);
   shell.classList.add("word-ribbon-enabled");
   activate("inicio");
   window.EstiloAPARibbon = { activate };
