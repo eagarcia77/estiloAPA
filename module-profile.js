@@ -374,20 +374,12 @@ function initializeModuleProfile() {
   select.addEventListener("change", () => applyModuleProfile({ announce: true }));
   applyModuleProfile();
 
-  const preview = document.querySelector("#preview");
-  if (!preview) return;
-  let timer;
-  const observer = new MutationObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(() => applyModuleProfile(), 80);
+  // Apply the profile when a file/sample is loaded, not on every input or
+  // MutationObserver callback. Once the user edits a paragraph, automatic APA
+  // styling must never overwrite a manual Ribbon choice.
+  document.querySelector("#preview")?.addEventListener("apa-document-loaded", () => {
+    applyModuleProfile();
   });
-  observer.observe(preview, { childList: true, subtree: true, characterData: true });
-
-  document.addEventListener("click", (event) => {
-    if (!event.target?.closest?.("#formatBtn,#reauditBtn")) return;
-    setTimeout(() => applyModuleProfile(), 150);
-    setTimeout(() => applyModuleProfile(), 800);
-  }, true);
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeModuleProfile, { once: true });
