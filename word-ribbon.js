@@ -96,6 +96,9 @@ function initWordRibbon() {
   }
 
   function activate(id) {
+    // Clicking a tab expands a minimized Ribbon without replacing its commands.
+    shell.classList.remove("word-ribbon-collapsed");
+    if (typeof collapseButton !== "undefined") syncCollapseButton();
     for (const [key, tab] of tabMap) {
       const active = key === id;
       tab.setAttribute("aria-selected", String(active));
@@ -191,14 +194,68 @@ function initWordRibbon() {
   preview.addEventListener("input", updateDocumentStats);
   new MutationObserver(() => updateDocumentStats()).observe(preview, { childList: true, subtree: true, characterData: true });
   updateDocumentStats();
+  // Keep view controls accessible even when Ribbon panels are collapsed.
+  // Only layout classes change: do not touch #preview HTML or the browser selection.
+  const viewActions = document.createElement("div");
+  viewActions.id = "wordRibbonActions";
+  viewActions.className = "word-ribbon-view-actions";
+  viewActions.setAttribute("role", "group");
+  viewActions.setAttribute("aria-label", "Editor display options");
+
+  const collapseButton = ribbonButton("Collapse Ribbon", () => {
+    shell.classList.toggle("word-ribbon-collapsed");
+    syncCollapseButton();
+  });
+  collapseButton.id = "wordRibbonCollapse";
+  collapseButton.setAttribute("aria-controls", "wordRibbonPanels");
+  function syncCollapseButton() {
+    const collapsed = shell.classList.contains("word-ribbon-collapsed");
+    collapseButton.setAttribute("aria-expanded", String(!collapsed));
+    collapseButton.textContent = collapsed ? "Expand Ribbon" : "Collapse Ribbon";
+  }
+
+  const focusButton = ribbonButton("Focus Mode", () => {
+    const enabled = document.body.classList.toggle("apa-focus-mode");
+    syncFocusButton(enabled);
+  });
+  focusButton.id = "wordRibbonFocus";
+  focusButton.setAttribute("aria-pressed", "false");
+  function syncFocusButton(enabled = document.body.classList.contains("apa-focus-mode")) {
+    focusButton.setAttribute("aria-pressed", String(enabled));
+    focusButton.textContent = enabled ? "Exit Focus Mode" : "Focus Mode";
+    focusButton.title = enabled
+      ? "Show import and review panels again (Esc)"
+      : "Hide secondary panels to maximize document editing space";
+  }
+  viewActions.append(collapseButton, focusButton);
+  // Escape exits focus mode, without intercepting normal document editing.
+  document.addEventListener("keydown", event => {
+    if (event.key !== "Escape" || !document.body.classList.contains("apa-focus-mode")) return;
+    document.body.classList.remove("apa-focus-mode");
+    syncFocusButton(false);
+  });
+
   // Existing shell remains the editing parent. Hide the now-empty toolbar.
   toolbar.hidden = true;
   shell.prepend(panels);
+  shell.prepend(viewActions);
   shell.prepend(tabs);
   shell.append(statusLine);
   shell.classList.add("word-ribbon-enabled");
   activate("inicio");
-  window.EstiloAPARibbon = { activate };
+  syncCollapseButton();
+  syncFocusButton();
+  window.EstiloAPARibbon = {
+    activate,
+    setCollapsed(value) {
+      shell.classList.toggle("word-ribbon-collapsed", Boolean(value));
+      syncCollapseButton();
+    },
+    setFocusMode(value) {
+      document.body.classList.toggle("apa-focus-mode", Boolean(value));
+      syncFocusButton();
+    },
+  };
 }
 
 if (document.readyState === "loading") {
