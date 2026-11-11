@@ -84,3 +84,17 @@ test("the editor appears before setup and review in the document",()=>{
   assert.match(html, /id="simpleDocumentOptions"/);
   assert.match(html, /id="simpleReviewDetails"/);
 });
+
+test("the Word Ribbon defaults to compact mode without removing its controls",()=>{
+  const ribbon=fs.readFileSync(path.join(__dirname,"../word-ribbon.js"),"utf8");
+  assert.match(ribbon,/shell\.classList\.add\("word-ribbon-collapsed"\)/);
+  assert.match(ribbon,/activate\("inicio"\)/);
+  assert.match(ribbon,/window\.EstiloAPARibbon/);
+});
+test("the application retains document input, all format profiles and export actions",()=>{
+  const html=fs.readFileSync(path.join(__dirname,"../index.html"),"utf8");
+  for(const id of ["files","formatProfile","fontFamily","firstLineIndent","hangingReferences","pageNumbers","formatBtn","downloadDocxBtn","downloadHtmlBtn","reauditBtn","clearBtn","preview"]){
+    assert.match(html,new RegExp('id="'+id+'"'),id);
+  }
+  for(const profile of ["modulo11c","thesis-doctoral","thesis-masters","apa7"]) assert.ok(html.includes('value="'+profile+'"'));
+});
