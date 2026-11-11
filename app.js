@@ -27,6 +27,8 @@ const els = {
 };
 
 let selectedFiles = [];
+let importRequestId = 0;
+let importingDocument = false;
 let pdfjsPromise;
 let lastAudit = null;
 
@@ -69,12 +71,22 @@ function updateFileList() {
 }
 
 function setFiles(fileList) {
-  selectedFiles = Array.from(fileList || []);
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  // A new selection triggers the entire APA 7 import automatically.
+  // Keep the file picker reusable even when the same file is selected again.
+  selectedFiles = files;
+  importRequestId += 1;
   updateFileList();
-  setStatus(selectedFiles.length ? `${selectedFiles.length} archivo(s) listo(s) para procesar.` : "");
+  setStatus("Opening and formatting document in APA 7…");
+  void formatSelectedFiles(importRequestId);
 }
 
-els.files.addEventListener("change", (event) => setFiles(event.target.files));
+els.files.addEventListener("change", (event) => {
+  const files = Array.from(event.target.files || []);
+  event.target.value = "";
+  setFiles(files);
+});
 for (const eventName of ["dragenter", "dragover"]) {
   els.dropZone.addEventListener(eventName, (event) => {
     event.preventDefault();
@@ -93,14 +105,20 @@ for (const control of [els.fontFamily, els.firstLineIndent, els.hangingReference
   control.addEventListener("change", applyPreviewStyles);
 }
 els.sortReferences.addEventListener("change", () => {
+  // Sorting is an explicit user request, never triggered during typing.
   if (hasFormattedContent()) {
     normalizeReferences(els.preview);
-    applyPreviewStyles();
     runAudit();
   }
 });
 
-els.formatBtn.addEventListener("click", formatSelectedFiles);
+els.formatBtn.addEventListener("click", () => {
+  if (importingDocument || !selectedFiles.length) return;
+  if (hasFormattedContent() &&
+      !window.confirm("Reapply APA 7 from the original uploaded file? This replaces your edits in the editor.")) return;
+  importRequestId += 1;
+  void formatSelectedFiles(importRequestId);
+});
 els.demoBtn.addEventListener("click", loadDemo);
 els.reauditBtn.addEventListener("click", runAudit);
 els.clearBtn.addEventListener("click", clearAll);
@@ -545,37 +563,39 @@ function renderAudit(result) {
 
 function runAudit(announce = true) {
   if (!hasFormattedContent()) return;
-  applyPreviewStyles();
+  // An academic review must not silently restyle edited paragraphs.
   renderAudit(auditDocument(els.preview));
-  if (announce) setStatus("Auditoría actualizada.", "success");
+  if (announce) setStatus("APA 7 review complete. Your edits were not changed.", "success");
 }
 
-async function formatSelectedFiles() {
-  if (!selectedFiles.length) {
-    setStatus("Seleccione por lo menos un archivo o use “Probar ejemplo”.", "error");
-    els.files.focus();
-    return;
-  }
+async function formatSelectedFiles(requestId = importRequestId) {
+  if (!selectedFiles.length || importingDocument && requestId === importRequestId) return;
+  // Snapshot input files so a later selection cannot alter this import.
+  const files = [...selectedFiles];
+  importingDocument = true;
   els.formatBtn.disabled = true;
-  setStatus("Procesando documentos…");
+  setStatus("Applying APA 7 formatting…");
   try {
     const wrapper = document.createElement("div");
-    for (let i = 0; i < selectedFiles.length; i += 1) {
-      const file = selectedFiles[i];
-      setStatus(`Procesando ${i + 1} de ${selectedFiles.length}: ${file.name}`);
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
       const html = await readFile(file);
+      // Reject stale imports before touching the currently edited document.
+      if (requestId !== importRequestId) return;
+      setStatus(`Formatting ${i + 1} of ${files.length}: ${file.name}`);
       const section = document.createElement("section");
       section.dataset.sourceFile = file.name;
       section.innerHTML = html;
       applyApaRules(section);
       wrapper.append(section);
-      if (i < selectedFiles.length - 1) {
+      if (i < files.length - 1) {
         const separator = document.createElement("hr");
         separator.className = "document-separator";
         separator.setAttribute("aria-hidden", "true");
         wrapper.append(separator);
       }
     }
+    if (requestId !== importRequestId) return;
     window.apaResetProtectedDocument?.();
     els.preview.replaceChildren(...wrapper.childNodes);
     applyPreviewStyles();
@@ -583,13 +603,17 @@ async function formatSelectedFiles() {
     els.preview.dispatchEvent(new Event("apa-document-loaded"));
     renderAudit(auditDocument(els.preview));
     enableDownloads();
-    setStatus("Formato aplicado. Revise la auditoría y edite la vista previa si es necesario.", "success");
+    els.preview.dataset.apaReadyForEditing = "true";
+    setStatus("APA 7 applied. Your document is ready to edit.", "success");
     els.preview.focus();
   } catch (error) {
     console.error(error);
-    setStatus(error?.message || "Ocurrió un error al procesar los documentos.", "error");
+    if (requestId === importRequestId) setStatus(error?.message || "Could not open the document.", "error");
   } finally {
-    els.formatBtn.disabled = false;
+    if (requestId === importRequestId) {
+      importingDocument = false;
+      els.formatBtn.disabled = false;
+    }
   }
 }
 
@@ -605,13 +629,16 @@ function loadDemo() {
     <p>García, E. A. (2026). Innovación educativa y uso responsable de inteligencia artificial. Editorial Académica.</p>
     <p>López, M., & Rivera, J. (2025). Diseño universal y tecnología educativa. Revista de Innovación Educativa, 12(2), 20–35. https://doi.org/10.1000/ejemplo</p>`;
   applyApaRules(demo);
+  importRequestId += 1;
+  importingDocument = false;
   window.apaResetProtectedDocument?.();
   els.preview.replaceChildren(demo);
   applyPreviewStyles();
   els.preview.dispatchEvent(new Event("apa-document-loaded"));
   renderAudit(auditDocument(els.preview));
   enableDownloads();
-  setStatus(`Ejemplo ejecutado correctamente en APA7 Module Formatter v${APP_VERSION}.`, "success");
+  els.preview.dataset.apaReadyForEditing = "true";
+  setStatus("APA 7 sample loaded. You can now edit the document.", "success");
 }
 
 function hasFormattedContent() {
@@ -626,6 +653,9 @@ function enableDownloads() {
 }
 
 function clearAll() {
+  importRequestId += 1;
+  importingDocument = false;
+  els.formatBtn.disabled = false;
   window.apaResetProtectedDocument?.();
   selectedFiles = [];
   lastAudit = null;
