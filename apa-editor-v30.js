@@ -103,6 +103,10 @@ function applyEditorBlockStyle(styleName) {
   if (!blocks.length) return;
   for (const block of blocks) {
     clearApaEditorClasses(block);
+    // Choosing another paragraph style replaces the previous explicit indent.
+    delete block.dataset.apaEditorIndent;
+    block.style.removeProperty("text-indent");
+    block.style.removeProperty("padding-left");
     block.dataset.apaEditorStyle = styleName;
     block.style.fontWeight = "";
     block.style.fontStyle = "";
@@ -162,6 +166,12 @@ function applyEditorBlockStyle(styleName) {
       block.dataset.apaEditorAlign = "left";
       block.dataset.apaEditorIndent = "none";
       block.style.fontStyle = "italic";
+    }
+    // Keep the visual state consistent with the newly chosen paragraph style.
+    if (["first", "hanging", "none"].includes(block.dataset.apaEditorIndent)) {
+      const indent = block.dataset.apaEditorIndent;
+      block.style.setProperty("padding-left", indent === "hanging" ? ".5in" : "0", "important");
+      block.style.setProperty("text-indent", indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0", "important");
     }
   }
   dispatchEditorChange(`APA 7 v${APA_EDITOR_VERSION}: estilo aplicado a ${blocks.length} bloque(s).`);
