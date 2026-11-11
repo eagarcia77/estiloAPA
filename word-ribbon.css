@@ -1,0 +1,23 @@
+/* EstiloAPA ribbon: familiar Word-like grouping without copying Microsoft's UI. */
+.word-ribbon-enabled { overflow: hidden; background: #f6f8fc; border-color: #c7d4e3; }
+.word-ribbon-tabs { display:flex; flex-wrap:wrap; gap:2px; padding:6px 10px 0; background:#eef3fb; border-bottom:1px solid #cbd6e7; }
+.word-ribbon-tabs [role="tab"] { min-height:38px; padding:7px 16px; background:transparent; border:0; border-radius:6px 6px 0 0; font-weight:600; color:#314a69; }
+.word-ribbon-tabs [role="tab"][aria-selected="true"] { background:#fff; color:#174c8b; box-shadow:inset 0 -3px #1971ce; }
+.word-ribbon-tabs [role="tab"]:focus-visible { outline:2px solid #165da2; outline-offset:-2px; }
+.word-ribbon-panels { background:white; min-height:94px; }
+.word-ribbon-panel { display:flex; align-items:stretch; flex-wrap:wrap; gap:4px; padding:10px; }
+.word-ribbon-panel[hidden] { display:none !important; }
+.word-ribbon-panel .word-ribbon-legacy-group { display:flex; align-items:center; flex-wrap:wrap; padding:6px 9px; border-right:1px solid #d9e2ed; gap:5px; }
+.word-ribbon-panel .word-ribbon-legacy-group button,
+.word-ribbon-panel .word-ribbon-legacy-group select,
+.word-ribbon-action { font-size:13px; min-height:35px; padding:6px 9px; border-radius:5px; }
+.word-ribbon-group { display:flex; flex-wrap:wrap; align-content:center; align-items:center; gap:7px; border-right:1px solid #d9e2ed; padding:7px 11px; position:relative; }
+.word-ribbon-group-label { width:100%; font-size:11px; color:#63758c; font-weight:600; }
+.word-ribbon-action:disabled { opacity:.45; cursor:not-allowed; }
+.word-ribbon-enabled > #apaEditorToolbar[hidden] { display:none !important; }
+@media (max-width:760px) {
+  .word-ribbon-panel { max-height:240px; overflow:auto; }
+  .word-ribbon-tabs [role="tab"] { padding:7px 10px; font-size:13px; }
+}
+
+.word-ribbon-status { padding:7px 13px; border-top:1px solid #d9e2ed; background:#f6f9ff; color:#52647c; font-size:12px; font-variant-numeric:tabular-nums; }
