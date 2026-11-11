@@ -161,14 +161,18 @@ function scheduleListNormalization() {
 function initializeListNormalizer() {
   const root = listRoot();
   if (!root) return;
-  new MutationObserver(scheduleListNormalization).observe(root, { childList: true, subtree: true });
-  root.addEventListener("input", scheduleListNormalization);
+  // Normalize new imports only. Continuous input/DOM observers could
+  // reconstruct an actively edited paragraph after a Ribbon command.
+  root.addEventListener("apa-document-loaded", () => {
+    normalizeNumberedLists();
+    listAudit();
+  });
   document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(listAudit, 80));
   document.addEventListener("click", (event) => {
     if (!event.target?.closest?.("#downloadDocxBtn,#downloadHtmlBtn")) return;
     normalizeNumberedLists();
   }, true);
-  setTimeout(() => { normalizeNumberedLists(); listAudit(); }, 250);
+  listAudit();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeListNormalizer);

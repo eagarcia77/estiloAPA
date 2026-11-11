@@ -290,11 +290,17 @@ function scheduleReferences(delay = 180, announce = false) {
 
 function initializeReferenceFormatting() {
   installReferenceStyles();
-  rfQ("#formatBtn")?.addEventListener("click", () => scheduleReferences(1250));
-  rfQ("#reauditBtn")?.addEventListener("click", () => scheduleReferences(180));
-  rfQ("#sortReferences")?.addEventListener("change", () => scheduleReferences(80));
-  rfQ("#formatReferenceList")?.addEventListener("click", () => scheduleReferences(40, true));
-  scheduleReferences(900);
+  // Formatting is triggered by a document import, sample loading, or an
+  // explicit reference command only. No delayed startup or audit restyling.
+  rfQ("#preview")?.addEventListener("apa-document-loaded", () => {
+    formatReferencesApa7(rfQ("#preview"));
+  });
+  rfQ("#sortReferences")?.addEventListener("change", () => {
+    formatReferencesApa7(rfQ("#preview"));
+  });
+  rfQ("#formatReferenceList")?.addEventListener("click", () => {
+    formatReferencesApa7(rfQ("#preview"), { announce: true });
+  });
 }
 
 window.formatReferencesApa7 = formatReferencesApa7;
