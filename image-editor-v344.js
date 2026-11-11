@@ -144,9 +144,9 @@ async function ieInsertImageFile(file) {
 
   const dataUrl = await ieReadFile(file);
   const number = ieNextFigureNumber();
-  const title = window.prompt("Título de la figura (APA 7):", `Título descriptivo de la figura ${number}`);
+  const title = window.prompt("APA 7 figure title:", `Descriptive figure title ${number}`);
   if (title === null) return;
-  const note = window.prompt("Nota de la figura (opcional):", "");
+  const note = window.prompt("Figure note (optional):", "");
   if (note === null) return;
 
   const { label, titleP, noteP } = ieCreateCaption(number, ieText(title) || `Figura ${number}`, ieText(note));
@@ -202,9 +202,9 @@ function ieEditSelectedImage() {
   const captions = ieCaptionNodes(img);
   const currentTitle = ieText(captions.title?.textContent || img.dataset.figureTitle || img.alt.replace(/^Figura\s+\d+\.\s*/i, ""));
   const currentNote = ieText(captions.note?.textContent || img.dataset.figureNote || "").replace(/^Nota\.\s*/i, "");
-  const title = window.prompt("Título de la figura:", currentTitle || `Título descriptivo de la figura ${number}`);
+  const title = window.prompt("Figure title:", currentTitle || `Descriptive figure title ${number}`);
   if (title === null) return;
-  const note = window.prompt("Nota de la figura (opcional):", currentNote);
+  const note = window.prompt("Figure note (optional):", currentNote);
   if (note === null) return;
 
   if (captions.label) captions.label.innerHTML = `<strong>Figura ${number}</strong>`;

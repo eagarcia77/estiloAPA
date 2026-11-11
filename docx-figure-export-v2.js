@@ -125,7 +125,11 @@ function dxParagraph(element, api, font, size, firstLineIndent, hangingReference
     keepNext: isHeading || isTableLabel || isTableTitle || isFigureLabel || isFigureTitle,
   };
 
-  if (isReference && hangingReferences) options.indent = { left: 720, hanging: 720 };
+  const userIndent = element.dataset.apaEditorIndent;
+  if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
+  else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
+  else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
+  else if (isReference && hangingReferences) options.indent = { left: 720, hanging: 720 };
   else {
     const noIndent = isHeading || isReferencesHeading || isTableLabel || isTableTitle || isFigureLabel || isFigureTitle || isNote || element.classList.contains("no-indent");
     if (!noIndent && firstLineIndent) options.indent = { firstLine: 720 };

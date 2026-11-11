@@ -25,15 +25,10 @@ function synchronizeApaEditorForExport() {
 
     if (align) block.style.textAlign = align;
     if (line) block.style.lineHeight = line;
-    if (indent === "first") {
-      block.style.paddingLeft = "";
-      block.style.textIndent = ".5in";
-    } else if (indent === "hanging") {
-      block.style.paddingLeft = ".5in";
-      block.style.textIndent = "-.5in";
-    } else if (indent === "none") {
-      block.style.paddingLeft = "";
-      block.style.textIndent = "0";
+    if (["first", "hanging", "none"].includes(indent)) {
+      block.style.setProperty("padding-left", indent === "hanging" ? ".5in" : "0", "important");
+      block.style.setProperty("text-indent", indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0", "important");
+      block.classList.toggle("no-indent", indent === "none");
     }
 
     if (style === "h1") {

@@ -31,25 +31,43 @@ function restoreEditorSelection() {
   const root = preview();
   if (!root || !root.contains(savedRange.commonAncestorContainer)) return false;
   const sel = window.getSelection();
+  // An actual selection in the document takes priority over an old saved one.
+  // Restoring a stale range could format (or delete) a different paragraph.
+  if (selectionInsidePreview()) return true;
   sel.removeAllRanges();
   sel.addRange(savedRange);
   return true;
 }
 
 function selectedBlocks() {
-  restoreEditorSelection();
   const root = preview();
+  if (!root) return [];
+  if (!selectionInsidePreview()) restoreEditorSelection();
   const sel = window.getSelection();
-  if (!root || !sel || !sel.rangeCount) return [];
+  if (!sel || !sel.rangeCount || !selectionInsidePreview()) return [];
   const range = sel.getRangeAt(0);
   const candidates = [...root.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li")];
-  const selected = candidates.filter((el) => {
+  // For a caret selection, target ONLY the current paragraph: intersectsNode
+  // can report adjacent blocks at a shared boundary.
+  if (range.collapsed) {
+    let node = range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer : range.startContainer.parentElement;
+    const block = node?.closest?.("p,h1,h2,h3,h4,h5,h6,li");
+    if (block && root.contains(block)) return [block];
+    // Browser may position caret in a section or the editor root.
+    if (node === root || node?.matches?.("section[data-source-file]")) {
+      const child = range.startContainer.childNodes?.[range.startOffset] ||
+        range.startContainer.childNodes?.[range.startOffset - 1];
+      node = child?.nodeType === Node.ELEMENT_NODE ? child : child?.parentElement;
+      const fallback = node?.matches?.("p,h1,h2,h3,h4,h5,h6,li") ?
+        node : node?.closest?.("p,h1,h2,h3,h4,h5,h6,li");
+      if (fallback && root.contains(fallback)) return [fallback];
+    }
+    return [];
+  }
+  return candidates.filter(el => {
     try { return range.intersectsNode(el); } catch { return false; }
   });
-  if (selected.length) return selected;
-  const node = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
-  const block = node?.closest?.("p,h1,h2,h3,h4,h5,h6,li");
-  return block && root.contains(block) ? [block] : [];
 }
 
 function dispatchEditorChange(message = "") {
@@ -85,6 +103,11 @@ function applyEditorBlockStyle(styleName) {
   if (!blocks.length) return;
   for (const block of blocks) {
     clearApaEditorClasses(block);
+    // Choosing another paragraph style replaces the previous explicit indent.
+    delete block.dataset.apaEditorIndent;
+    block.style.removeProperty("text-indent");
+    block.style.removeProperty("padding-left");
+    block.style.removeProperty("text-align");
     block.dataset.apaEditorStyle = styleName;
     block.style.fontWeight = "";
     block.style.fontStyle = "";
@@ -145,41 +168,79 @@ function applyEditorBlockStyle(styleName) {
       block.dataset.apaEditorIndent = "none";
       block.style.fontStyle = "italic";
     }
+    // Keep the visual state consistent with the newly chosen paragraph style.
+    if (["first", "hanging", "none"].includes(block.dataset.apaEditorIndent)) {
+      const indent = block.dataset.apaEditorIndent;
+      block.style.setProperty("padding-left", indent === "hanging" ? ".5in" : "0", "important");
+      block.style.setProperty("text-indent", indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0", "important");
+    }
+    if (block.dataset.apaEditorAlign) {
+      block.style.setProperty("text-align", block.dataset.apaEditorAlign, "important");
+    }
   }
   dispatchEditorChange(`APA 7 v${APA_EDITOR_VERSION}: estilo aplicado a ${blocks.length} bloque(s).`);
 }
 
+function markRibbonButtonState(attribute, value) {
+  document.querySelectorAll(`#apaEditorShell [${attribute}]`).forEach(button => {
+    button.setAttribute("aria-pressed", String(button.getAttribute(attribute) === value));
+  });
+}
+
 function applyAlignment(value) {
+  if (!["left", "center", "right"].includes(value)) return;
   const blocks = selectedBlocks();
+  if (!blocks.length) return;
   for (const block of blocks) {
     block.dataset.apaEditorAlign = value;
-    block.style.textAlign = value;
+    block.style.setProperty("text-align", value, "important");
   }
-  dispatchEditorChange();
+  markRibbonButtonState("data-align", value);
+  dispatchEditorChange(`Alignment: ${value} (${blocks.length} paragraph(s)).`);
 }
 
 function applyIndent(value) {
+  if (!["first", "hanging", "none"].includes(value)) return;
   const blocks = selectedBlocks();
-  for (const block of blocks) {
-    block.dataset.apaEditorIndent = value;
-    block.style.paddingLeft = "";
-    block.style.textIndent = "";
-    if (value === "first") block.style.textIndent = ".5in";
-    else if (value === "hanging") {
-      block.style.paddingLeft = ".5in";
-      block.style.textIndent = "-.5in";
-    } else block.style.textIndent = "0";
+  if (!blocks.length) {
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = "Place the cursor inside a paragraph to change its indentation.";
+      status.className = "status error";
+    }
+    return;
   }
-  dispatchEditorChange();
+  for (const block of blocks) {
+    // Explicit editor choice overrides inherited APA styles and legacy classes.
+    block.dataset.apaEditorIndent = value;
+    block.classList.toggle("no-indent", value === "none");
+    block.style.removeProperty("padding-left");
+    block.style.removeProperty("text-indent");
+    if (value === "first") {
+      block.style.setProperty("padding-left", "0", "important");
+      block.style.setProperty("text-indent", ".5in", "important");
+    } else if (value === "hanging") {
+      block.style.setProperty("padding-left", ".5in", "important");
+      block.style.setProperty("text-indent", "-.5in", "important");
+    } else {
+      block.style.setProperty("padding-left", "0", "important");
+      block.style.setProperty("text-indent", "0", "important");
+    }
+  }
+  markRibbonButtonState("data-indent", value);
+  const labels = { none: "No Indent", first: "First Line Indent", hanging: "Hanging Indent" };
+  dispatchEditorChange(`${labels[value]} applied to ${blocks.length} paragraph(s).`);
 }
 
 function applyLineSpacing(value) {
+  if (!["1", "1.5", "2"].includes(value)) return;
   const blocks = selectedBlocks();
+  if (!blocks.length) return;
   for (const block of blocks) {
     block.dataset.apaEditorLine = value;
-    block.style.lineHeight = value;
+    block.style.setProperty("line-height", value, "important");
   }
-  dispatchEditorChange();
+  dispatchEditorChange(`Line Spacing: ${value} (${blocks.length} paragraph(s)).`);
 }
 
 function nextNumber(kind) {
@@ -208,10 +269,10 @@ function insertAfter(anchor, nodes) {
 }
 
 function insertApaTable() {
-  const title = window.prompt("Título de la tabla (APA 7):", "Título descriptivo de la tabla");
+  const title = window.prompt("APA 7 table title:", "Descriptive table title");
   if (title === null) return;
-  const rows = Math.max(2, Math.min(20, Number(window.prompt("Cantidad de filas, incluyendo encabezado:", "4")) || 4));
-  const cols = Math.max(2, Math.min(8, Number(window.prompt("Cantidad de columnas:", "3")) || 3));
+  const rows = Math.max(2, Math.min(20, Number(window.prompt("Number of rows, including the header:", "4")) || 4));
+  const cols = Math.max(2, Math.min(8, Number(window.prompt("Number of columns:", "3")) || 3));
   const number = nextNumber("table");
   const label = document.createElement("p");
   label.className = "apa-table-label thesis-table-label no-indent";
@@ -248,7 +309,7 @@ function insertApaTable() {
 }
 
 function insertFigureCaption() {
-  const title = window.prompt("Título de la figura:", "Título descriptivo de la figura");
+  const title = window.prompt("Figure title:", "Descriptive figure title");
   if (title === null) return;
   const number = nextNumber("figure");
   const label = document.createElement("p");
@@ -266,7 +327,7 @@ function insertFigureCaption() {
 
 function insertLink() {
   restoreEditorSelection();
-  const url = window.prompt("URL del enlace (https://...):", "https://");
+  const url = window.prompt("Link URL (https://...):", "https://");
   if (!url) return;
   document.execCommand("createLink", false, url);
   dispatchEditorChange();
@@ -298,14 +359,15 @@ function insertReferencesHeading() {
 function applyApaParagraphPreset() {
   const blocks = selectedBlocks();
   for (const block of blocks) {
+    block.classList.remove("no-indent");
     block.dataset.apaEditorStyle = "normal";
     block.dataset.apaEditorAlign = "left";
     block.dataset.apaEditorIndent = "first";
     block.dataset.apaEditorLine = "2";
-    block.style.textAlign = "left";
-    block.style.textIndent = ".5in";
-    block.style.paddingLeft = "";
-    block.style.lineHeight = "2";
+    block.style.setProperty("text-align", "left", "important");
+    block.style.setProperty("text-indent", ".5in", "important");
+    block.style.setProperty("padding-left", "0", "important");
+    block.style.setProperty("line-height", "2", "important");
   }
   dispatchEditorChange("Párrafo APA 7 aplicado: izquierda, doble espacio y sangría inicial de 0.5 pulg.");
 }
@@ -319,10 +381,10 @@ function applyApaReferencePreset() {
     block.dataset.apaEditorAlign = "left";
     block.dataset.apaEditorIndent = "hanging";
     block.dataset.apaEditorLine = "2";
-    block.style.textAlign = "left";
-    block.style.paddingLeft = ".5in";
-    block.style.textIndent = "-.5in";
-    block.style.lineHeight = "2";
+    block.style.setProperty("text-align", "left", "important");
+    block.style.setProperty("padding-left", ".5in", "important");
+    block.style.setProperty("text-indent", "-.5in", "important");
+    block.style.setProperty("line-height", "2", "important");
   }
   dispatchEditorChange("Referencia APA 7 aplicada: doble espacio y sangría francesa de 0.5 pulg.");
 }
@@ -344,6 +406,10 @@ function ensureEditorStyles() {
     .apa-rules-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.65rem; }
     .apa-rule-card { border:1px solid #e0e7e5; border-radius:9px; padding:.65rem; }
     .apa-rule-card strong { display:block; margin-bottom:.2rem; }
+    /* Editor indentation is a direct user command and overrides profile rules. */
+    .apa-paper [data-apa-editor-indent="none"] { text-indent:0 !important; padding-left:0 !important; margin-left:0 !important; }
+    .apa-paper [data-apa-editor-indent="first"] { text-indent:.5in !important; padding-left:0 !important; }
+    .apa-paper [data-apa-editor-indent="hanging"] { text-indent:-.5in !important; padding-left:.5in !important; }
     .apa-paper .apa-editor-title { text-align:center !important; font-weight:700 !important; text-indent:0 !important; }
     .apa-paper .apa-heading-level-1 { text-align:center !important; font-weight:700 !important; text-indent:0 !important; }
     .apa-paper .apa-heading-level-2 { text-align:left !important; font-weight:700 !important; text-indent:0 !important; }

@@ -118,9 +118,12 @@ function paragraphFromElement(element, api, font, size, firstLineIndent, hanging
     keepNext: isHeading || isTableLabel || isTableTitle || isFigureLabel || isFigureTitle,
   };
 
-  if (isRef && hangingReferences) {
-    options.indent = { left: 720, hanging: 720 };
-  } else {
+  const userIndent = element.dataset.apaEditorIndent;
+  if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
+  else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
+  else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
+  else if (isRef && hangingReferences) options.indent = { left: 720, hanging: 720 };
+  else {
     const noIndent = isHeading || isFigureLabel || isFigureTitle || isTableLabel || isTableTitle || isNote || element.classList.contains("no-indent");
     if (!noIndent && firstLineIndent) options.indent = { firstLine: 720 };
   }

@@ -21,3 +21,11 @@
 }
 
 .word-ribbon-status { padding:7px 13px; border-top:1px solid #d9e2ed; background:#f6f9ff; color:#52647c; font-size:12px; font-variant-numeric:tabular-nums; }
+
+/* Show the last explicitly applied paragraph command. */
+.word-ribbon-enabled [data-indent][aria-pressed="true"],
+.word-ribbon-enabled [data-align][aria-pressed="true"] {
+  color: #124f91;
+  background: #deebfc;
+  border-color: #6ca7e8;
+}
