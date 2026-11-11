@@ -24,7 +24,7 @@ function harness(initial = "A".repeat(500), selection = null) {
     set(value) { html = value; root.textContent = value; }
   });
   const document = {
-    readyState: "loading", activeElement: root,
+    readyState: "complete", activeElement: root,
     querySelector(selector) { return selector === "#preview" ? root : selector === "#status" ? status : null; },
     addEventListener() {},
   };
@@ -41,20 +41,49 @@ function harness(initial = "A".repeat(500), selection = null) {
   function drain() {
     for (const [id, fn] of [...timers]) { if (!timers.has(id)) continue; timers.delete(id); fn(); }
   }
-  // Initialize registered DOMContentLoaded listeners separately by evaluating with readyState "complete".
   return { root, status, window, document, listeners, emit, drain };
 }
 
-function live(initial = "A".repeat(500), selection = null) {
-  const h = harness(initial, selection);
-  // Dispatch events are installed only on DOMContentLoaded. The standalone
-  // simulation re-evaluates with readyState complete to register them.
-  h.document.readyState = "complete";
-  // Build a fresh harness with a document that starts complete instead.
-  return h;
-}
-
-test("code exposes a catastrophic deletion check", () => {
+test("ordinary Backspace keeps document and does not trigger restoration", () => {
   const h = harness();
-  assert.equal(typeof h.window.apaCheckDeleteIntegrity, "function");
+  const original = h.root.innerHTML;
+  h.emit("keydown", { key: "Backspace" });
+  h.root.innerHTML = original.slice(0, -1);
+  h.emit("input");
+  h.drain();
+  assert.equal(h.root.innerHTML.length, original.length - 1);
+  assert.doesNotMatch(h.status.textContent, /restauró/i);
+});
+
+test("catastrophic deletion restores the saved document", () => {
+  const h = harness();
+  const original = h.root.innerHTML;
+  h.emit("keydown", { key: "Backspace" });
+  h.root.innerHTML = "A";
+  h.emit("input");
+  h.drain();
+  assert.equal(h.root.innerHTML, original);
+  assert.match(h.status.textContent, /restauró/i);
+});
+
+test("selecting almost the entire document and pressing Backspace is blocked", () => {
+  const selected = "A".repeat(490);
+  const selection = {
+    rangeCount: 1, isCollapsed: false,
+    getRangeAt() { return { commonAncestorContainer: {}, toString() { return selected; } }; }
+  };
+  const h = harness("A".repeat(500), selection);
+  const event = { key: "Backspace", prevented: false };
+  h.emit("keydown", event);
+  assert.equal(event.prevented, true);
+  assert.match(h.status.textContent, /bloqueó/i);
+});
+
+test("replacing the document invalidates a pending deletion snapshot", () => {
+  const h = harness();
+  h.emit("keydown", { key: "Backspace" });
+  h.window.apaResetProtectedDocument();
+  h.root.innerHTML = "Nuevo documento";
+  h.window.apaCheckDeleteIntegrity();
+  assert.equal(h.root.innerHTML, "Nuevo documento");
 });
