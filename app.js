@@ -73,6 +73,8 @@ function updateFileList() {
 function setFiles(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return;
+  if (hasFormattedContent() &&
+      !window.confirm("Opening a new file will replace the current document. Export your edits before continuing. Open the new file?")) return;
   // A new selection triggers the entire APA 7 import automatically.
   // Keep the file picker reusable even when the same file is selected again.
   selectedFiles = files;
