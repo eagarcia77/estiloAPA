@@ -9,7 +9,7 @@ function harness(initial = "A".repeat(500), selection = null) {
   let next = 0;
   const timers = new Map();
   const listeners = new Map();
-  const status = { textContent: "", className: "" };
+  const status = { textContent: "", className: "", dataset: {} };
   const root = {
     innerHTML: initial, textContent: initial, dataset: {}, classList: { toggle() {} },
     contains() { return true; },
