@@ -304,14 +304,11 @@ function initializeThesisProfiles() {
   if (!select) return;
   select.addEventListener("change", () => applyThesisProfile({ announce: thesisProfileEnabled() }));
 
-  const preview = document.querySelector("#preview");
-  if (preview) {
-    let timer;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => { if (thesisProfileEnabled()) applyThesisProfile(); }, 100);
-    }).observe(preview, { childList: true, subtree: true });
-  }
+  // Thesis formatting is an explicit operation, not an input observer.
+  // Do not re-run semantic styles after a manual No Indent action.
+  document.querySelector("#preview")?.addEventListener("apa-document-loaded", () => {
+    applyThesisProfile();
+  });
 
   document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(appendThesisAudit, 100));
   applyThesisProfile();
