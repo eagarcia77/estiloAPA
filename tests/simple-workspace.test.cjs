@@ -7,7 +7,7 @@ const vm = require("node:vm");
 class El {
   constructor(id="") {
     this.id=id; this.children=[]; this.listeners={}; this.open=false;
-    this.attributes={}; this.classList={add(){}};
+    this.attributes={}; this.classList={add(){},toggle(){}};
     this.textContent=""; this.clicked=0; this.disabled=false;
   }
   append(...nodes) {
@@ -28,27 +28,29 @@ class El {
 }
 function boot(){
   const nodes=new Map();
-  for(const id of ["simplePrimaryActions","simpleDocumentOptions","simpleReviewDetails","files","preview","simpleQuickStatus","status","demoBtn","formatBtn","downloadDocxBtn","downloadHtmlBtn"]){nodes.set(id,new El(id))}
+  for(const id of ["simplePrimaryActions","simpleDocumentOptions","simpleReviewDetails","files","preview","simpleQuickStatus","status","demoBtn","formatBtn","downloadDocxBtn","downloadHtmlBtn","clearBtn"]){nodes.set(id,new El(id))}
   const controls=new El("controls");
-  for(const id of ["demoBtn","formatBtn","status"]){controls.append(nodes.get(id))}
+  for(const id of ["demoBtn","formatBtn","status","clearBtn"]){controls.append(nodes.get(id))}
   const actions=nodes.get("simplePrimaryActions");
   for(const id of ["downloadDocxBtn","downloadHtmlBtn"])actions.append(nodes.get(id));
-  const doc={readyState:"complete",getElementById:id=>nodes.get(id)||null,createElement:()=>new El(),querySelector:()=>null};
+  const doc={readyState:"complete",body:{classList:{toggle(){}}},addEventListener(){},getElementById:id=>nodes.get(id)||null,createElement:()=>new El(),querySelector:()=>null};
   const window={};
   const source=fs.readFileSync(path.join(__dirname,"../simple-workspace.js"),"utf8");
   vm.runInNewContext(source,{document:doc,window});
-  const find=id=>actions.children.find(n=>n.id===id);
+  const find=id=>actions.children.find(n=>n.id===id)||actions.children.flatMap(n=>n.children).flatMap(n=>n.children).find(n=>n.id===id);
   return{nodes,controls,actions,window,find};
 }
 test("workflow exposes one original instance of each command",()=>{
   const h=boot();
   const ids=h.actions.children.map(n=>n.id);
-  for(const name of ["simpleOpenBtn","demoBtn","formatBtn","downloadDocxBtn","downloadHtmlBtn","simpleSettingsBtn","simpleReviewBtn"]){
-    assert.equal(ids.filter(x=>x===name).length,1,name);
-  }
+  assert.deepEqual(ids,["simpleOpenBtn","formatBtn","downloadDocxBtn","simpleToolsMenu"]);
+  const more=h.actions.children.find(n=>n.id==="simpleToolsMenu");
+  const extras=more.children[1].children.map(n=>n.id);
+  assert.deepEqual(extras,["demoBtn","downloadHtmlBtn","clearBtn","simpleSettingsBtn","simpleReviewBtn"]);
   assert.equal(h.nodes.get("demoBtn"),h.find("demoBtn"));
   assert.equal(h.nodes.get("formatBtn"),h.find("formatBtn"));
   assert.equal(h.nodes.get("downloadDocxBtn"),h.find("downloadDocxBtn"));
+  assert.equal(h.nodes.get("downloadHtmlBtn"),h.find("downloadHtmlBtn"));
 });
 test("Open File expands document options and triggers the real input",()=>{
   const h=boot();
@@ -97,4 +99,16 @@ test("the application retains document input, all format profiles and export act
     assert.match(html,new RegExp('id="'+id+'"'),id);
   }
   for(const profile of ["modulo11c","thesis-doctoral","thesis-masters","apa7"]) assert.ok(html.includes('value="'+profile+'"'));
+});
+
+test("More menu toggles without changing the document",()=>{
+  const h=boot();
+  const more=h.actions.children.find(n=>n.id==="simpleToolsMenu");
+  h.nodes.get("preview").textContent="Preserved editorial content";
+  assert.equal(more.open,false);
+  h.window.EstiloAPASimple.toggleTools();
+  assert.equal(more.open,true);
+  h.window.EstiloAPASimple.toggleTools();
+  assert.equal(more.open,false);
+  assert.equal(h.nodes.get("preview").textContent,"Preserved editorial content");
 });
