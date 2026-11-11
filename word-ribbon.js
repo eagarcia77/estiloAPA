@@ -243,6 +243,10 @@ function initWordRibbon() {
   shell.append(statusLine);
   shell.classList.add("word-ribbon-enabled");
   activate("inicio");
+  // On narrow screens, prioritize document space while keeping tabs available.
+  if (window.matchMedia?.("(max-width: 760px)")?.matches) {
+    shell.classList.add("word-ribbon-collapsed");
+  }
   syncCollapseButton();
   syncFocusButton();
   window.EstiloAPARibbon = {
