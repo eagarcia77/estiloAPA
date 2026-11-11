@@ -8,7 +8,6 @@ const aesNativeClearTimeout = window.clearTimeout.bind(window);
 let apaEditForceDepth = 0;
 let apaEditIdleTimer = null;
 let apaEditComposing = false;
-let aesPendingNormalizationId = 0;
 const aesPendingNormalizations = new Map();
 
 function aesPreview() {
@@ -42,7 +41,9 @@ function apaShouldDeferNormalization() {
   if (apaEditComposing) return true;
   if (root.dataset.apaUserEditing === "true") return true;
   if (root.contains(document.activeElement)) return true;
-  return aesSelectionInsidePreview();
+  // A stale selection can remain in #preview after focus has moved elsewhere.
+  // Selection alone must never block deferred normalizations indefinitely.
+  return false;
 }
 
 function aesLooksLikeNormalization(callback) {
@@ -52,10 +53,9 @@ function aesLooksLikeNormalization(callback) {
   return /(applyModuleProfile|markModuleSemantics|normalizeMedia|normalizeApaMedia|normalizeFigures|normalizeTableCaptions|normalizeNumberedLists|recoverParagraphNumberRuns|applyApaFigureFormatting|classifyEmbeddedImages|repairMediaRoles|preserveOriginalPdfMedia|recoverPdfFiguresV34\d|formatReferencesApa7|scheduleSourceImages|scheduleApaFigureFormatting|scheduleListNormalization|scheduleMediaNormalization)/.test(source);
 }
 
-function aesQueueNormalization(callback, args) {
-  const id = ++aesPendingNormalizationId;
-  aesPendingNormalizations.set(id, { callback, args });
-  return id;
+function aesQueueNormalization(timerId, callback, args) {
+  // Retain the original browser timer ID so clearTimeout can cancel a queued task.
+  aesPendingNormalizations.set(timerId, { callback, args });
 }
 
 function aesFlushPendingNormalizations() {
@@ -77,15 +77,17 @@ window.setTimeout = function(callback, delay = 0, ...args) {
   if (!aesLooksLikeNormalization(callback)) {
     return aesNativeSetTimeout(callback, delay, ...args);
   }
-  return aesNativeSetTimeout(() => {
+  const timerId = aesNativeSetTimeout(() => {
     if (apaShouldDeferNormalization()) {
-      aesQueueNormalization(callback, args);
+      aesQueueNormalization(timerId, callback, args);
       return;
     }
     callback(...args);
   }, delay);
+  return timerId;
 };
 window.clearTimeout = function(timerId) {
+  aesPendingNormalizations.delete(timerId);
   aesNativeClearTimeout(timerId);
 };
 
@@ -113,7 +115,7 @@ function aesScheduleFinish(delay = 320) {
     const root = aesPreview();
     const toolbar = aesToolbar();
     const active = document.activeElement;
-    if (root?.contains(active) || toolbar?.contains(active) || aesSelectionInsidePreview()) return;
+    if (root?.contains(active) || toolbar?.contains(active)) return;
     aesFinishEditing();
   }, delay);
 }
@@ -183,6 +185,14 @@ function aesInitialize() {
   }, true);
 
   root.addEventListener("focusout", (event) => {
+    const next = event.relatedTarget;
+    if (next && (root.contains(next) || aesToolbar()?.contains(next))) return;
+    aesScheduleFinish();
+  }, true);
+
+  // Leaving toolbar must also release the guard: preview focusout intentionally
+  // retained it while toolbar controls were in use.
+  aesToolbar()?.addEventListener("focusout", (event) => {
     const next = event.relatedTarget;
     if (next && (root.contains(next) || aesToolbar()?.contains(next))) return;
     aesScheduleFinish();
