@@ -579,6 +579,8 @@ async function formatSelectedFiles() {
     window.apaResetProtectedDocument?.();
     els.preview.replaceChildren(...wrapper.childNodes);
     applyPreviewStyles();
+    // Apply academic profiles ONCE to this newly imported document.
+    els.preview.dispatchEvent(new Event("apa-document-loaded"));
     renderAudit(auditDocument(els.preview));
     enableDownloads();
     setStatus("Formato aplicado. Revise la auditoría y edite la vista previa si es necesario.", "success");
@@ -606,6 +608,7 @@ function loadDemo() {
   window.apaResetProtectedDocument?.();
   els.preview.replaceChildren(demo);
   applyPreviewStyles();
+  els.preview.dispatchEvent(new Event("apa-document-loaded"));
   renderAudit(auditDocument(els.preview));
   enableDownloads();
   setStatus(`Ejemplo ejecutado correctamente en APA7 Module Formatter v${APP_VERSION}.`, "success");
