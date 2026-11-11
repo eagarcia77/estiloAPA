@@ -569,7 +569,7 @@ function runAudit(announce = true) {
 }
 
 async function formatSelectedFiles(requestId = importRequestId) {
-  if (!selectedFiles.length || importingDocument && requestId === importRequestId) return;
+  if (!selectedFiles.length) return;
   // Snapshot input files so a later selection cannot alter this import.
   const files = [...selectedFiles];
   importingDocument = true;
