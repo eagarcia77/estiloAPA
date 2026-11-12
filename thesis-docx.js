@@ -116,6 +116,7 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
   else if (!noIndent) options.indent = { firstLine: 720 };
 
   if (allowPageBreak && element.classList.contains("thesis-page-start")) options.pageBreakBefore = true;
+  window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
 
@@ -340,7 +341,7 @@ async function exportThesisDocx() {
   const split = thesisSplitBlocks(blocks);
   const sections = [];
   const numberingState = { counter: 0, configs: [] };
-  const pageBase = {
+  const pageBase = window.EstiloAPAWordPageLayout?.getDocxPage({ thesis: true }) || {
     size: { width: 12240, height: 15840 },
     margin: { top: 1440, right: 1440, bottom: 1440, left: 2160 },
   };
