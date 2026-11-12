@@ -615,6 +615,10 @@ function initializeApaEditor() {
   preview()?.addEventListener("keyup", saveEditorSelection);
   preview()?.addEventListener("mouseup", saveEditorSelection);
   initializeIndentPersistence();
+  // Share the existing selection-safe paragraph resolver with Word Layout.
+  window.EstiloAPAEditorSelection = {
+    selectedBlocks, restoreEditorSelection, saveEditorSelection
+  };
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeApaEditor);
