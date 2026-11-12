@@ -469,18 +469,32 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 3).sort((a, b) => a.x - b.x).map(group => group.x);
   if (anchors.length < 2 || anchors.length > 8) return null;
-  const tolerance = Math.max(14, bodyFontSize * 1.5);
+  const tolerance = Math.max(10, bodyFontSize * 1.1);
   const firstX = anchors[0];
   const rows = [];
+  let previousY = null;
+  let previousLine = null;
   for (const line of region) {
     const cells = splitLineIntoCells(line, threshold);
+    if (!cells.length) continue;
+    // Only a first-column entry at a new vertical row begins a new table row.
+    // Wrapped text often starts at the same left margin; do not split it
+    // unless another column is also populated or there is a larger row gap.
+    const columns = new Set(cells.map(cell => nearestIndex(cell.x, anchors)));
     const firstColumnStarts = cells.some(cell => Math.abs(cell.x - firstX) <= tolerance);
-    if (firstColumnStarts || !rows.length) rows.push(Array.from({length: anchors.length}, () => ""));
+    const verticalGap = previousY === null ? Infinity : previousY - line.y;
+    const newRow = !rows.length || (firstColumnStarts && (
+      columns.size >= 2 && verticalGap > bodyFontSize * 1.25 ||
+      verticalGap > bodyFontSize * 2.6
+    ));
+    if (newRow) rows.push(Array.from({length: anchors.length}, () => ""));
     const row = rows[rows.length - 1];
     for (const cell of cells) {
       const col = nearestIndex(cell.x, anchors);
       row[col] += (row[col] ? " " : "") + cell.text;
     }
+    previousY = line.y;
+    previousLine = line;
   }
   if (rows.length < 2 || rows.filter(row => row.filter(Boolean).length >= 2).length < 2) return null;
   return {block: {type: "table", rows, pageNumber: label.pageNumber}, nextIndex: end};
