@@ -581,7 +581,7 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
         const candidateStartsReference = referenceStartRegex.test(candidate.text.trim());
         const likelyNewEntry = candidateStartsReference &&
           (candidate.x <= line.x + Math.max(12, bodyFontSize * 1.5) ||
-           /(?:https?:\\/\\/\\S+|doi\\.org\\/\\S+|\\.)\\s*$/.test(refText));
+           /(?:https?:\/\/\S+|doi\.org\/\S+|\.)\s*$/.test(refText));
         if (likelyNewEntry) break;
         const candidateGap = lines[cursor - 1].y - candidate.y;
         if (candidateGap > gap * 1.9) break;
@@ -591,7 +591,7 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
       }
       // PDF extraction can concatenate separate bibliography entries onto
       // one physical line. Split only at a credible author + year boundary.
-      const embeddedEntry = /\\s+(?=[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'-]+,\\s+[A-Z](?:\\.|[a-z]+)[^()]{0,90}\\((?:19|20)\\d{2}[a-z]?\\)\\.)/g;
+      const embeddedEntry = /\s+(?=[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'-]+,\s+[A-Z](?:\.|[a-z]+)[^()]{0,90}\((?:19|20)\d{2}[a-z]?\)\.)/g;
       const parts = refText.split(embeddedEntry).map(part => part.trim()).filter(Boolean);
       if (parts.length > 1) {
         for (const part of parts) blocks.push({type:"reference",text:part,html:escapeHtml(part),pageNumber:page.pageNumber});
