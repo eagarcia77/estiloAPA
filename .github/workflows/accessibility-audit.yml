@@ -11,6 +11,8 @@ on:
       - 'tests/accessibility-audit-core.test.cjs'
       - 'safari-stream-compat.js'
       - 'tests/safari-stream-compat.test.cjs'
+      - 'tests/pdf-import.test.cjs'
+      - 'app.js'
       - '.github/workflows/accessibility-audit.yml'
   workflow_dispatch:
 jobs:
@@ -22,7 +24,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run accessibility core tests
-        run: node --test tests/accessibility-audit-core.test.cjs tests/safari-stream-compat.test.cjs
+        run: node --test tests/accessibility-audit-core.test.cjs tests/safari-stream-compat.test.cjs tests/pdf-import.test.cjs
       - name: Check browser module syntax
         run: |
           for file in *.js js/*.js; do
