@@ -1,0 +1,74 @@
+/* Word-style Page Layout: visual presentation only; no extra document HTML. */
+.apa-paper {
+  --word-page-width: 8.5in;
+  --word-page-height: 11in;
+  --word-margin-top: 1in;
+  --word-margin-right: 1in;
+  --word-margin-bottom: 1in;
+  --word-margin-left: 1in;
+  box-sizing: border-box;
+  padding:var(--word-margin-top) var(--word-margin-right)
+    var(--word-margin-bottom) var(--word-margin-left);
+}
+body.apa-page-view .apa-paper {
+  box-sizing:border-box;
+  width:min(var(--word-page-width),100%);
+  max-width:var(--word-page-width);
+  min-height:var(--word-page-height);
+  padding:var(--word-margin-top) var(--word-margin-right)
+    var(--word-margin-bottom) var(--word-margin-left);
+}
+.word-layout-group { align-items:center; max-width:100%; }
+.word-layout-group select {
+  min-height:37px; max-width:210px; padding:5px 7px;
+  border:1px solid #bdcbd7; border-radius:6px; font-size:.81rem;
+}
+.word-layout-group .word-layout-field {
+  display:flex; flex-direction:column; align-items:flex-start;
+  gap:.25rem; font-size:.76rem; color:#37516b;
+}
+.word-layout-group .word-layout-field input {
+  min-height:37px; max-width:110px; width:100%; padding:5px 7px;
+  background:#fff; color:#172b40;
+  border:1px solid #bdcbd7; border-radius:6px;
+}
+.word-layout-margins {
+  position:relative; max-width:min(330px,95vw); font-size:.8rem;
+}
+.word-layout-margins > summary {
+  cursor:pointer; border:1px solid #bdcbd7; background:#f7f9fc;
+  border-radius:6px; padding:7px 10px;
+}
+.word-layout-custom {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.5rem; padding:.55rem;
+  background:#f7faff; border:1px solid #bdcbd7; border-radius:6px;
+}
+.word-layout-tab-readout {
+  display:block; flex-basis:100%; max-width:240px;
+  font-size:.75rem; overflow-wrap:anywhere; color:#49637b;
+}
+/* Native text tab characters remain in the editable document and DOCX. */
+.apa-paper [data-word-tab-stops] { white-space:pre-wrap; tab-size:4; }
+@media(max-width:680px) {
+  /* Keep full-width editing usable on a phone while Page View retains size. */
+  body:not(.apa-page-view) .apa-paper {
+    padding:clamp(.4rem,2.5vw,.8rem);
+  }
+  body.apa-page-view .apa-paper {
+    padding:min(var(--word-margin-top),9vw) min(var(--word-margin-right),9vw)
+      min(var(--word-margin-bottom),9vw) min(var(--word-margin-left),9vw);
+  }
+  .word-layout-group select {max-width:100%; }
+}
+@media print {
+  .apa-paper,body.apa-page-view .apa-paper {
+    width:var(--word-page-width)!important;
+    max-width:none!important;
+    min-height:var(--word-page-height)!important;
+    padding:var(--word-margin-top) var(--word-margin-right)
+      var(--word-margin-bottom) var(--word-margin-left)!important;
+    box-sizing:border-box!important;
+    margin:0!important;zoom:1!important;
+  }
+}
