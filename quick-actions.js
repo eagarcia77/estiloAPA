@@ -41,7 +41,14 @@
       }
       bar.append(button);
     });
-    if (anchor) anchor.insertAdjacentElement('afterend',bar);
+    // Integrate shortcuts into the existing ribbon header, preserving its tabs and handlers.
+    const tabs = document.getElementById('wordRibbonTabs');
+    if (tabs && tabs.parentElement) {
+      const header = document.createElement('div');
+      header.className = 'academic-ribbon-header';
+      tabs.parentElement.insertBefore(header, tabs);
+      header.append(bar, tabs);
+    } else if (anchor) anchor.insertAdjacentElement('afterend',bar);
     else toolbar.insertAdjacentElement('afterend',bar);
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
