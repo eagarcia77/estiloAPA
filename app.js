@@ -261,9 +261,23 @@ async function convertDocx(file) {
 }
 
 async function readPdf(file) {
-  const pdfjs = await getPdfJs();
+  if (!file || file.size === 0) {
+    throw new Error("El PDF está vacío (0 bytes). Guarde una copia local completa y vuelva a intentar.");
+  }
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data }).promise;
+  const isPdf = data.length >= 5 && data[0] === 0x25 && data[1] === 0x50 &&
+    data[2] === 0x44 && data[3] === 0x46 && data[4] === 0x2d;
+  if (!isPdf) {
+    throw new Error("El archivo seleccionado no contiene un PDF válido. Verifique que se haya descargado completamente.");
+  }
+  const pdfjs = await getPdfJs();
+  let pdf;
+  try {
+    pdf = await pdfjs.getDocument({ data }).promise;
+  } catch (error) {
+    console.error("PDF import failed:", error);
+    throw new Error("No se pudo abrir el PDF. Puede estar incompleto, dañado o protegido. Guarde una copia sin protección y vuelva a intentar.");
+  }
   const pages = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
