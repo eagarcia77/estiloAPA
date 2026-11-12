@@ -982,13 +982,22 @@ async function imageToDocxRun(img, api) {
     if (!bytes.length) return null;
     const naturalWidth = img.naturalWidth || Number(img.getAttribute("width")) || 600;
     const naturalHeight = img.naturalHeight || Number(img.getAttribute("height")) || 400;
-    const scale = Math.min(1, 520 / naturalWidth, 690 / naturalHeight);
+    // Export the displayed size, not the source image's pixel dimensions.
+    // The clone is detached, so read the corresponding live editor image by index.
+    const sourceImages = [...document.querySelectorAll("#preview img")];
+    const imageIndex = Number(img.dataset.exportImageIndex);
+    const live = Number.isInteger(imageIndex) && imageIndex >= 0 ? sourceImages[imageIndex] : null;
+    const bounds = live?.getBoundingClientRect();
+    const visibleWidth = bounds?.width > 0 ? bounds.width : (Number.parseFloat(img.style.width) || naturalWidth);
+    const visibleHeight = bounds?.height > 0 ? bounds.height : (Number.parseFloat(img.style.height) || visibleWidth * naturalHeight / naturalWidth);
+    const scale = Math.min(1, 520 / visibleWidth, 690 / visibleHeight);
     return new api.ImageRun({
       data: bytes,
       transformation: {
-        width: Math.max(1, Math.round(naturalWidth * scale)),
-        height: Math.max(1, Math.round(naturalHeight * scale)),
+        width: Math.max(1, Math.round(visibleWidth * scale)),
+        height: Math.max(1, Math.round(visibleHeight * scale)),
       },
+      altText: { title: img.getAttribute("alt") || "Imagen", description: img.getAttribute("alt") || "Imagen del documento" },
     });
   } catch (error) {
     console.warn("DOCX image export skipped:", error);
@@ -1003,6 +1012,7 @@ async function downloadDocx() {
     const font = els.fontFamily.value;
     const size = fontSettings[font].halfPoints;
     const clone = cleanExportClone();
+    [...clone.querySelectorAll("img")].forEach((img, index) => { img.dataset.exportImageIndex = String(index); });
     const children = [];
 
     for (const element of collectExportBlocks(clone)) {
