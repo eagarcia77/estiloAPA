@@ -103,17 +103,12 @@ function paragraphFromElement(element, api, font, size, firstLineIndent, hanging
   const isFigureTitle = element.classList.contains("apa-figure-title");
   const isNote = element.classList.contains("apa-note");
 
-  let runs = inlineRuns(element, api, font, size, { bold: isModuleKeywords });
-  if (!runs.length) runs = [new TextRun({ text, font, size })];
-
-  if (isHeading) {
-    const headingItalic = [3, 5].includes(headingLevel);
-    runs = [new TextRun({ text, font, size, bold: true, italics: headingItalic })];
-  } else if (isTableLabel || isFigureLabel) {
-    runs = [new TextRun({ text, font, size, bold: true })];
-  } else if (isTableTitle || isFigureTitle) {
-    runs = [new TextRun({ text, font, size, italics: true })];
-  }
+  const baseline = {
+    bold: isModuleKeywords || isHeading || isTableLabel || isFigureLabel,
+    italics: (isHeading && [3, 5].includes(headingLevel)) || isTableTitle || isFigureTitle,
+  };
+  let runs = inlineRuns(element, api, font, size, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font, size, ...baseline })];
 
   let alignment = AlignmentType.LEFT;
   if (headingLevel === 1 || isReferencesHeading) alignment = AlignmentType.CENTER;
