@@ -59,6 +59,14 @@
       toggleButton.disabled = !enabledStorage;
     }
   }
+  function pauseAutoSave(message) {
+    if (!autosave) return;
+    autosave = false;
+    clearTimer();
+    try { storage()?.setItem(PREF_KEY, "false"); } catch {}
+    status(message, true);
+    refreshControls();
+  }
   function saveDraft(silent = false) {
     if (!hasDocument()) {
       if (!silent) status("Open or edit a document before saving a draft.", true);
@@ -66,12 +74,15 @@
     }
     const html = preview().innerHTML;
     if (html.length > MAX_HTML_CHARS) {
-      if (!silent) status("This document is too large for browser draft storage. Download DOCX instead.", true);
+      const warning = "AutoSave cannot store this large document. Download DOCX instead.";
+      if (silent) pauseAutoSave(warning);
+      else status("This document is too large for browser draft storage. Download DOCX instead.", true);
       return false;
     }
     const store = storage();
     if (!store) {
-      if (!silent) status("Local storage is unavailable in this browser. Download DOCX instead.", true);
+      if (silent) pauseAutoSave("AutoSave is unavailable in this browser. Download DOCX.");
+      else status("Local storage is unavailable in this browser. Download DOCX instead.", true);
       refreshControls();
       return false;
     }
@@ -86,7 +97,8 @@
       refreshControls();
       return true;
     } catch {
-      if (!silent) status("Could not save locally. Check browser storage or download DOCX.", true);
+      if (silent) pauseAutoSave("AutoSave stopped: browser storage is full. Download DOCX.");
+      else status("Could not save locally. Check browser storage or download DOCX.", true);
       return false;
     }
   }
@@ -110,7 +122,7 @@
     const template = document.createElement("template");
     template.innerHTML = html;
     template.content.querySelectorAll(
-      "script,iframe,object,embed,form,meta,base,link,svg,math"
+      "script,iframe,object,embed,form,meta,base,link,svg,math,style,noscript"
     ).forEach(node => node.remove());
     template.content.querySelectorAll("*").forEach(node => {
       for (const attribute of [...node.attributes]) {
