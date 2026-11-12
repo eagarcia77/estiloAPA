@@ -62,11 +62,14 @@ function dxInlineRuns(node, api, font, size, inherited = {}) {
   const { TextRun, ExternalHyperlink } = api;
   if (node.nodeType === Node.TEXT_NODE) {
     if (!node.nodeValue) return [];
-    return [new TextRun({ text: node.nodeValue, font, size, bold: !!inherited.bold, italics: !!inherited.italics, underline: inherited.underline ? {} : undefined, color: "000000" })];
+    const styles = window.EstiloAPAWordDocxStyles;
+    const options = styles?.runOptions(inherited, font, size) ||
+      { font, size, bold: !!inherited.bold, italics: !!inherited.italics, underline: inherited.underline ? {} : undefined };
+    return [new TextRun({ text: node.nodeValue, ...options, color: options.color || "000000" })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = {
+  const style = window.EstiloAPAWordDocxStyles?.childStyle(node, inherited) || {
     bold: inherited.bold || tag === "B" || tag === "STRONG",
     italics: inherited.italics || tag === "I" || tag === "EM",
     underline: inherited.underline || tag === "U"
@@ -76,7 +79,11 @@ function dxInlineRuns(node, api, font, size, inherited = {}) {
     const href = node.getAttribute("href");
     return [new ExternalHyperlink({
       link: href,
-      children: [new TextRun({ text: dxText(node.textContent) || href, font, size, color: "0563C1", underline: {}, bold: style.bold, italics: style.italics })]
+      children: [new TextRun({
+        text: dxText(node.textContent) || href,
+        ...(window.EstiloAPAWordDocxStyles?.runOptions(style, font, size) || { font, size, bold: style.bold, italics: style.italics }),
+        color: "0563C1", underline: {}
+      })]
     })];
   }
   return [...node.childNodes].flatMap((child) => dxInlineRuns(child, api, font, size, style));
