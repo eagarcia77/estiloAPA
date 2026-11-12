@@ -260,3 +260,12 @@ body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important;
  .academic-context-actions button { min-width:0; padding:.4rem .15rem; font-size:.72rem; }
 }
 @media print { .academic-context-tools { display:none!important; } }
+
+.academic-context-alt { font-weight:650; font-size:.8rem; }
+.academic-context-tools input[type="text"] { flex:1 1 190px; min-width:0; min-height:44px; border:1px solid #9dbbb5; border-radius:8px; padding:.45rem .65rem; background:#fff; color:#123c39; font:inherit; }
+.academic-context-tools [hidden] { display:none!important; }
+.academic-context-tools input:focus-visible { outline:3px solid #168ab5; outline-offset:2px; }
+@media (max-width:760px) {
+ .academic-context-alt { width:100%; }
+ .academic-context-tools input[type="text"] { flex-basis:100%; }
+}
