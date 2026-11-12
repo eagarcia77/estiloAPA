@@ -455,12 +455,19 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
          lines[end].y < label.y && label.y - lines[end].y < 530) end += 1;
   const region = lines.slice(labelIndex + 1, end);
   if (region.length < 2) return null;
-  const header = region[0];
   const threshold = Math.max(15, bodyFontSize * 1.35);
-  const headerCells = splitLineIntoCells(header, threshold);
-  // Use x-position clusters rather than the combined line text.
-  const anchors = headerCells.map(cell => cell.x)
-    .filter((x, i, arr) => i === 0 || x - arr[i - 1] >= 45);
+  // Stable left edges recur on multiple rows; isolated fragments within a
+  // wrapped header (e.g. "TCP/IP del texto (5 capas)") must not become columns.
+  const starts = region.flatMap(line => line.items.map(item => item.x));
+  const clusters = [];
+  for (const x of starts.sort((a, b) => a - b)) {
+    const cluster = clusters.find(group => Math.abs(group.x - x) <= 7);
+    if (cluster) { cluster.count += 1; cluster.x = (cluster.x * (cluster.count - 1) + x) / cluster.count; }
+    else clusters.push({x, count: 1});
+  }
+  const anchors = clusters.filter(group => group.count >= 2)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3).sort((a, b) => a.x - b.x).map(group => group.x);
   if (anchors.length < 2 || anchors.length > 8) return null;
   const tolerance = Math.max(14, bodyFontSize * 1.5);
   const firstX = anchors[0];
