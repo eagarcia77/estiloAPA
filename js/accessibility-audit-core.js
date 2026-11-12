@@ -25,6 +25,29 @@
         if (!th.hasAttribute('scope') && !th.hasAttribute('headers')) add('table-header-association','warning',th,'Header association needs review','Add scope or explicit headers for complex tables.');
       });
     });
+    // Check explicitly declared opaque foreground/background colors only.
+    // Inherited, transparent, image and gradient backgrounds require manual review.
+    function rgb(value) {
+      var match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim());
+      if (match) {
+        var h=match[1];if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');
+        return [0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16);});
+      }
+      match=/^rgba?\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*(?:,\\s*([\\d.]+))?\\s*\\)$/i.exec(value.trim());
+      if (!match || (match[4]!==undefined && Number(match[4])!==1))return null;
+      var values=[Number(match[1]),Number(match[2]),Number(match[3])];
+      return values.every(function(n){return n>=0&&n<=255;})?values:null;
+    }
+    function luminance(c) {
+      var v=c.map(function(n){n=n/255;return n<=0.04045?n/12.92:Math.pow((n+0.055)/1.055,2.4);});
+      return 0.2126*v[0]+0.7152*v[1]+0.0722*v[2];
+    }
+    container.querySelectorAll('[style]').forEach(function(el) {
+      var fg=rgb(el.style.color||''),bg=rgb(el.style.backgroundColor||'');
+      if(!fg||!bg||!text(el))return;
+      var a=luminance(fg),b=luminance(bg),ratio=(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);
+      if(ratio<4.5) add('explicit-color-contrast','warning',el,'Possible low text contrast ('+ratio.toFixed(2)+':1)','Verify WCAG 2.2 contrast requirements; large text may use a 3:1 threshold.');
+    });
     var previous=0;
     container.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(function(h) {
       var level=Number(h.tagName.slice(1));
