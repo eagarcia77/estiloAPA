@@ -718,7 +718,19 @@ function applyPreviewPresentation(preview) {
   preview.style.fontSize = sizes[font] || "12pt";
   preview.querySelectorAll("p").forEach((paragraph) => {
     const exempt = paragraph.matches(".apa-reference,.apa-title,.apa-heading,.apa-figure-label,.apa-figure-title,.apa-note,.no-indent");
-    paragraph.style.textIndent = !exempt && firstLineIndent ? ".5in" : "0";
+    // Match the editor's custom rule: only substantive paragraphs (3+ sentences).
+    // Do not indent contact details, headings, or isolated PDF text lines.
+    const text = (paragraph.textContent || "").trim();
+    const contact = /@|https?:\/\/|www\.|\b(?:linkedin|tel(?:éfono)?|phone|email)\b/i.test(text);
+    const upperHeading = text.length < 120 && /[A-ZÁÉÍÓÚÑ]/.test(text) &&
+      text === text.toLocaleUpperCase() && !/[.!?]$/.test(text);
+    const normalized = text
+      .replace(/\b(?:Dr|Dra|Sr|Sra|Prof|etc)\./gi, "")
+      .replace(/\b(?:[A-ZÁÉÍÓÚÑ]\.){2,}/g, "")
+      .replace(/\b\d+\.\d+\b/g, "");
+    const sentences = (normalized.match(/[.!?]+(?=\s|$|["”’»)\]])/g) || []).length;
+    paragraph.style.textIndent = !exempt && !contact && !upperHeading &&
+      firstLineIndent && sentences >= 3 ? ".5in" : "0";
   });
   preview.querySelectorAll(".apa-reference").forEach((reference) => {
     reference.style.paddingLeft = hangingReferences ? ".5in" : "0";
