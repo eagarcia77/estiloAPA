@@ -739,7 +739,7 @@ window.EstiloAPASmartPdfToHtml = async function (file) {
     inReferences = parsed.inReferences;
   }
   const labeledTables = pages.reduce((count, page) =>
-    count + page.lines.filter(line => /\\bTabla\\s+\\d+\\b/i.test(line.text)).length, 0);
+    count + page.lines.filter(line => /\bTabla\s+\d+\b/i.test(line.text)).length, 0);
   const reconstructedTables = blocks.filter(block => block.type === "table").length;
   if (labeledTables > reconstructedTables) {
     console.warn("PDF table reconstruction incomplete", { labeledTables, reconstructedTables });
