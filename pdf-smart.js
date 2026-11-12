@@ -687,6 +687,25 @@ function applyPreviewPresentation(preview) {
   });
 }
 
+// Shared structured PDF converter used by the automatic Open File workflow.
+// Keep document insertion and APA formatting under app.js control.
+window.EstiloAPASmartPdfToHtml = async function (file) {
+  const pages = await extractPdfPages(file);
+  removeRepeatedHeadersAndFooters(pages);
+  const characters = pages.reduce((sum, page) => sum + page.lines.reduce((n, line) => n + line.text.length, 0), 0);
+  if (!characters) throw new Error("El PDF no contiene texto seleccionable. Para documentos escaneados se requiere OCR.");
+  const bodyFontSize = detectBodyFontSize(pages);
+  await prepareFigureImages(pages, bodyFontSize);
+  let blocks = [];
+  let inReferences = false;
+  for (const page of pages) {
+    const parsed = pageToBlocks(page, bodyFontSize, inReferences);
+    blocks.push(...parsed.blocks);
+    inReferences = parsed.inReferences;
+  }
+  return blocksToHtml(mergeCrossPageBlocks(blocks), false);
+};
+
 async function smartFormatPdfFiles(files) {
   const preview = document.querySelector("#preview");
   const formatBtn = document.querySelector("#formatBtn");
