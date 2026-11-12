@@ -1,0 +1,64 @@
+/* EstiloAPA visual refresh: presentation only, no document-content mutations. */
+:root {
+  --green:#087e69; --green-dark:#075f51; --yellow:#e8b949;
+  --ink:#172b35; --muted:#60717e; --line:#dbe5e8;
+  --bg:#f3f6f9; --shadow:0 8px 30px rgba(22,49,64,.07);
+}
+body { background:var(--bg); -webkit-font-smoothing:antialiased; }
+.site-header { background:linear-gradient(110deg,#064e47,#087e69); border-bottom:2px solid #e8b949; }
+.site-header .header-inner { min-height:52px; padding:.55rem clamp(.75rem,2vw,1.5rem); }
+.site-header h1 { font-size:clamp(1.02rem,2vw,1.3rem); letter-spacing:-.025em; font-weight:750; }
+.layout { padding:clamp(.4rem,1.1vw,1rem); gap:.7rem; }
+.preview-panel { border:1px solid #dce6ea; border-radius:16px; padding:clamp(.4rem,.8vw,.85rem); box-shadow:var(--shadow); }
+.preview-toolbar { border-radius:12px 12px 0 0; border-bottom:1px solid #e0e9ec; padding:.55rem .65rem; gap:.6rem; }
+.preview-toolbar #preview-title { font-size:.9rem; letter-spacing:-.01em; }
+.simple-primary-actions { gap:.45rem; }
+.simple-primary-actions button, .simple-tools-menu > summary {
+  min-height:44px; border-radius:11px; padding:.6rem .85rem;
+  font-size:.86rem; transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+#simpleOpenBtn { background:var(--green); border-color:var(--green); color:#fff; }
+#simpleOpenBtn:hover { background:var(--green-dark); color:#fff; }
+#downloadDocxBtn:not(:disabled) { background:#fff; border-color:#b5ccc7; color:#123e39; }
+#downloadDocxBtn:disabled { opacity:.55; }
+.simple-tools-menu > summary { background:#f5f8fa; }
+.simple-tools-content { border-radius:14px; box-shadow:0 18px 45px rgba(18,43,53,.17); }
+.simple-quick-status .status { border-radius:9px; }
+.word-ribbon-enabled { border-radius:13px; border:1px solid #d8e3ee; background:#f8fafc; }
+.word-ribbon-tabs { background:#edf3f9; gap:3px; padding:7px 9px 0; }
+.word-ribbon-tabs [role="tab"] { border-radius:9px 9px 0 0; min-height:43px; padding:9px 13px; }
+.word-ribbon-tabs [role="tab"][aria-selected="true"] { color:#0d536b; box-shadow:inset 0 -3px #078575; }
+.word-ribbon-view-actions { background:#edf3f9; gap:.45rem; }
+.word-ribbon-view-actions .word-ribbon-action { border-radius:9px; }
+.word-ribbon-status { background:#f8fafc; color:#50667a; }
+.paper-wrap { border-radius:12px; border:1px solid #dfe7eb; background:#e9eef3; }
+.simple-secondary:has(details[open]) { border-radius:15px; box-shadow:0 14px 40px rgba(18,43,53,.12); }
+.simple-secondary details > summary { border-radius:10px; }
+button:focus-visible, summary:focus-visible, [role="tab"]:focus-visible,
+input:focus-visible, select:focus-visible, .apa-paper:focus-visible {
+  outline:3px solid #188fba; outline-offset:2px;
+}
+@media (hover:hover) {
+  .simple-primary-actions button:not(:disabled):hover,
+  .simple-tools-menu > summary:hover { box-shadow:0 3px 12px rgba(18,43,53,.11); }
+}
+@media (max-width:760px) {
+  .layout { padding:.35rem; }
+  .preview-panel { padding:.35rem; border-radius:12px; }
+  .preview-toolbar { flex-wrap:wrap; justify-content:stretch; gap:.35rem; padding:.4rem; }
+  .preview-toolbar > div:first-child { display:none; }
+  .simple-primary-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; width:100%; gap:.35rem; }
+  .simple-primary-actions button { min-width:0; padding:.6rem .35rem; font-size:.78rem; }
+  .simple-tools-menu > summary { padding:.6rem .55rem; }
+  .word-ribbon-tabs { flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:thin; }
+  .word-ribbon-tabs [role="tab"] { white-space:nowrap; flex:0 0 auto; }
+  .word-ribbon-view-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .word-ribbon-view-actions .word-ribbon-action { min-width:0; padding:.5rem .25rem; font-size:.75rem; }
+  .paper-wrap { border-radius:8px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .simple-primary-actions button, .simple-tools-menu > summary { transition:none; }
+}
+@media print {
+  .preview-panel,.paper-wrap { border:0!important; box-shadow:none!important; background:#fff!important; }
+}
