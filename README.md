@@ -46,24 +46,25 @@ APA7 Academic Formatter busca facilitar la preparación y revisión de documento
 
 ---
 
-## Versión actual: v3.4.8 — Edición protegida
+## Flujo actual: formato inicial y edición libre
 
-La versión **3.4.8** incorpora un sistema de protección para la sección **3. Vista previa y exportación**.
+EstiloAPA sigue un proceso centrado en el documento:
 
-Mientras el usuario está escribiendo, borrando, cortando, pegando o reemplazando texto, los normalizadores automáticos de estructura quedan temporalmente aplazados. Esto evita que un `MutationObserver` u otro proceso de formato vuelva a reconstruir nodos del documento mientras el cursor está activo.
+1. **Open File:** seleccionar un DOCX, PDF, TXT, MD o HTML. También se puede arrastrar un archivo al área del editor.
+2. **Automatic APA 7 Formatting:** el perfil predeterminado es Standard APA 7. El formato se aplica durante la importación; no hace falta pulsar Apply Formatting.
+3. **Document Editor:** modificar libremente el contenido, las sangrías, la alineación y los estilos. Los normalizadores automáticos diferidos no se vuelven a ejecutar al abandonar el editor.
+4. **Review (optional):** abrir More → Review para analizar el documento actual sin alterar su formato. El panel permanece cerrado cuando no se necesita.
+5. **Download DOCX:** exportar el trabajo editado. Download HTML permanece disponible en More.
 
-La edición protegida cubre, entre otros, los procesos relacionados con:
+**Reapply APA 7** vuelve a cargar el archivo original; por eso requiere confirmación, ya que puede sustituir los cambios del editor. **Open File** también advierte antes de reemplazar un documento ya cargado.
 
-- perfil institucional del módulo;
-- listas numeradas;
-- tablas APA 7;
-- figuras e imágenes;
-- recuperación de figuras PDF;
-- clasificación de imágenes DOCX;
-- referencias APA 7;
-- semántica y estructura del documento.
+### Simplificación de la interfaz
 
-Las reglas pendientes pueden volver a ejecutarse al salir del área editable, volver a auditar o exportar el documento.
+La ventana principal reserva el espacio para Document Editor. Las opciones secundarias se agrupan en More y Document Settings. Se conservaron los perfiles institucionales y de tesis, las herramientas del Ribbon, los análisis académicos y los exportadores. Se eliminaron avisos repetidos de modo protegido, reglas CSS duplicadas y sobrescrituras obsoletas del título y de las instrucciones.
+
+### Protección y limitaciones
+
+Los cambios del usuario tienen prioridad sobre la normalización automática después de la importación. La protección contra eliminaciones accidentales grandes sigue disponible. La revisión APA 7 es heurística; no garantiza por sí sola exactitud bibliográfica ni reproducción perfecta de un PDF o DOCX complejo. Es importante comprobar los documentos exportados.
 
 ---
 
