@@ -73,6 +73,17 @@ The **File** tab also provides **Save Draft**, **Recover Draft**, **AutoSave: On
 - Drafts are stored **locally, without encryption**. They are not uploaded by this feature. Other people using the same browser profile may be able to access them.
 - Browser storage capacity is limited; large image-rich documents may not fit. For reliable storage outside the browser, always use **Download DOCX**.
 
+### Command Search and contextual Word editing
+
+EstiloAPA includes a lightweight **Command Search** button in the editor's quick-access ribbon, available even when the full Ribbon is collapsed. Use **Ctrl/Cmd + Shift + P** or **Alt + Q** to search for commands in English. No additional installation or account is required.
+
+- Search by feature or task, such as **No Indent**, **Find and Replace**, **Download Word Document**, **Page Layout**, **Review APA 7**, **Document Outline**, **Rulers**, **Bold** or **Insert APA Table**.
+- Use **Arrow Up/Down** to choose a result, **Enter** to apply it, or **Escape** to close without making changes. Recently used commands move to the top of an empty search.
+- Select text to show a compact desktop-only **contextual formatting toolbar** with **Bold**, **Italic**, **Underline**, **No Indent** and **Find**. The toolbar does not appear when there is only a text cursor; on touch screens the device's native text-selection controls take precedence.
+- Open **Keyboard Shortcuts** from Command Search to see the available shortcuts. All Command Search controls use the same existing editor actions and preserve the current text selection when possible.
+
+The Command Search interface lives outside the editable document and does not alter document HTML, apply APA 7 again or trigger reformatting while typing. Its accessibility features include keyboard operation, English labels, search-result status, and responsive design. Browser clipboard and selection behavior still need real-device testing.
+
 ### Word-style editing tools
 
 The Word-style Ribbon now contains a set of practical document-editing features, in addition to the APA 7 controls already available:

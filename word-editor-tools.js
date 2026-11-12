@@ -509,8 +509,11 @@
     home.append(edit);
 
     const lists = makeGroup("Lists");
-    lists.append(makeButton("Bullets", () => command("insertUnorderedList")),
-      makeButton("Numbering", () => command("insertOrderedList")));
+    const bullets = makeButton("Bullets", () => command("insertUnorderedList"));
+    bullets.id = "wordBulletsButton";
+    const numbering = makeButton("Numbering", () => command("insertOrderedList"));
+    numbering.id = "wordNumberingButton";
+    lists.append(bullets, numbering);
     home.append(lists);
 
     const character = makeGroup("Character");
@@ -579,12 +582,15 @@
     home.append(clip);
 
     const tableTools = makeGroup("Table Editing");
-    tableTools.append(
-      makeButton("Add Row", () => editTable("addRow")),
-      makeButton("Add Column", () => editTable("addColumn")),
-      makeButton("Delete Row", () => editTable("deleteRow")),
-      makeButton("Delete Column", () => editTable("deleteColumn"))
-    );
+    const addRowTool = makeButton("Add Row", () => editTable("addRow"));
+    addRowTool.id = "wordTableAddRow";
+    const addColumnTool = makeButton("Add Column", () => editTable("addColumn"));
+    addColumnTool.id = "wordTableAddColumn";
+    const deleteRowTool = makeButton("Delete Row", () => editTable("deleteRow"));
+    deleteRowTool.id = "wordTableDeleteRow";
+    const deleteColumnTool = makeButton("Delete Column", () => editTable("deleteColumn"));
+    deleteColumnTool.id = "wordTableDeleteColumn";
+    tableTools.append(addRowTool, addColumnTool, deleteRowTool, deleteColumnTool);
     insert.append(tableTools);
     const insertText = makeGroup("Date & Symbols");
     insertText.append(makeButton("Insert Date", () => {
@@ -630,7 +636,9 @@
     const view = document.getElementById("word-ribbon-panel-vista");
     if (view) {
       const navigation = makeGroup("Navigation");
-      navigation.append(makeButton("Document Outline", openOutline));
+      const outline = makeButton("Document Outline", openOutline);
+      outline.id = "wordDocumentOutlineButton";
+      navigation.append(outline);
       const marks = makeButton("Show Paragraph Marks", () => {
         const enabled = document.body.classList.toggle("word-show-paragraph-marks");
         marks.textContent = enabled ? "Hide Paragraph Marks" : "Show Paragraph Marks";
