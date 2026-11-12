@@ -221,6 +221,26 @@ function sanitizeHtml(html) {
 }
 
 async function readDocx(file) {
+  // A DOCX is a non-empty ZIP archive. Reject empty, misnamed, or truncated
+  // uploads before passing them to Mammoth, which otherwise emits opaque ZIP errors.
+  if (!file || file.size === 0) {
+    throw new Error("El archivo Word está vacío (0 bytes). Descargue una copia completa e inténtelo nuevamente.");
+  }
+  const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+  const isZip = header.length === 4 && header[0] === 0x50 && header[1] === 0x4b &&
+    header[2] === 0x03 && header[3] === 0x04;
+  if (!isZip) {
+    throw new Error("Este archivo no parece ser un DOCX válido. En Word, guárdelo como Documento de Word (.docx), no como .doc ni PDF.");
+  }
+  try {
+    return await convertDocx(file);
+  } catch (error) {
+    console.error("DOCX import failed:", error);
+    throw new Error("No se pudo leer el archivo DOCX. Puede estar incompleto o dañado. Ábralo en Word, guarde una copia nueva como .docx y vuelva a subirla.");
+  }
+}
+
+async function convertDocx(file) {
   const mammoth = await waitForGlobal("mammoth");
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.convertToHtml(
