@@ -30,8 +30,7 @@
     const closePickerSetup = () => {
       setup.open = false;
     };
-    fileInput.addEventListener("change", closePickerSetup);
-    fileInput.addEventListener("cancel", closePickerSetup);
+    // Do not collapse the ancestor <details> on file selection.\n    // iPadOS file providers may expose a lazy File handle; keep its input\n    // connected and visible until the asynchronous import has finished.\n    fileInput.addEventListener("cancel", closePickerSetup);\n    preview.addEventListener("apa-document-loaded", closePickerSetup);
     // Preserve all listeners previously attached by the application.
     // Moving elements does not clone or recreate their event handlers.
     const sample = document.getElementById("demoBtn");
