@@ -224,18 +224,18 @@ function renderAdvancedAudit() {
       <div class="advanced-card"><span>Findings</span><strong>${analysis.issueCount}</strong></div>
     </div>
     <details ${analysis.unmatchedCitations.length ? "open" : ""}>
-      <summary><strong>Unmatched citations detectada (${analysis.unmatchedCitations.length})</strong></summary>
+      <summary><strong>Unmatched citations (${analysis.unmatchedCitations.length})</strong></summary>
       <ul>${unmatched}</ul>
     </details>
     <details>
-      <summary><strong>References sin cita detectada (${analysis.uncitedReferences.length})</strong></summary>
+      <summary><strong>Uncited references (${analysis.uncitedReferences.length})</strong></summary>
       <ul>${uncited}</ul>
     </details>
     <details>
       <summary><strong>Individual Reference Review</strong></summary>
       <div class="advanced-table-wrap">
         <table class="advanced-table">
-          <thead><tr><th>#</th><th>Referencia</th><th>Estado</th><th>Findings</th></tr></thead>
+          <thead><tr><th>#</th><th>Reference</th><th>Status</th><th>Findings</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="4">No references detected.</td></tr>'}</tbody>
         </table>
       </div>
@@ -294,7 +294,7 @@ function downloadAdvancedCsv() {
 
   for (const citation of analysis.citations) {
     lines.push([
-      "cita",
+      "citation",
       citation.author,
       citation.year,
       citation.raw,
@@ -304,7 +304,7 @@ function downloadAdvancedCsv() {
 
   for (const ref of analysis.referenceReview) {
     lines.push([
-      "referencia",
+      "reference",
       ref.author,
       ref.year,
       ref.text,
