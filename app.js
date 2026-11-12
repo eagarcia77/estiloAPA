@@ -911,6 +911,36 @@ function collectExportBlocks(clone) {
   return blocks;
 }
 
+async function imageToDocxRun(img, api) {
+  const source = img.getAttribute("src") || "";
+  if (!source) return null;
+  let bytes;
+  try {
+    if (source.startsWith("data:image/")) {
+      const response = await fetch(source);
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } else if (source.startsWith("blob:") || source.startsWith("https:") || source.startsWith("http:")) {
+      const response = await fetch(source);
+      if (!response.ok) return null;
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } else return null;
+    if (!bytes.length) return null;
+    const naturalWidth = img.naturalWidth || Number(img.getAttribute("width")) || 600;
+    const naturalHeight = img.naturalHeight || Number(img.getAttribute("height")) || 400;
+    const scale = Math.min(1, 520 / naturalWidth, 690 / naturalHeight);
+    return new api.ImageRun({
+      data: bytes,
+      transformation: {
+        width: Math.max(1, Math.round(naturalWidth * scale)),
+        height: Math.max(1, Math.round(naturalHeight * scale)),
+      },
+    });
+  } catch (error) {
+    console.warn("DOCX image export skipped:", error);
+    return null;
+  }
+}
+
 async function downloadDocx() {
   try {
     const api = await waitForGlobal("docx");
@@ -945,7 +975,20 @@ async function downloadDocx() {
         continue;
       }
       if (element.tagName === "FIGURE" || element.tagName === "IMG") {
-        children.push(new Paragraph({ children: [new TextRun({ text: `[Figura: ${element.getAttribute("alt") || "revise la imagen en el original"}]`, font, size, italics: true })], spacing: { line: 480 } }));
+        const images = element.tagName === "IMG" ? [element] : [...element.querySelectorAll("img")];
+        for (const img of images) {
+          const imageRun = await imageToDocxRun(img, api);
+          if (imageRun) {
+            children.push(new Paragraph({ children: [imageRun], spacing: { line: 480 } }));
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: `[Figura no incrustada: ${img.getAttribute("alt") || "revise el original"}]`, font, size, italics: true })] }));
+          }
+        }
+        if (element.tagName === "FIGURE") {
+          for (const caption of element.querySelectorAll("figcaption")) {
+            children.push(new Paragraph({ children: [new TextRun({ text: caption.textContent.trim(), font, size })], spacing: { line: 480 } }));
+          }
+        }
         continue;
       }
       const paragraph = domBlockToDocxParagraph(element, api, font, size);
