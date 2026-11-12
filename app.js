@@ -666,16 +666,39 @@ async function formatSelectedFiles(requestId = importRequestId) {
       }
     }
     if (requestId !== importRequestId) return;
-    window.apaResetProtectedDocument?.();
-    els.preview.replaceChildren(...wrapper.childNodes);
-    applyPreviewStyles();
-    // Apply academic profiles ONCE to this newly imported document.
-    els.preview.dispatchEvent(new Event("apa-document-loaded"));
-    renderAudit(auditDocument(els.preview));
-    enableDownloads();
-    els.preview.dataset.apaReadyForEditing = "true";
-    setStatus("APA 7 applied. Your document is ready to edit.", "success");
-    els.preview.focus();
+    // Preserve the previous editor until the new document has survived every
+    // import hook. An empty post-import editor must never be marked successful.
+    const previousHtml = els.preview.innerHTML;
+    const previousReady = els.preview.dataset.apaReadyForEditing;
+    const hasContent = (node) => Boolean((node.textContent || "").trim() ||
+      node.querySelector("img,svg,table,canvas,video,math"));
+    if (!hasContent(wrapper)) throw new Error("El conversor no produjo contenido. Se conservó el documento anterior.");
+    try {
+      window.apaResetProtectedDocument?.();
+      els.preview.replaceChildren(...wrapper.childNodes);
+      if (!hasContent(els.preview)) throw new Error("El contenido no llegó al editor.");
+      applyPreviewStyles();
+      if (!hasContent(els.preview)) throw new Error("El contenido desapareció al aplicar el diseño del editor.");
+      // The document-loaded event may trigger external editor modules.
+      els.preview.dispatchEvent(new Event("apa-document-loaded"));
+      if (!hasContent(els.preview)) throw new Error("Un módulo del editor eliminó el contenido durante la importación.");
+      renderAudit(auditDocument(els.preview));
+      if (!hasContent(els.preview)) throw new Error("El contenido desapareció durante la auditoría.");
+      enableDownloads();
+      els.preview.dataset.apaReadyForEditing = "true";
+      setStatus("APA 7 applied. Your document is ready to edit.", "success");
+      els.preview.focus();
+    } catch (importError) {
+      els.preview.innerHTML = previousHtml;
+      if (previousReady === undefined) delete els.preview.dataset.apaReadyForEditing;
+      else els.preview.dataset.apaReadyForEditing = previousReady;
+      if (!hasContent(els.preview)) {
+        els.downloadDocxBtn.disabled = true;
+        els.downloadHtmlBtn.disabled = true;
+        els.downloadAuditBtn.disabled = true;
+      }
+      throw importError;
+    }
   } catch (error) {
     console.error(error);
     if (requestId === importRequestId) setStatus(error?.message || "Could not open the document.", "error");
