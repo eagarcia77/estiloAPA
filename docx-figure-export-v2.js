@@ -144,6 +144,7 @@ function dxParagraph(element, api, font, size, firstLineIndent, hangingReference
     const noIndent = isHeading || isReferencesHeading || isTableLabel || isTableTitle || isFigureLabel || isFigureTitle || isNote || element.classList.contains("no-indent");
     if (!noIndent && firstLineIndent) options.indent = { firstLine: 720 };
   }
+  window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
 
@@ -304,7 +305,7 @@ async function buildApaDocxFigureV2() {
     numbering: { config: numberingConfigs },
     sections: [{
       properties: {
-        page: {
+        page: window.EstiloAPAWordPageLayout?.getDocxPage() || {
           size: { width: 12240, height: 15840 },
           margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
         }
