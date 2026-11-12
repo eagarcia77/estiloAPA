@@ -236,6 +236,90 @@
     }
   }
 
+  function currentTableCell() {
+    const range = getRange();
+    if (!range) return null;
+    const node = range.startContainer.nodeType === 1 ?
+      range.startContainer : range.startContainer.parentElement;
+    const cell = node?.closest?.("td,th");
+    return cell && inside(cell) ? cell : null;
+  }
+  function tableContext() {
+    const cell = currentTableCell();
+    const table = cell?.closest?.("table");
+    if (!table) { report("Place the cursor inside a table first.", true); return null; }
+    // Merged tables require structure-aware operations not provided by this tool.
+    if ([...table.querySelectorAll("td,th")].some(item =>
+      Number(item.getAttribute("rowspan") || 1) > 1 ||
+      Number(item.getAttribute("colspan") || 1) > 1)) {
+      report("Complex merged tables must be edited in Word after export.", true);
+      return null;
+    }
+    return { cell, table, row: cell.closest("tr"), column: cell.cellIndex };
+  }
+  function editTable(action) {
+    const context = tableContext();
+    if (!context) return false;
+    const { table, row, column } = context;
+    if (action === "addRow") {
+      const inserted = document.createElement("tr");
+      for (const existing of [...row.cells]) {
+        const cell = document.createElement("td");
+        cell.textContent = "";
+        inserted.append(cell);
+      }
+      row.after(inserted);
+    } else if (action === "addColumn") {
+      for (const targetRow of [...table.rows]) {
+        const added = document.createElement("td");
+        added.textContent = "";
+        const target = targetRow.cells[column];
+        if (target) target.after(added);
+        else targetRow.append(added);
+      }
+    } else if (action === "deleteRow") {
+      if (table.rows.length <= 1) return false;
+      row.remove();
+    } else if (action === "deleteColumn") {
+      if (table.rows[0]?.cells.length <= 1) return false;
+      for (const targetRow of [...table.rows]) targetRow.cells[column]?.remove();
+    } else return false;
+    changed();
+    return true;
+  }
+  function openOutline() {
+    const headings = [...root().querySelectorAll(
+      "h1,h2,h3,h4,h5,h6,[data-apa-heading-level],.apa-editor-title"
+    )];
+    const list = document.createElement("section");
+    list.className = "word-outline";
+    list.setAttribute("aria-label", "Document Outline");
+    const title = document.createElement("strong");
+    title.textContent = "Document Outline";
+    const close = makeButton("Close", () => list.remove());
+    const head = document.createElement("div");
+    head.className = "word-outline-header";
+    head.append(title, close);
+    list.append(head);
+    if (!headings.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No document headings found.";
+      list.append(empty);
+    } else {
+      for (const heading of headings.slice(0, 250)) {
+        const jump = makeButton((heading.textContent || "Untitled heading").trim().slice(0, 90), () => {
+          heading.scrollIntoView?.({ behavior: "smooth", block: "center" });
+          list.remove();
+        });
+        jump.className = "word-outline-link";
+        list.append(jump);
+      }
+    }
+    document.getElementById("wordDocumentOutline")?.remove();
+    list.id = "wordDocumentOutline";
+    shell().parentNode.insertBefore(list, shell());
+  }
+
   function textMap() {
     const el = root();
     if (!el) return { text: "", spans: [] };
@@ -430,6 +514,24 @@
     home.append(lists);
 
     const character = makeGroup("Character");
+    const family = document.createElement("select");
+    family.id = "wordFontFamily";
+    family.setAttribute("aria-label", "Font family");
+    const familyDefault = document.createElement("option");
+    familyDefault.textContent = "Font Family";
+    familyDefault.value = "";
+    family.append(familyDefault);
+    for (const name of ["Times New Roman", "Arial", "Calibri", "Georgia", "Verdana"]) {
+      const option = document.createElement("option");
+      option.textContent = name;
+      option.value = name;
+      family.append(option);
+    }
+    family.addEventListener("change", () => {
+      if (family.value) applySpanStyle("font-family", family.value);
+      family.value = "";
+    });
+    character.append(family);
     const size = document.createElement("select");
     size.id = "wordFontSize";
     size.setAttribute("aria-label", "Font size in points");
@@ -476,9 +578,26 @@
       makeButton("Cut", () => command("cut"), "Ctrl+X"));
     home.append(clip);
 
-    const printing = makeGroup("Document");
-    printing.append(makeButton("Print", () => window.print?.(), "Ctrl+P"));
-    insert.append(printing);
+    const tableTools = makeGroup("Table Editing");
+    tableTools.append(
+      makeButton("Add Row", () => editTable("addRow")),
+      makeButton("Add Column", () => editTable("addColumn")),
+      makeButton("Delete Row", () => editTable("deleteRow")),
+      makeButton("Delete Column", () => editTable("deleteColumn"))
+    );
+    insert.append(tableTools);
+    const view = document.getElementById("word-ribbon-panel-vista");
+    if (view) {
+      const navigation = makeGroup("Navigation");
+      navigation.append(makeButton("Document Outline", openOutline));
+      view.append(navigation);
+    }
+    const file = document.getElementById("word-ribbon-panel-archivo");
+    if (file) {
+      const printing = makeGroup("Print");
+      printing.append(makeButton("Print Document", () => window.print?.(), "Ctrl+P"));
+      file.append(printing);
+    }
   }
   function keydown(event) {
     const shortcut = (event.ctrlKey || event.metaKey) && !event.altKey;
@@ -512,7 +631,12 @@
       ensureHistory();
     }, true);
     el.addEventListener("input", event => commit(event.inputType || ""));
-    el.addEventListener("apa-document-loaded", resetHistory);
+    el.addEventListener("apa-document-loaded", () => {
+      resetHistory();
+      // Some import-specific figure/list formatters run after this listener.
+      // Rebase once all synchronous import listeners have completed.
+      if (typeof queueMicrotask === "function") queueMicrotask(resetHistory);
+    });
     el.addEventListener("keyup", rememberSelection);
     el.addEventListener("mouseup", rememberSelection);
     el.addEventListener("keydown", keydown, true);
