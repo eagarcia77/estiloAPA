@@ -174,12 +174,12 @@ function ensurePanel() {
   panel.id = "advancedApaAudit";
   panel.className = "advanced-audit";
   panel.innerHTML = `
-    <h3>Revisión avanzada de citas y referencias</h3>
-    <p class="advanced-note">Correcciones automáticas limitadas a cambios seguros de presentación. Los datos bibliográficos deben verificarse con la fuente original.</p>
+    <h3>Advanced Citations and References Review</h3>
+    <p class="advanced-note">Automatic fixes are limited to safe presentation changes. Verify bibliographic details against the original sources.</p>
     <div class="advanced-actions">
-      <button type="button" id="safeFixReferences">Aplicar correcciones seguras</button>
-      <button type="button" id="refreshAdvancedAudit">Revisar ahora</button>
-      <button type="button" id="downloadAdvancedCsv">Descargar matriz CSV</button>
+      <button type="button" id="safeFixReferences">Apply Safe Fixes</button>
+      <button type="button" id="refreshAdvancedAudit">Review Now</button>
+      <button type="button" id="downloadAdvancedCsv">Download CSV Report</button>
     </div>
     <div id="advancedAuditContent" aria-live="polite"></div>
   `;
@@ -198,45 +198,45 @@ function renderAdvancedAudit() {
 
   const analysis = analyzeAdvanced();
   if (!analysis.refs.length && !analysis.citations.length) {
-    target.innerHTML = '<p class="advanced-note">Todavía no hay citas o referencias detectadas para revisar.</p>';
+    target.innerHTML = '<p class="advanced-note">No citations or references have been detected for review.</p>';
     return;
   }
 
   const rows = analysis.referenceReview.map((ref) => {
-    const status = ref.issues.length ? `<span class="advanced-warn">${ref.issues.length} observación(es)</span>` : '<span class="advanced-ok">Sin alertas básicas</span>';
+    const status = ref.issues.length ? `<span class="advanced-warn">${ref.issues.length} finding(s)</span>` : '<span class="advanced-ok">No basic alerts</span>';
     const issues = ref.issues.length ? `<ul>${ref.issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul>` : "—";
     return `<tr><td>${ref.index + 1}</td><td>${escapeHtml(ref.text)}</td><td>${status}</td><td>${issues}</td></tr>`;
   }).join("");
 
   const unmatched = analysis.unmatchedCitations.length
-    ? analysis.unmatchedCitations.map((citation) => `<li>${escapeHtml(citation.raw)} — no se encontró coincidencia por primer autor y año.</li>`).join("")
-    : '<li class="advanced-ok">Todas las citas detectadas tienen una coincidencia básica por autor y año.</li>';
+    ? analysis.unmatchedCitations.map((citation) => `<li>${escapeHtml(citation.raw)} — no matching reference was found by first author and year.</li>`).join("")
+    : '<li class="advanced-ok">All detected citations have a basic author-year match.</li>';
 
   const uncited = analysis.uncitedReferences.length
     ? analysis.uncitedReferences.map((ref) => `<li>${escapeHtml(ref.text)}</li>`).join("")
-    : '<li class="advanced-ok">No se detectaron referencias claramente no citadas.</li>';
+    : '<li class="advanced-ok">No clearly uncited references were detected.</li>';
 
   target.innerHTML = `
     <div class="advanced-summary">
-      <div class="advanced-card"><span>Citas detectadas</span><strong>${analysis.citations.length}</strong></div>
-      <div class="advanced-card"><span>Referencias</span><strong>${analysis.refs.length}</strong></div>
-      <div class="advanced-card"><span>Citas sin referencia</span><strong>${analysis.unmatchedCitations.length}</strong></div>
-      <div class="advanced-card"><span>Observaciones</span><strong>${analysis.issueCount}</strong></div>
+      <div class="advanced-card"><span>Citations detected</span><strong>${analysis.citations.length}</strong></div>
+      <div class="advanced-card"><span>References</span><strong>${analysis.refs.length}</strong></div>
+      <div class="advanced-card"><span>Unmatched citations</span><strong>${analysis.unmatchedCitations.length}</strong></div>
+      <div class="advanced-card"><span>Findings</span><strong>${analysis.issueCount}</strong></div>
     </div>
     <details ${analysis.unmatchedCitations.length ? "open" : ""}>
-      <summary><strong>Citas sin referencia detectada (${analysis.unmatchedCitations.length})</strong></summary>
+      <summary><strong>Unmatched citations (${analysis.unmatchedCitations.length})</strong></summary>
       <ul>${unmatched}</ul>
     </details>
     <details>
-      <summary><strong>Referencias sin cita detectada (${analysis.uncitedReferences.length})</strong></summary>
+      <summary><strong>Uncited references (${analysis.uncitedReferences.length})</strong></summary>
       <ul>${uncited}</ul>
     </details>
     <details>
-      <summary><strong>Revisión individual de referencias</strong></summary>
+      <summary><strong>Individual Reference Review</strong></summary>
       <div class="advanced-table-wrap">
         <table class="advanced-table">
-          <thead><tr><th>#</th><th>Referencia</th><th>Estado</th><th>Observaciones</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="4">No se detectaron referencias.</td></tr>'}</tbody>
+          <thead><tr><th>#</th><th>Reference</th><th>Status</th><th>Findings</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="4">No references detected.</td></tr>'}</tbody>
         </table>
       </div>
     </details>
@@ -290,25 +290,25 @@ function csvEscape(value) {
 
 function downloadAdvancedCsv() {
   const analysis = analyzeAdvanced();
-  const lines = [["tipo", "autor_clave", "anio", "texto", "estado"]];
+  const lines = [["type", "author_key", "year", "text", "status"]];
 
   for (const citation of analysis.citations) {
     lines.push([
-      "cita",
+      "citation",
       citation.author,
       citation.year,
       citation.raw,
-      analysis.unmatchedCitations.some((item) => item.key === citation.key && item.raw === citation.raw) ? "sin referencia" : "coincidencia básica",
+      analysis.unmatchedCitations.some((item) => item.key === citation.key && item.raw === citation.raw) ? "unmatched" : "basic match",
     ]);
   }
 
   for (const ref of analysis.referenceReview) {
     lines.push([
-      "referencia",
+      "reference",
       ref.author,
       ref.year,
       ref.text,
-      ref.issues.length ? ref.issues.join(" | ") : "sin alertas básicas",
+      ref.issues.length ? ref.issues.join(" | ") : "no basic alerts",
     ]);
   }
 
@@ -324,27 +324,26 @@ function downloadAdvancedCsv() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-let refreshTimer;
-function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(renderAdvancedAudit, 450);
-}
-
+// Advanced review is an on-demand tool, not a background editor observer.
+// Running citation analysis after every keystroke makes long documents sluggish.
 function initEnhancements() {
-  ensureStyles();
-  ensurePanel();
-  renderAdvancedAudit();
+  const review = document.querySelector("#simpleReviewDetails");
+  const refresh = () => {
+    if (review && !review.open) return;
+    ensureStyles();
+    renderAdvancedAudit();
+  };
 
-  const preview = getPreview();
-  preview?.addEventListener("input", scheduleRefresh);
-
-  const observer = new MutationObserver(scheduleRefresh);
-  if (preview) observer.observe(preview, { childList: true, subtree: true });
-
-  document.querySelector("#formatBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 700));
-  document.querySelector("#demoBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 300));
-  document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 100));
-  document.querySelector("#clearBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 100));
+  if (review) {
+    review.addEventListener("toggle", refresh);
+    getPreview()?.addEventListener("apa-document-loaded", refresh);
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+    if (review.open) refresh();
+  } else {
+    // Compatibility with the earlier page that had no collapsible Review.
+    refresh();
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+  }
 }
 
 if (document.readyState === "loading") {
