@@ -66,6 +66,21 @@ const ready = () => {
         });
         li.append(fix);
       }
+      if(finding.rule==='table-header-association'){
+        const fix=document.createElement('button');fix.type='button';fix.textContent='Set header scope';
+        fix.addEventListener('click',()=>{
+          const th=finding.element;
+          if(!editor.contains(th)){summary.textContent='Document changed. Run the checker again.';return;}
+          const choice=window.prompt('Header scope: col or row (Cancel to keep unchanged)', 'col');
+          if(choice===null)return;
+          const scope=choice.trim().toLowerCase();
+          if(scope!=='col'&&scope!=='row'){window.alert('Choose col or row.');return;}
+          th.setAttribute('scope',scope);
+          th.dispatchEvent(new Event('input',{bubbles:true}));
+          button.click();
+        });
+        li.append(fix);
+      }
       list.appendChild(li);
     });
     if(result.findings.length)report.appendChild(list);
