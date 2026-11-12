@@ -105,8 +105,13 @@ function applyEditorBlockStyle(styleName) {
     clearApaEditorClasses(block);
     // Choosing another paragraph style replaces the previous explicit indent.
     delete block.dataset.apaEditorIndent;
+    delete block.dataset.apaEditorIndentLeft;
+    delete block.dataset.apaEditorIndentFirst;
+    delete block.dataset.apaEditorIndentRight;
     block.style.removeProperty("text-indent");
     block.style.removeProperty("padding-left");
+    block.style.removeProperty("padding-right");
+    block.style.removeProperty("margin-left");
     block.style.removeProperty("text-align");
     block.dataset.apaEditorStyle = styleName;
     block.style.fontWeight = "";
@@ -205,18 +210,25 @@ function applyAlignment(value) {
 function enforceEditorIndent(block) {
   if (!block || !block.dataset) return false;
   const indent = block.dataset.apaEditorIndent;
-  if (!["none", "first", "hanging"].includes(indent)) return false;
-  const expectedText = indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0";
-  const expectedLeft = indent === "hanging" ? ".5in" : "0";
+  if (!["none", "first", "hanging", "custom"].includes(indent)) return false;
+  const values = indent === "custom" ? window.EstiloAPAWordRulerIndents?.read(block) : null;
+  if (indent === "custom" && !values) return false;
+  const expectedText = values ?
+    (Math.round((values.first - values.left) * 1000) / 1000) + "in" :
+    indent === "first" ? ".5in" : indent === "hanging" ? "-.5in" : "0";
+  const expectedLeft = values ? values.left + "in" : indent === "hanging" ? ".5in" : "0";
+  const properties = [["text-indent", expectedText], ["padding-left", expectedLeft]];
+  if (values) properties.push(["padding-right", values.right + "in"]);
   let changed = false;
-  for (const [property, expected] of [["text-indent", expectedText], ["padding-left", expectedLeft]]) {
+  for (const [property, expected] of properties) {
     if (block.style.getPropertyValue(property) !== expected ||
         block.style.getPropertyPriority(property) !== "important") {
       block.style.setProperty(property, expected, "important");
       changed = true;
     }
   }
-  if (indent === "none" && (block.style.getPropertyValue("margin-left") !== "0" ||
+  if (["none", "custom"].includes(indent) &&
+    (block.style.getPropertyValue("margin-left") !== "0" ||
     block.style.getPropertyPriority("margin-left") !== "important")) {
     block.style.setProperty("margin-left", "0", "important");
     changed = true;
@@ -286,6 +298,10 @@ function applyIndent(value) {
       block.style.setProperty("text-indent", "0", "important");
       block.style.setProperty("margin-left", "0", "important");
     }
+    delete block.dataset.apaEditorIndentLeft;
+    delete block.dataset.apaEditorIndentFirst;
+    delete block.dataset.apaEditorIndentRight;
+    block.style.removeProperty("padding-right");
     enforceEditorIndent(block);
   }
   markRibbonButtonState("data-indent", value);

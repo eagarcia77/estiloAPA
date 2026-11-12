@@ -1,0 +1,83 @@
+/* Interactive Word-like rulers. Decoration is outside #preview: never exported. */
+.word-ruler-workspace { position:relative; }
+.word-ruler-horizontal {
+  position:sticky; top:0; z-index:14; box-sizing:border-box;
+  height:26px; flex:none; margin-bottom:7px;
+  border:1px solid #b6c3d1; border-radius:3px;
+  background:#f2f5f8;
+  color:#465a71; font:10px/1.1 Arial,Helvetica,sans-serif;
+  user-select:none; overflow:visible; pointer-events:none;
+}
+.word-ruler-horizontal::before {
+  content:""; position:absolute;
+  left:0; top:0; bottom:0;
+  width:var(--word-text-start,96px);
+  background:repeating-linear-gradient(135deg,#dbe3eb 0 4px,#e7edf3 4px 8px);
+}
+.word-ruler-horizontal::after {
+  content:""; position:absolute; top:0; bottom:0;
+  left:var(--word-text-end,100%); right:0;
+  background:repeating-linear-gradient(135deg,#dbe3eb 0 4px,#e7edf3 4px 8px);
+}
+.word-ruler-tick {
+  position:absolute; display:block;
+  box-sizing:border-box; pointer-events:none;
+  text-align:center; color:#53677c;
+}
+.word-ruler-horizontal .word-ruler-tick {
+  top:16px; height:6px; width:1px; font-size:0;
+  border-left:1px solid #8599ad;
+}
+.word-ruler-horizontal .word-ruler-tick.medium { top:12px; height:10px; }
+.word-ruler-horizontal .word-ruler-tick.major {
+  top:2px; margin-left:-7px; height:21px;
+  width:14px; border-left:0; font-size:10px;
+}
+.word-ruler-marker {
+  position:absolute; z-index:3; box-sizing:border-box;
+  width:17px; height:11px; min-width:0; min-height:0;
+  margin:0 0 0 -8px; padding:0;
+  border:1px solid #154d84; border-radius:2px;
+  background:#336ea6; color:transparent;
+  cursor:ew-resize; pointer-events:auto; touch-action:none;
+}
+.word-ruler-marker::after {
+  content:""; display:block; position:absolute;
+  left:4px; border-left:4px solid transparent;
+  border-right:4px solid transparent;
+}
+.word-ruler-first { top:-1px; }
+.word-ruler-first::after { top:9px; border-top:5px solid #336ea6; }
+.word-ruler-left { top:16px; }
+.word-ruler-left::after { bottom:9px; border-bottom:5px solid #336ea6; }
+.word-ruler-right { top:16px; background:#617991; border-color:#3b526a; }
+.word-ruler-right::after { bottom:9px; border-bottom:5px solid #617991; }
+.word-ruler-marker:focus-visible {
+  outline:3px solid #ed9c28; outline-offset:3px;
+}
+.word-ruler-vertical {
+  position:absolute; z-index:3; width:21px; box-sizing:border-box;
+  border:1px solid #b6c3d1; border-radius:2px;
+  background:#f2f5f8;
+  color:#53677c; user-select:none;
+  pointer-events:none; font:9px Arial,Helvetica,sans-serif;
+}
+.word-ruler-vertical .word-ruler-tick {
+  left:11px; width:6px; height:1px; font-size:0;
+  border-top:1px solid #8599ad;
+}
+.word-ruler-vertical .word-ruler-tick.medium { left:8px; width:9px; }
+.word-ruler-vertical .word-ruler-tick.major {
+  left:1px; margin-top:-5px; width:17px;
+  height:12px; font-size:9px; border:0;
+}
+body.word-rulers-hidden #wordRulerHorizontal,
+body.word-rulers-hidden #wordRulerVertical { display:none !important; }
+@media(max-width:680px) {
+  .word-ruler-vertical { display:none !important; }
+  .word-ruler-horizontal { height:24px; margin-bottom:4px; }
+  .word-ruler-marker { width:20px; }
+}
+@media print {
+  #wordRulerHorizontal, #wordRulerVertical { display:none !important; }
+}

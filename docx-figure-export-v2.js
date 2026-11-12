@@ -134,7 +134,9 @@ function dxParagraph(element, api, font, size, firstLineIndent, hangingReference
   };
 
   const userIndent = element.dataset.apaEditorIndent;
-  if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
+  const rulerIndent = window.EstiloAPAWordRulerIndents?.toDocx(element);
+  if (rulerIndent) options.indent = rulerIndent;
+  else if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
   else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isReference && hangingReferences) options.indent = { left: 720, hanging: 720 };
