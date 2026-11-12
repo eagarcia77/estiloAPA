@@ -286,6 +286,13 @@ async function readPdf(file) {
   if (!isPdf) {
     throw new Error("El archivo seleccionado no contiene un PDF válido. Verifique que se haya descargado completamente.");
   }
+  // Prefer the structured converter: it reconstructs detectable tables and figures.
+  // Unlike the separate manual PDF tool, this returns HTML to the normal import flow.
+  if (typeof window.EstiloAPASmartPdfToHtml === "function") {
+    const structuredHtml = await window.EstiloAPASmartPdfToHtml(file);
+    if (structuredHtml && structuredHtml.trim()) return sanitizeHtml(structuredHtml);
+    throw new Error("No se pudo reconstruir contenido editable del PDF. Se conservó el documento anterior.");
+  }
   const pdfjs = await getPdfJs();
   let pdf;
   try {
