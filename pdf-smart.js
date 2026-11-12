@@ -473,7 +473,6 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
   const firstX = anchors[0];
   const rows = [];
   let previousY = null;
-  let previousLine = null;
   for (const line of region) {
     const cells = splitLineIntoCells(line, threshold);
     if (!cells.length) continue;
@@ -484,7 +483,7 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
     const firstColumnStarts = cells.some(cell => Math.abs(cell.x - firstX) <= tolerance);
     const verticalGap = previousY === null ? Infinity : previousY - line.y;
     const newRow = !rows.length || (firstColumnStarts && (
-      columns.size >= 2 && verticalGap > bodyFontSize * 1.25 ||
+      columns.size >= 2 && verticalGap > bodyFontSize * 0.95 ||
       verticalGap > bodyFontSize * 2.6
     ));
     if (newRow) rows.push(Array.from({length: anchors.length}, () => ""));
@@ -494,7 +493,6 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
       row[col] += (row[col] ? " " : "") + cell.text;
     }
     previousY = line.y;
-    previousLine = line;
   }
   if (rows.length < 2 || rows.filter(row => row.filter(Boolean).length >= 2).length < 2) return null;
   return {block: {type: "table", rows, pageNumber: label.pageNumber}, nextIndex: end};
