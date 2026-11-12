@@ -579,14 +579,15 @@
     home.append(clip);
 
     const tableTools = makeGroup("Table Editing");
-    for (const [label, commandName] of [
-      ["Add Row", "addRow"], ["Add Column", "addColumn"],
-      ["Delete Row", "deleteRow"], ["Delete Column", "deleteColumn"]
-    ]) {
-      const tool = makeButton(label, () => editTable(commandName));
-      tool.dataset.wordAction = commandName;
-      tableTools.append(tool);
-    }
+    const addRowTool = makeButton("Add Row", () => editTable("addRow"));
+    addRowTool.id = "wordTableAddRow";
+    const addColumnTool = makeButton("Add Column", () => editTable("addColumn"));
+    addColumnTool.id = "wordTableAddColumn";
+    const deleteRowTool = makeButton("Delete Row", () => editTable("deleteRow"));
+    deleteRowTool.id = "wordTableDeleteRow";
+    const deleteColumnTool = makeButton("Delete Column", () => editTable("deleteColumn"));
+    deleteColumnTool.id = "wordTableDeleteColumn";
+    tableTools.append(addRowTool, addColumnTool, deleteRowTool, deleteColumnTool);
     insert.append(tableTools);
     const insertText = makeGroup("Date & Symbols");
     insertText.append(makeButton("Insert Date", () => {
