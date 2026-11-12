@@ -586,10 +586,58 @@
       makeButton("Delete Column", () => editTable("deleteColumn"))
     );
     insert.append(tableTools);
+    const insertText = makeGroup("Date & Symbols");
+    insertText.append(makeButton("Insert Date", () => {
+      command("insertText", new Date().toLocaleDateString("en-US", {
+        year: "numeric", month: "long", day: "numeric"
+      }));
+    }));
+    const symbol = document.createElement("select");
+    symbol.id = "wordInsertSymbol";
+    symbol.setAttribute("aria-label", "Insert Symbol");
+    const symbolPlaceholder = document.createElement("option");
+    symbolPlaceholder.value = "";
+    symbolPlaceholder.textContent = "Insert Symbol";
+    symbol.append(symbolPlaceholder);
+    for (const [label, value] of [
+      ["Em dash —", "—"], ["En dash –", "–"], ["Degree °", "°"],
+      ["Plus/minus ±", "±"], ["Approximately ≈", "≈"], ["Section §", "§"],
+      ["Alpha α", "α"], ["Beta β", "β"], ["Gamma γ", "γ"],
+      ["Delta Δ", "Δ"], ["Pi π", "π"], ["Micro µ", "µ"]
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      symbol.append(option);
+    }
+    symbol.addEventListener("change", () => {
+      if (symbol.value) command("insertText", symbol.value);
+      symbol.value = "";
+    });
+    insertText.append(symbol);
+    insert.append(insertText);
+
+    const spell = makeGroup("Proofing");
+    const spellButton = makeButton("Spelling: On", () => {
+      root().spellcheck = !root().spellcheck;
+      spellButton.textContent = root().spellcheck ? "Spelling: On" : "Spelling: Off";
+      spellButton.setAttribute("aria-pressed", String(root().spellcheck));
+    }, "Use your browser's built-in spell checker");
+    spellButton.setAttribute("aria-pressed", String(root().spellcheck !== false));
+    spell.append(spellButton);
+    review.append(spell);
+
     const view = document.getElementById("word-ribbon-panel-vista");
     if (view) {
       const navigation = makeGroup("Navigation");
       navigation.append(makeButton("Document Outline", openOutline));
+      const marks = makeButton("Show Paragraph Marks", () => {
+        const enabled = document.body.classList.toggle("word-show-paragraph-marks");
+        marks.textContent = enabled ? "Hide Paragraph Marks" : "Show Paragraph Marks";
+        marks.setAttribute("aria-pressed", String(enabled));
+      });
+      marks.setAttribute("aria-pressed", "false");
+      navigation.append(marks);
       view.append(navigation);
     }
     const file = document.getElementById("word-ribbon-panel-archivo");
