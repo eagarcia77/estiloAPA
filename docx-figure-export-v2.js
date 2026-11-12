@@ -116,11 +116,12 @@ function dxParagraph(element, api, font, size, firstLineIndent, hangingReference
   const isFigureTitle = element.classList.contains("apa-figure-title");
   const isNote = element.classList.contains("apa-note") || element.classList.contains("apa-figure-note");
 
-  let runs = dxInlineRuns(element, api, font, size);
-  if (!runs.length) runs = [new TextRun({ text, font, size, color: "000000" })];
-  if (isHeading) runs = [new TextRun({ text, font, size, bold: true, italics: [3, 5].includes(headingLevel), color: "000000" })];
-  if (isTableLabel || isFigureLabel) runs = [new TextRun({ text, font, size, bold: true, color: "000000" })];
-  if (isTableTitle || isFigureTitle) runs = [new TextRun({ text, font, size, italics: true, bold: false, color: "000000" })];
+  const baseline = {
+    bold: isHeading || isTableLabel || isFigureLabel,
+    italics: (isHeading && [3, 5].includes(headingLevel)) || isTableTitle || isFigureTitle,
+  };
+  let runs = dxInlineRuns(element, api, font, size, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font, size, color: "000000", ...baseline })];
 
   let alignment = AlignmentType.LEFT;
   if (headingLevel === 1 || isReferencesHeading) alignment = AlignmentType.CENTER;
