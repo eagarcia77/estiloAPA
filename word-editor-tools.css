@@ -77,3 +77,44 @@
   .word-find-panel button { flex:1 1 auto; }
 }
 @media print { .word-find-panel { display:none !important; } }
+
+/* Optional document navigation; no structural edits are made to headings. */
+.word-outline {
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+  margin:.4rem 0;
+  max-height:min(50vh, 460px);
+  overflow-y:auto;
+  border:1px solid #b9cce0;
+  border-radius:9px;
+  padding:.5rem;
+  background:#f7faff;
+}
+.word-outline-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.5rem;
+  position:sticky;
+  top:0;
+  background:#f7faff;
+  padding-bottom:.3rem;
+}
+.word-outline .word-outline-link {
+  width:100%;
+  text-align:left;
+  min-height:35px;
+  border:0;
+  border-radius:5px;
+  background:transparent;
+  padding:.35rem .55rem;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.word-outline .word-outline-link:hover,
+.word-outline .word-outline-link:focus-visible {
+  background:#e2efff;
+  outline:2px solid #8bb9ec;
+}
+@media print { .word-outline { display:none !important; } }
