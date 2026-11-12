@@ -13,18 +13,6 @@ function institutionalHtmlProfileEnabled() {
   return document.querySelector("#formatProfile")?.value === "modulo11c";
 }
 
-function updateV347Ui() {
-  const badge = document.querySelector(".badge");
-  if (badge) {
-    badge.textContent = `v${HTML_ENHANCE_VERSION}`;
-    badge.setAttribute("aria-label", `Versión ${HTML_ENHANCE_VERSION}`);
-  }
-  const footer = document.querySelector("footer p");
-  if (footer) footer.textContent = `APA7 Academic Formatter v${HTML_ENHANCE_VERSION} · Imágenes DOCX/PDF incorporadas · Banner inicial excluido · Figuras APA 7 · Referencias APA 7.`;
-  const help = document.querySelector("#previewHelp");
-  if (help) help.innerHTML = "El documento permanece editable. <strong>v3.4.7:</strong> incorpora imágenes de DOCX y recupera figuras del PDF incluso cuando cada página llega como un solo párrafo con saltos de línea. Las figuras que ya contienen Figura X, título y Nota dentro de la imagen se conservan sin duplicar caption. El banner inicial se excluye.";
-}
-
 async function downloadInstitutionalHtml() {
   const preview = document.querySelector("#preview");
   if (!preview) return;
@@ -80,7 +68,7 @@ th,td { border:0; padding:.18em; vertical-align:top; line-height:1.55; } tr:firs
     const selfCaptioned = [...preview.querySelectorAll('img.pdf-recovered-v347[data-apa-self-captioned="true"]')].length;
     const manual = [...preview.querySelectorAll('img[data-apa-manual-image="true"]')].length;
     const refs = [...preview.querySelectorAll(".apa-reference")].length;
-    status.textContent = `HTML v${HTML_ENHANCE_VERSION}: ${figures} figura(s), ${recovered} recuperada(s) del PDF (${selfCaptioned} con caption integrado), ${manual} manuales; banner excluido; ${refs} referencia(s) APA 7.`;
+    status.textContent = `HTML exported: ${figures} figures, ${recovered} recovered PDF images, ${manual} inserted images, and ${refs} APA 7 references.`;
     status.className = "status success";
   }
 }
@@ -97,12 +85,11 @@ document.addEventListener("click", (event) => {
       console.error("HTML v3.4.7", error);
       const status = document.querySelector("#status");
       if (status) {
-        status.textContent = `No se pudo generar el HTML: ${error.message}`;
+        status.textContent = `Could not export HTML: ${error.message}`;
         status.className = "status error";
       }
     })
     .finally(() => { button.disabled = false; });
 }, true);
 
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", updateV347Ui, { once: true });
-else updateV347Ui();
+
