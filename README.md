@@ -81,8 +81,23 @@ The Word-style Ribbon now contains a set of practical document-editing features,
 - **Insert:** APA tables and figures, images, links, page breaks, date, scientific symbols, and basic table editing (add/delete rows or columns). Complex tables with merged cells are protected against unsupported structural edits.
 - **APA Layout:** paragraph and reference presets, APA heading levels, indentation, alignment and line spacing.
 - **Review:** on-demand APA checks, Find/Replace, and an optional toggle for native browser spell checking.
-- **View:** full-width or US Letter page view, zoom, focus mode, a document outline built from headings, and optional non-printing paragraph marks.
+- **View:** full-width or US Letter page view, zoom, focus mode, a document outline built from headings, optional non-printing paragraph marks, and horizontal/vertical rulers.
 - **File:** DOCX/HTML export, optional reapplication of the original APA 7 formatting, and Print Document.
+
+### Word-style rulers (inches)
+
+EstiloAPA now displays a **horizontal ruler** above the document and a **vertical ruler** beside the page. They are visual editing tools and do not become document text or appear in printed/exported content.
+
+1. Place the cursor inside a paragraph.
+2. Drag the upper blue marker on the horizontal ruler to set the **First-line Indent**.
+3. Drag the lower blue marker to move the **Left Indent** (including the first-line marker).
+4. Drag the right marker to change the **Right Indent**.
+5. For precise adjustments, focus a marker and use **Arrow Left / Arrow Right** in 1/8-inch steps, or **Home** to return it to zero.
+6. Select **View → Hide Rulers / Show Rulers** to toggle the guides. On narrow screens, the horizontal ruler remains available and the vertical guide is hidden to conserve space.
+
+The ruler uses inches and adapts to **Full Width**, **Page View**, screen resizing and zoom. Its margin bands show where the paper's built-in margins begin; rulers change **paragraph indentation**, not APA 7 page margins. Custom manual indents are saved in the document, restored by Undo/Redo and local drafts, and converted to Word twips in all four DOCX export routes.
+
+Choosing **Home → No Indent** after any ruler adjustment resets the paragraph indentation to zero. Initial APA 7 formatting still runs only when the document is opened or when **Reapply APA 7** is explicitly selected.
 
 **Keyboard shortcuts (while the document is focused):** Ctrl/Cmd+Z Undo; Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z Redo; Ctrl/Cmd+F Find; Ctrl/Cmd+H Find and Replace; Ctrl/Cmd+S Download DOCX. Native platform editing shortcuts (copy/paste, bold, italic and underline) remain available.
 
