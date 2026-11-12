@@ -222,28 +222,35 @@ function sanitizeHtml(html) {
 }
 
 async function readDocx(file) {
-  // A DOCX is a non-empty ZIP archive. Reject empty, misnamed, or truncated
-  // uploads before passing them to Mammoth, which otherwise emits opaque ZIP errors.
-  if (!file || file.size === 0) {
-    throw new Error("El archivo Word está vacío (0 bytes). Descargue una copia completa e inténtelo nuevamente.");
+  // iPadOS file providers can return a zero-size placeholder for cloud files.
+  // Try reading the actual bytes before trusting File.size metadata.
+  if (!file) throw new Error("No se recibió un archivo Word.");
+  let bytes;
+  try {
+    bytes = await file.arrayBuffer();
+  } catch (error) {
+    console.error("DOCX file provider read failed:", error);
+    throw new Error("Safari no pudo leer el documento. Descárguelo primero en Archivos > En mi iPad y vuelva a seleccionarlo.");
   }
-  const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+  if (bytes.byteLength === 0) {
+    throw new Error("Safari recibió 0 bytes del archivo seleccionado. En Archivos, descargue el documento de iCloud/OneDrive y guarde una copia en En mi iPad; luego selecciónela nuevamente.");
+  }
+  const header = new Uint8Array(bytes.slice(0, 4));
   const isZip = header.length === 4 && header[0] === 0x50 && header[1] === 0x4b &&
     header[2] === 0x03 && header[3] === 0x04;
   if (!isZip) {
     throw new Error("Este archivo no parece ser un DOCX válido. En Word, guárdelo como Documento de Word (.docx), no como .doc ni PDF.");
   }
   try {
-    return await convertDocx(file);
+    return await convertDocx(bytes);
   } catch (error) {
     console.error("DOCX import failed:", error);
     throw new Error("No se pudo leer el archivo DOCX. Puede estar incompleto o dañado. Ábralo en Word, guarde una copia nueva como .docx y vuelva a subirla.");
   }
 }
 
-async function convertDocx(file) {
+async function convertDocx(arrayBuffer) {
   const mammoth = await waitForGlobal("mammoth");
-  const arrayBuffer = await file.arrayBuffer();
   if (arrayBuffer.byteLength < 4) throw new Error("El proveedor de archivos devolvió un documento vacío. Guarde una copia local en Archivos y vuelva a intentar.");
   const result = await mammoth.convertToHtml(
     { arrayBuffer },
