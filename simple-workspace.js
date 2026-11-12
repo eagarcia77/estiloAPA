@@ -20,6 +20,7 @@
     };
 
     const open = button("simpleOpenBtn", "Open File", () => {
+      review.open = false;
       setup.open = true;
       fileInput.click();
     }, true);
@@ -31,8 +32,11 @@
     const exportHtml = document.getElementById("downloadHtmlBtn");
     const settings = button("simpleSettingsBtn", "More Options", () => {
       setup.open = !setup.open;
+      if (setup.open) review.open = false;
+      tools.open = false;
       settings.setAttribute("aria-expanded", String(setup.open));
-      if (setup.open) setup.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+      if (setup.open && window.matchMedia?.("(max-width: 1079px)")?.matches)
+        setup.scrollIntoView?.({ behavior: "smooth", block: "start" });
     });
     settings.setAttribute("aria-controls", "simpleDocumentOptions");
     settings.setAttribute("aria-expanded", String(setup.open));
@@ -40,8 +44,13 @@
 
     const reviewButton = button("simpleReviewBtn", "Review", () => {
       review.open = !review.open;
+      if (review.open) setup.open = false;
+      tools.open = false;
       reviewButton.setAttribute("aria-expanded", String(review.open));
-      if (review.open) review.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+      // A desktop drawer stays beside the document. On small screens bring
+      // the in-flow review section into view only when intentionally opened.
+      if (review.open && window.matchMedia?.("(max-width: 1079px)")?.matches)
+        review.scrollIntoView?.({ behavior: "smooth", block: "start" });
     });
     reviewButton.setAttribute("aria-controls", "simpleReviewDetails");
     reviewButton.setAttribute("aria-expanded", String(review.open));
@@ -50,7 +59,8 @@
     const closeReview = button("simpleCloseReviewBtn", "Close Review", () => {
       review.open = false;
       reviewButton.setAttribute("aria-expanded", "false");
-      reviewButton.focus?.();
+      // Return focus to a visible command, never to a hidden More menu item.
+      open.focus?.();
     });
     closeReview.className = "simple-close-review";
     closeReview.setAttribute("aria-label", "Close APA 7 Review panel");
@@ -100,6 +110,10 @@
     if (clear) toolsContent.append(clear);
     toolsContent.append(settings, reviewButton);
 
+    // Native <details> remains the source of truth. These classes affect
+    // layout only; opening and closing never writes inside #preview.
+    setup.open = false;
+    review.open = false;
     // Keep advanced sections accessible next to the editor, not behind an
     // arbitrary scroll position. They never wrap or replace the document.
     setup.addEventListener("toggle", () => {

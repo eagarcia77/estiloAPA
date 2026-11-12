@@ -164,11 +164,11 @@ function ensureReferenceAuditPanel() {
   panel.id = "referenceFormatAudit";
   panel.className = "reference-format-audit";
   panel.innerHTML = `
-    <h3>Validación del formato de referencias APA 7</h3>
-    <p class="muted">Revisa formato visible y patrones bibliográficos. El estado “Cumple controles automáticos” significa que no se detectaron problemas en las reglas comprobables por el programa; los datos de la fuente original todavía deben verificarse.</p>
+    <h3>APA 7 Reference Formatting Review</h3>
+    <p class="muted">Checks visible formatting and bibliographic patterns. “Passes automated checks” means no issues were found in the rules the application can evaluate. Verify source details independently.</p>
     <div class="ref-audit-actions">
-      <button type="button" id="auditReferencesNow">Auditar referencias</button>
-      <button type="button" id="formatReferenceList">Aplicar formato de lista APA 7</button>
+      <button type="button" id="auditReferencesNow">Review References</button>
+      <button type="button" id="formatReferenceList">Format APA 7 Reference List</button>
     </div>
     <div id="referenceAuditContent" aria-live="polite"></div>`;
   audit.append(panel);
@@ -178,8 +178,8 @@ function ensureReferenceAuditPanel() {
 }
 
 function statusLabel(status) {
-  if (status === "pass") return '<span class="ref-status-pass">Cumple controles automáticos</span>';
-  if (status === "review") return '<span class="ref-status-review">Revisar</span>';
+  if (status === "pass") return '<span class="ref-status-pass">Passes automated checks</span>';
+  if (status === "review") return '<span class="ref-status-review">Review</span>';
   return '<span class="ref-status-error">Error</span>';
 }
 
@@ -201,34 +201,34 @@ function renderReferenceFormattingAudit() {
   const percent = total ? Math.round((analysis.pass / total) * 100) : 0;
 
   if (!total) {
-    target.innerHTML = '<p class="muted">No se detectaron entradas marcadas como referencias. Use el estilo “Referencia APA” de la barra o formatee el documento primero.</p>';
+    target.innerHTML = '<p class="muted">No entries are marked as references. Apply the APA Reference style or import and format a document first.</p>';
     return;
   }
 
   const rows = analysis.entries.map((entry) => {
     const details = entry.issues.length
       ? `<ul>${entry.issues.map((item) => `<li class="ref-status-${item.severity === "error" ? "error" : "review"}">${escapeRefAudit(item.label)}</li>`).join("")}</ul>`
-      : '<span class="ref-status-pass">Sin observaciones detectadas.</span>';
+      : '<span class="ref-status-pass">No findings detected.</span>';
     return `<tr>
       <td>${entry.index + 1}</td>
       <td>${escapeRefAudit(entry.type)}</td>
       <td>${statusLabel(entry.status)}</td>
       <td>${escapeRefAudit(entry.text)}</td>
       <td>${details}</td>
-      <td><button type="button" data-ref-jump="${entry.index}">Ver</button></td>
+      <td><button type="button" data-ref-jump="${entry.index}">Go to</button></td>
     </tr>`;
   }).join("");
 
   target.innerHTML = `
     <div class="ref-audit-summary">
-      <div class="ref-audit-card"><span>Referencias</span><strong>${total}</strong></div>
-      <div class="ref-audit-card"><span>Cumplen</span><strong>${analysis.pass}</strong></div>
-      <div class="ref-audit-card"><span>Revisar / error</span><strong>${analysis.review + analysis.error}</strong></div>
-      <div class="ref-audit-card"><span>Cumplimiento automático</span><strong>${percent}%</strong></div>
+      <div class="ref-audit-card"><span>References</span><strong>${total}</strong></div>
+      <div class="ref-audit-card"><span>Pass</span><strong>${analysis.pass}</strong></div>
+      <div class="ref-audit-card"><span>Review / Errors</span><strong>${analysis.review + analysis.error}</strong></div>
+      <div class="ref-audit-card"><span>Automated Compliance</span><strong>${percent}%</strong></div>
     </div>
     <div class="ref-audit-table-wrap">
       <table class="ref-audit-table">
-        <thead><tr><th>#</th><th>Tipo probable</th><th>Estado</th><th>Referencia</th><th>Reglas APA 7</th><th>Editor</th></tr></thead>
+        <thead><tr><th>#</th><th>Likely Type</th><th>Status</th><th>Reference</th><th>APA 7 Rules</th><th>Editor</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
@@ -297,14 +297,21 @@ function formatReferenceListLayout() {
 }
 
 function initializeReferenceAudit() {
-  ensureReferenceAuditStyles();
-  ensureReferenceAuditPanel();
-  document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(renderReferenceFormattingAudit, 120));
-  document.querySelector("#preview")?.addEventListener("input", () => {
-    clearTimeout(window.__apaRefAuditTimer);
-    window.__apaRefAuditTimer = setTimeout(renderReferenceFormattingAudit, 450);
-  });
-  setTimeout(renderReferenceFormattingAudit, 250);
+  const review = document.querySelector("#simpleReviewDetails");
+  const refresh = () => {
+    if (review && !review.open) return;
+    ensureReferenceAuditStyles();
+    renderReferenceFormattingAudit();
+  };
+  if (review) {
+    review.addEventListener("toggle", refresh);
+    document.querySelector("#preview")?.addEventListener("apa-document-loaded", refresh);
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+    if (review.open) refresh();
+  } else {
+    refresh();
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+  }
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeReferenceAudit);

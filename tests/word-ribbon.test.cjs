@@ -164,3 +164,23 @@ test("Focus Mode and Ribbon state can be controlled independently", () => {
   h.window.EstiloAPARibbon.setCollapsed(false);
   assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), false);
 });
+
+test("Review APA 7 Ribbon action opens a visible panel instead of auditing invisibly", () => {
+  const h = setup();
+  const review = new Element("details");
+  review.open = false;
+  h.els.set("simpleReviewDetails", review);
+  h.window.EstiloAPASimple = {
+    toggleReview() { review.open = !review.open; },
+  };
+  const panels = h.shell.children.find(child => child.id === "wordRibbonPanels");
+  const reviewPanel = panels.children.find(panel => panel.id === "word-ribbon-panel-revisar");
+  const command = reviewPanel.children.flatMap(group => group.children)
+    .find(el => el.textContent === "Review APA 7");
+  assert.ok(command, "The review command should exist");
+  command.click();
+  assert.equal(review.open, true);
+  assert.equal(h.els.get("reauditBtn").called, 0);
+  command.click();
+  assert.equal(h.els.get("reauditBtn").called, 1);
+});
