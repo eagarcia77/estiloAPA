@@ -738,6 +738,16 @@ window.EstiloAPASmartPdfToHtml = async function (file) {
     blocks.push(...parsed.blocks);
     inReferences = parsed.inReferences;
   }
+  const labeledTables = pages.reduce((count, page) =>
+    count + page.lines.filter(line => /\\bTabla\\s+\\d+\\b/i.test(line.text)).length, 0);
+  const reconstructedTables = blocks.filter(block => block.type === "table").length;
+  if (labeledTables > reconstructedTables) {
+    console.warn("PDF table reconstruction incomplete", { labeledTables, reconstructedTables });
+    // Do not claim the table conversion is complete when some labels became prose.
+    window.dispatchEvent(new CustomEvent("apa-pdf-table-warning", {
+      detail: { labeledTables, reconstructedTables }
+    }));
+  }
   return blocksToHtml(mergeCrossPageBlocks(blocks), false);
 };
 
