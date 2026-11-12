@@ -218,6 +218,8 @@ test("View can disable the contextual toolbar without removing any document text
   const toggle=h.view.children.flatMap(group=>group.children)
     .find(node=>node.id==="wordContextToggle");
   assert.ok(toggle);
+  h.elements.set("wordContextToggle",toggle);
+  h.selectorMap.set("#wordContextToggle",toggle);
   assert.equal(toggle.getAttribute("aria-pressed"),"true");
   assert.equal(h.window.EstiloAPACommandCenter.execute("selection-toolbar"),true);
   assert.equal(toggle.textContent,"Selection Toolbar: Off");
