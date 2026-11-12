@@ -42,7 +42,8 @@ test("audit or ongoing editing does not reapply APA 7 styling", () => {
   assert.doesNotMatch(audit, /applyPreviewStyles\(/);
   assert.doesNotMatch(audit, /applyApaRules\(/);
   assert.match(audit, /renderAudit\(auditDocument\(els\.preview\)\)/);
-  assert.match(app, /els\.preview\.addEventListener\("input",\s*debounce\(\(\) => \{\s*if \(hasFormattedContent\(\)\) runAudit\(false\)/);
+  assert.doesNotMatch(app, /els\.preview\.addEventListener\("input",\s*debounce\(/);
+  assert.match(app, /reviewDetails\?\.addEventListener\("toggle"/);
 });
 
 test("reapplying APA 7 is optional and requires confirmation before replacing edits", () => {
@@ -58,4 +59,10 @@ test("stale imports cannot overwrite a more recent upload or a sample", () => {
   assert.match(app, /async function formatSelectedFiles\(requestId = importRequestId\)/);
   const demo = app.slice(app.indexOf("function loadDemo()"), app.indexOf("function hasFormattedContent()"));
   assert.match(demo, /importRequestId \+= 1;/);
+});
+
+test("dropping a file on the document uses the same safe import path", () => {
+  assert.match(app, /const editorDropArea = document\.querySelector\("\.paper-wrap"\)/);
+  assert.match(app, /editorDropArea\?\.addEventListener\("drop"/);
+  assert.match(app, /setFiles\(event\.dataTransfer\.files\)/);
 });
