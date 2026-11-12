@@ -215,3 +215,17 @@ body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important;
   .simple-primary-actions button { font-size:.7rem; }
   .word-ribbon-view-actions .word-ribbon-action { font-size:.69rem; }
 }
+
+/* Compact quick action strip; controls are proxies to existing editor features. */
+.academic-quick-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; margin:.35rem .2rem .6rem; padding:.4rem; background:#f6fafb; border:1px solid #dbe6e8; border-radius:12px; }
+.academic-quick-button { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:44px; padding:.45rem .8rem; border:1px solid #cad9dd; border-radius:9px; background:#fff; color:#173d4b; font:650 .82rem system-ui,-apple-system,sans-serif; cursor:pointer; }
+.academic-quick-button > span:first-child { font-size:1.25rem; line-height:1; }
+.academic-quick-button:disabled { opacity:.45; cursor:not-allowed; }
+.academic-quick-button:not(:disabled):hover { border-color:#087e69; background:#eaf7f2; }
+.academic-quick-button:focus-visible { outline:3px solid #168ab5; outline-offset:2px; }
+@media (max-width:760px) {
+ .academic-quick-actions { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.25rem; padding:.3rem; }
+ .academic-quick-button { min-width:0; padding:.45rem .15rem; flex-direction:column; gap:.1rem; font-size:.68rem; }
+ .academic-quick-button > span:first-child { font-size:1.2rem; }
+}
+@media print { .academic-quick-actions { display:none!important; } }
