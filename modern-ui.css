@@ -166,3 +166,21 @@ body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important;
   .site-header .app-brand-logo { width:clamp(166px,53vw,225px); padding:2px 7px; border-radius:8px; }
 }
 @media print { .site-header .app-brand-logo { display:none!important; } }
+
+/* Brand contrast refinement: a solid white plate around the entire SVG. */
+.site-header .header-inner > div:first-child {
+  display:inline-flex; align-items:center; max-width:100%;
+  background:#fff; border:1px solid #e2eaf0; border-radius:14px;
+  padding:6px 12px; box-shadow:0 3px 16px rgba(0,26,37,.15);
+}
+.site-header .app-brand-logo {
+  background:#fff!important; box-shadow:none!important;
+  border-radius:0!important; padding:0!important;
+  width:clamp(190px,26vw,275px); max-width:100%; height:auto;
+}
+@media (max-width:760px) {
+  .site-header .header-inner { justify-content:flex-start; padding:.55rem .65rem; }
+  .site-header .header-inner > div:first-child { padding:5px 10px; border-radius:11px; }
+  .site-header .app-brand-logo { width:clamp(190px,54vw,250px); }
+}
+@media print { .site-header .header-inner > div:first-child { background:transparent; border:0; box-shadow:none; } }
