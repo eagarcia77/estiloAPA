@@ -706,7 +706,11 @@ function normalizeExtractedStructure(blocks) {
     } else if (/^h[123]$/.test(block.type) && !questions && !references) {
       questions = false;
     }
-    if (questions && (block.type === "ol-item" || block.type === "p")) {
+    // Split multiple numbered questions even when the PDF heading was not
+    // classified as a heading. Keep the original numbering for reliable order.
+    const multipleQuestions = /(?:^|\s)[1-8]\.\s*¿/.test(raw) &&
+      (raw.match(/(?:^|\s)[1-8]\.\s*¿/g) || []).length >= 2;
+    if ((questions || multipleQuestions) && (block.type === "ol-item" || block.type === "p")) {
       const pieces = raw.split(questionBoundary).filter(Boolean);
       const isQuestion = block.type === "ol-item" || /^[1-8]\.\s*(?:¿|[A-ZÁÉÍÓÚÑ])/.test(raw);
       if (isQuestion) {
