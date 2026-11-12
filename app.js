@@ -76,7 +76,7 @@ function setFiles(fileList) {
   if (hasFormattedContent() &&
       !window.confirm("Opening a new file will replace the current document. Export your edits before continuing. Open the new file?")) return;
   // A new selection triggers the entire APA 7 import automatically.
-  // Keep the file picker reusable even when the same file is selected again.
+  // Preserve the native File input while Safari finishes reading the selected file.
   selectedFiles = files;
   importRequestId += 1;
   updateFileList();
@@ -86,8 +86,7 @@ function setFiles(fileList) {
 
 els.files.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
-  event.target.value = "";
-  setFiles(files);
+  // Clearing the input immediately can invalidate iPadOS file-provider handles.\n  // Keep the selection alive throughout asynchronous DOCX/PDF decoding.\n  setFiles(files);
 });
 for (const eventName of ["dragenter", "dragover"]) {
   els.dropZone.addEventListener(eventName, (event) => {
@@ -243,6 +242,7 @@ async function readDocx(file) {
 async function convertDocx(file) {
   const mammoth = await waitForGlobal("mammoth");
   const arrayBuffer = await file.arrayBuffer();
+  if (arrayBuffer.byteLength < 4) throw new Error("El proveedor de archivos devolvió un documento vacío. Guarde una copia local en Archivos y vuelva a intentar.");
   const result = await mammoth.convertToHtml(
     { arrayBuffer },
     {
