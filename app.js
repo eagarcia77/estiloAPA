@@ -311,7 +311,11 @@ async function readPdf(file) {
     if (current.trim()) lines.push(current.trim());
     pages.push(lines.join("\n"));
   }
-  return textToHtml(pages.join("\n\n"));
+  const extractedText = pages.join("\n\n").trim();
+  if (!extractedText) {
+    throw new Error("Este PDF no contiene texto seleccionable. Puede ser un documento escaneado: necesita OCR antes de convertirlo en texto editable. No se reemplazó el documento actual.");
+  }
+  return textToHtml(extractedText);
 }
 
 async function readFile(file) {
