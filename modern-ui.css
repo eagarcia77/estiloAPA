@@ -184,3 +184,34 @@ body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important;
   .site-header .app-brand-logo { width:clamp(190px,54vw,250px); }
 }
 @media print { .site-header .header-inner > div:first-child { background:transparent; border:0; box-shadow:none; } }
+
+/* Mobile workspace refinement: compact header, consistent controls, visible editor. */
+.site-header .header-inner { min-height:0; }
+.site-header .header-inner > div:first-child { padding:4px 9px; border-radius:11px; }
+.site-header .app-brand-logo { width:clamp(175px,23vw,245px); }
+.preview-panel { scroll-margin-top:8px; }
+.simple-primary-actions button, .simple-tools-menu > summary,
+.word-ribbon-view-actions .word-ribbon-action {
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-weight:650; letter-spacing:-.012em;
+}
+.word-ribbon-view-actions .word-ribbon-action { white-space:normal; line-height:1.25; }
+.word-ribbon-tabs { scrollbar-width:thin; }
+.word-ribbon-tabs [role="tab"]:focus-visible { outline-offset:-3px; }
+@media (max-width:760px) {
+  .site-header .header-inner { padding:.3rem .55rem; }
+  .site-header .header-inner > div:first-child { padding:3px 8px; border-radius:9px; }
+  .site-header .app-brand-logo { width:clamp(166px,47vw,205px); }
+  .preview-panel { margin-top:0; }
+  .preview-toolbar { padding:.3rem .35rem; }
+  .simple-primary-actions { gap:.35rem; }
+  .simple-primary-actions button, .simple-tools-menu > summary { min-height:44px; }
+  .word-ribbon-tabs [role="tab"] { min-height:44px; }
+  .word-ribbon-view-actions { gap:.3rem; padding:.35rem; }
+  .word-ribbon-view-actions .word-ribbon-action { min-height:44px; padding:.4rem .2rem; font-size:.75rem; }
+  .apa-accessibility-tools details > summary { min-height:44px; }
+}
+@media (max-width:360px) {
+  .simple-primary-actions button { font-size:.7rem; }
+  .word-ribbon-view-actions .word-ribbon-action { font-size:.69rem; }
+}
