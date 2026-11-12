@@ -444,6 +444,41 @@ function detectTable(lines, startIndex, bodyFontSize) {
   return { block: { type: "table", rows }, nextIndex: startIndex + region.length };
 }
 
+// PDF tables frequently have wrapped cells: infer rows from the first column,
+// and attach intervening text to the nearest column of the current row.
+function detectLabeledTable(lines, labelIndex, bodyFontSize) {
+  const label = lines[labelIndex];
+  if (!/^Tabla\\s+\\d+\\b/i.test(label.text.trim())) return null;
+  const stop = /^(?:Nota\\.|Tabla\\s+\\d+\\b|Figura\\s+\\d+\\b|Estudio de caso)/i;
+  let end = labelIndex + 1;
+  while (end < lines.length && !stop.test(lines[end].text.trim()) &&
+         lines[end].y < label.y && label.y - lines[end].y < 530) end += 1;
+  const region = lines.slice(labelIndex + 1, end);
+  if (region.length < 2) return null;
+  const header = region[0];
+  const threshold = Math.max(15, bodyFontSize * 1.35);
+  const headerCells = splitLineIntoCells(header, threshold);
+  // Use x-position clusters rather than the combined line text.
+  const anchors = headerCells.map(cell => cell.x)
+    .filter((x, i, arr) => i === 0 || x - arr[i - 1] >= 45);
+  if (anchors.length < 2 || anchors.length > 8) return null;
+  const tolerance = Math.max(14, bodyFontSize * 1.5);
+  const firstX = anchors[0];
+  const rows = [];
+  for (const line of region) {
+    const cells = splitLineIntoCells(line, threshold);
+    const firstColumnStarts = cells.some(cell => Math.abs(cell.x - firstX) <= tolerance);
+    if (firstColumnStarts || !rows.length) rows.push(Array.from({length: anchors.length}, () => ""));
+    const row = rows[rows.length - 1];
+    for (const cell of cells) {
+      const col = nearestIndex(cell.x, anchors);
+      row[col] += (row[col] ? " " : "") + cell.text;
+    }
+  }
+  if (rows.length < 2 || rows.filter(row => row.filter(Boolean).length >= 2).length < 2) return null;
+  return {block: {type: "table", rows, pageNumber: label.pageNumber}, nextIndex: end};
+}
+
 function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
   const lines = page.lines;
   if (!lines.length) return { blocks: [], inReferences: inReferencesAtStart };
@@ -458,6 +493,17 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
   while (index < lines.length) {
     const line = lines[index];
     const text = line.text.trim();
+
+    if (/^Tabla\\s+\\d+\\b/i.test(text)) {
+      const labeled = detectLabeledTable(lines, index, bodyFontSize);
+      if (labeled) {
+        blocks.push({type: "table-label", text, pageNumber: page.pageNumber});
+        labeled.block.pageNumber = page.pageNumber;
+        blocks.push(labeled.block);
+        index = labeled.nextIndex;
+        continue;
+      }
+    }
 
     if (figureLabelRegex.test(text)) {
       const originalIndex = index;
@@ -628,6 +674,8 @@ function blocksToHtml(blocks, sortReferences) {
       const classes = ["apa-heading", `level-${level}`];
       if (referenceHeadingRegex.test(block.text)) classes.push("apa-references-heading");
       output.push(`<h${level} class="${classes.join(" ")}">${block.html || escapeHtml(block.text)}</h${level}>`);
+    } else if (block.type === "table-label") {
+      output.push(`<p class="apa-table-label"><strong>${escapeHtml(block.text)}</strong></p>`);
     } else if (block.type === "figure-label") {
       output.push(`<p class="apa-figure-label">${escapeHtml(block.text)}</p>`);
     } else if (block.type === "figure-title") {
