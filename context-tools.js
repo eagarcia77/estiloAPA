@@ -68,6 +68,7 @@
     else editor.closest('.paper-wrap')?.insertAdjacentElement('beforebegin',bar);
     let current='';
     function update() {
+      if(bar.contains(document.activeElement))return;
       const selection=window.getSelection();
       let node=selection && selection.rangeCount ? selection.anchorNode : null;
       if(!node || !editor.contains(node)) {
