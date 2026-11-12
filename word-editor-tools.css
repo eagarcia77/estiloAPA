@@ -1,0 +1,79 @@
+/* Word-like commands remain inside the existing EstiloAPA Ribbon. */
+.word-ribbon-panel .word-ribbon-group select {
+  min-height:37px;
+  max-width:135px;
+  border-radius:6px;
+  border:1px solid #bdcbd7;
+  padding:5px 7px;
+  font-size:12px;
+}
+.word-ribbon-panel .word-ribbon-group input[type="color"] {
+  appearance:auto;
+  width:38px;
+  height:36px;
+  padding:2px;
+  border-radius:6px;
+  border:1px solid #bdcbd7;
+  background:#fff;
+  cursor:pointer;
+}
+.word-find-panel {
+  margin:.35rem 0 .6rem;
+  padding:.8rem;
+  border:1px solid #b9cce0;
+  border-radius:9px;
+  background:#f7faff;
+  box-shadow:0 3px 10px rgba(12,36,65,.08);
+}
+.word-find-panel[hidden] { display:none !important; }
+.word-find-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.5rem;
+  margin-bottom:.6rem;
+}
+.word-find-row {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.4rem;
+  margin-bottom:.45rem;
+}
+.word-find-row > input {
+  flex:1 1 190px;
+  min-width:0;
+  height:38px;
+  border:1px solid #bdcbd7;
+  border-radius:6px;
+  padding:.45rem .6rem;
+  background:#fff;
+  color:#172b40;
+}
+.word-find-panel button {
+  min-height:38px;
+  border-radius:6px;
+}
+.word-find-count {
+  font-size:.82rem;
+  color:#4b5e73;
+  white-space:nowrap;
+}
+.word-find-flags {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:1rem;
+  font-size:.84rem;
+}
+.word-find-flags label { cursor:pointer; }
+.word-find-panel:not(.word-find-replace-mode) .word-replace-row {
+  display:none !important;
+}
+@media(max-width:760px) {
+  .word-find-panel { padding:.45rem; }
+  .word-find-row { align-items:stretch; }
+  .word-find-row > input { flex:1 1 100%; }
+  .word-find-panel button { flex:1 1 auto; }
+}
+@media print { .word-find-panel { display:none !important; } }
