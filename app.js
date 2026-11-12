@@ -774,11 +774,11 @@ function domBlockToDocxParagraph(element, api, font, size) {
   const isHeading = isLevel1 || isLevel2 || isLevel3;
   const isFigureLabel = element.classList.contains("apa-figure-label");
   const noIndent = isRef || isHeading || isFigureLabel || element.classList.contains("apa-note") || element.classList.contains("no-indent");
-  let runs = textRunsFromNode(element, api, font, size);
-  if (!runs.length) runs = [new TextRun({ text, font, size })];
-  if (isHeading || isFigureLabel || isLevel3) {
-    runs = [new TextRun({ text, font, size, bold: isHeading || isFigureLabel, italics: isLevel3 })];
-  }
+  // Apply APA heading emphasis as inherited styling, not a replacement run.
+  // Manual font/color/size changes inside the heading must survive DOCX export.
+  const baseline = { bold: isHeading || isFigureLabel, italics: isLevel3 };
+  let runs = textRunsFromNode(element, api, font, size, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font, size, ...baseline })];
   const options = {
     children: runs,
     spacing: { line: 480, after: 0, before: 0 },
