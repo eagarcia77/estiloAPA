@@ -809,7 +809,29 @@ function clearAll() {
 }
 
 function cleanExportClone() {
-  const clone = els.preview.cloneNode(true);
+  // Capture the actual visible editor styles before detaching the export DOM.
+  // getComputedStyle() on detached nodes cannot reliably resolve editor CSS.
+  const live = els.preview;
+  const clone = live.cloneNode(true);
+  const liveNodes = [live, ...live.querySelectorAll("*")];
+  const cloneNodes = [clone, ...clone.querySelectorAll("*")];
+  for (let i = 0; i < cloneNodes.length; i++) {
+    const source = liveNodes[i];
+    const target = cloneNodes[i];
+    if (!source || !target || source.nodeType !== Node.ELEMENT_NODE) continue;
+    if (!/^(P|H[1-6]|LI|TD|TH|SPAN|B|STRONG|I|EM|U|A|DIV)$/.test(source.tagName)) continue;
+    const computed = window.getComputedStyle(source);
+    // Preserve user-visible formatting for Word, including class-based styles.
+    for (const prop of ["text-align", "font-family", "font-size", "font-weight",
+      "font-style", "text-decoration-line", "color"]) {
+      if (!target.style.getPropertyValue(prop)) target.style.setProperty(prop, computed.getPropertyValue(prop));
+    }
+    if (/^(P|H[1-6]|LI|TD|TH)$/.test(source.tagName)) {
+      for (const prop of ["text-indent", "line-height"]) {
+        if (!target.style.getPropertyValue(prop)) target.style.setProperty(prop, computed.getPropertyValue(prop));
+      }
+    }
+  }
   clone.removeAttribute("contenteditable");
   clone.removeAttribute("id");
   clone.querySelectorAll("[data-missing-alt]").forEach((el) => el.removeAttribute("data-missing-alt"));
