@@ -676,7 +676,41 @@ function mergeCrossPageBlocks(blocks) {
   return merged;
 }
 
+function normalizeExtractedStructure(blocks) {
+  const result = [];
+  let questions = false;
+  for (const block of blocks) {
+    if (/^h[123]$/.test(block.type)) {
+      if (/^Preguntas de reflexi[oó]n y autoevaluaci[oó]n/i.test(block.text)) questions = true;
+      else if (/^Referencias\b/i.test(block.text)) questions = false;
+    }
+    if (questions && block.type === "p" && /^\s*1\.\s+/.test(block.text)) {
+      // Numbered questions were placed on the same physical PDF lines.
+      // Split only on a number following a question mark or sentence boundary.
+      const pieces = block.text.split(/\s+(?=[2-8]\.\s+(?:¿|[A-ZÁÉÍÓÚÑ]))/g);
+      if (pieces.length > 1) {
+        for (const piece of pieces) {
+          const clean = piece.replace(/^\s*[1-8]\.\s*/, "").trim();
+          if (clean) result.push({ ...block, type:"ol-item", text:clean, html:undefined });
+        }
+        continue;
+      }
+    }
+    if (block.type === "reference") {
+      // A DOI followed by a new author is a strong entry boundary.
+      const pieces = block.text.split(/(?<=https?:\/\/doi\.org\/10\.\d{4,9}\/[^\s]+)\s+(?=[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñü-]+,\s+[A-Z])/g);
+      if (pieces.length > 1) {
+        for (const piece of pieces) result.push({...block,text:piece.trim(),html:escapeHtml(piece.trim())});
+        continue;
+      }
+    }
+    result.push(block);
+  }
+  return result;
+}
+
 function blocksToHtml(blocks, sortReferences) {
+  blocks = normalizeExtractedStructure(blocks);
   const output = [];
   let referenceBuffer = [];
   let listType = null;
