@@ -39,8 +39,8 @@ APA7 Academic Formatter busca facilitar la preparación y revisión de documento
 1. importar documentos;
 2. reconstruir su estructura;
 3. aplicar reglas visibles de APA 7;
-4. auditar elementos académicos;
-5. editar el resultado directamente en la vista previa;
+4. editar directamente el resultado con herramientas de formato;
+5. revisar elementos académicos cuando el usuario lo solicite;
 6. conservar tablas, figuras e imágenes cuando sea posible;
 7. exportar una copia limpia en DOCX o HTML.
 
@@ -95,7 +95,7 @@ El perfil institucional de módulo utiliza Arial de 12 pt y aplica reglas espec�
 
 ### Vista previa editable
 
-La sección **3. Vista previa y exportación** utiliza un documento `contenteditable` que permite:
+El área **Document Editor** utiliza un documento `contenteditable` que permite:
 
 - escribir texto nuevo;
 - modificar palabras y párrafos;
