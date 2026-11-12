@@ -33,3 +33,35 @@
     });
   }
 })(typeof globalThis!=='undefined'?globalThis:this);
+
+/* PDF.js Map upsert proposal compatibility for Safari/iPadOS.
+ * Must be defined before PDF.js modules are imported.
+ */
+(function () {
+  'use strict';
+  if (typeof Map !== 'function') return;
+  if (typeof Map.prototype.getOrInsertComputed !== 'function') {
+    Object.defineProperty(Map.prototype, 'getOrInsertComputed', {
+      configurable: true,
+      writable: true,
+      value: function getOrInsertComputed(key, callback) {
+        if (this.has(key)) return this.get(key);
+        if (typeof callback !== 'function') throw new TypeError('callback must be a function');
+        const value = callback(key);
+        this.set(key, value);
+        return value;
+      }
+    });
+  }
+  if (typeof Map.prototype.getOrInsert !== 'function') {
+    Object.defineProperty(Map.prototype, 'getOrInsert', {
+      configurable: true,
+      writable: true,
+      value: function getOrInsert(key, value) {
+        if (this.has(key)) return this.get(key);
+        this.set(key, value);
+        return value;
+      }
+    });
+  }
+})();
