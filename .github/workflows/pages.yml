@@ -35,6 +35,7 @@ jobs:
           node --check word-ribbon.js
           node --check word-editor-tools.js
           node --check word-docx-styles.js
+          node --check word-local-drafts.js
           node --check simple-workspace.js
           node --check ui-english.js
           node --check list-normalizer-v31.js
@@ -58,7 +59,7 @@ jobs:
 
       - name: Test Word-style ribbon behavior
         run: |
-          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs tests/no-automatic-restyling.test.cjs tests/auto-apa-import.test.cjs tests/review-panel-close.test.cjs tests/on-demand-review.test.cjs tests/editor-cleanup.test.cjs tests/word-editor-tools.test.cjs tests/word-docx-styles.test.cjs
+          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs tests/no-automatic-restyling.test.cjs tests/auto-apa-import.test.cjs tests/review-panel-close.test.cjs tests/on-demand-review.test.cjs tests/editor-cleanup.test.cjs tests/word-editor-tools.test.cjs tests/word-docx-styles.test.cjs tests/word-local-drafts.test.cjs
 
       - name: Verify v3.4.8 protected editing and local installation files
         shell: bash

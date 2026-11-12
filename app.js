@@ -136,7 +136,17 @@ els.formatBtn.addEventListener("click", () => {
 });
 els.demoBtn.addEventListener("click", loadDemo);
 els.reauditBtn.addEventListener("click", runAudit);
-els.clearBtn.addEventListener("click", clearAll);
+els.clearBtn.addEventListener("click", event => {
+  // Protect user edits from accidental Clear, including locally saved drafts.
+  const existing = els.preview &&
+    !els.preview.querySelector(".placeholder") &&
+    (els.preview.textContent || "").trim().length > 0;
+  if (existing && !window.confirm("Clear the current document and its local draft? Export your changes first if needed.")) {
+    event.stopImmediatePropagation();
+    return;
+  }
+  clearAll();
+});
 els.downloadHtmlBtn.addEventListener("click", downloadHtml);
 els.downloadDocxBtn.addEventListener("click", downloadDocx);
 els.downloadAuditBtn.addEventListener("click", downloadAudit);

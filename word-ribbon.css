@@ -76,3 +76,14 @@ body.apa-focus-mode:not(.apa-page-view) .apa-paper { min-height:calc(100dvh - 21
   .word-ribbon-view-actions, .word-ribbon-tabs, .word-ribbon-panels, .word-ribbon-status { display:none !important; }
   body.apa-focus-mode .layout { padding:0 !important; }
 }
+
+/* Word-style local draft controls: compact and unobtrusive. */
+#wordLocalDraftTools { max-width:340px; }
+.word-local-draft-note {
+  display:block;
+  flex-basis:100%;
+  max-width:300px;
+  font-size:11px;
+  line-height:1.3;
+  color:#506179;
+}

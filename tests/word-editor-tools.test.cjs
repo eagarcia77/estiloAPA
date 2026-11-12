@@ -310,3 +310,36 @@ test("Word tools remain optional rather than replacing the APA 7 workflow", () =
   assert.match(editor, /data-indent="none"/);
   assert.match(editor, /data-indent="hanging"/);
 });
+
+test("Insert tab provides date and academic symbols without adding document chrome", () => {
+  const h = setup();
+  const titles = h.insert.children.flatMap(group => group.children);
+  assert.ok(titles.some(item => item.textContent === "Insert Date"));
+  const symbols = titles.find(item => item.id === "wordInsertSymbol");
+  assert.ok(symbols);
+  assert.ok(symbols.children.some(option => option.value === "π"));
+  assert.ok(symbols.children.some(option => option.value === "§"));
+  assert.equal(h.root.innerHTML, "<p>Original paragraph.</p>");
+});
+
+test("native spell checking can be toggled without editing the document", () => {
+  const h = setup();
+  h.root.spellcheck = true;
+  const controls = h.review.children.flatMap(group => group.children);
+  const spelling = controls.find(item => item.textContent === "Spelling: On");
+  assert.ok(spelling);
+  spelling.dispatchEvent({ type: "click" });
+  assert.equal(h.root.spellcheck, false);
+  assert.equal(spelling.textContent, "Spelling: Off");
+  assert.equal(spelling.getAttribute("aria-pressed"), "false");
+  assert.equal(h.root.innerHTML, "<p>Original paragraph.</p>");
+});
+
+test("paragraph marks change only presentation and remain absent from print", () => {
+  const src = fs.readFileSync(path.join(__dirname, "../word-editor-tools.js"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "../word-editor-tools.css"), "utf8");
+  assert.match(src, /word-show-paragraph-marks/);
+  assert.match(css, /body\.word-show-paragraph-marks #preview p::after/);
+  assert.match(css, /@media print/);
+  assert.match(css, /content:none !important/);
+});
