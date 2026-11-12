@@ -127,9 +127,12 @@ els.clearBtn.addEventListener("click", clearAll);
 els.downloadHtmlBtn.addEventListener("click", downloadHtml);
 els.downloadDocxBtn.addEventListener("click", downloadDocx);
 els.downloadAuditBtn.addEventListener("click", downloadAudit);
-els.preview.addEventListener("input", debounce(() => {
-  if (hasFormattedContent()) runAudit(false);
-}, 600));
+// The editor stays responsive: auditing is on demand, not on every keystroke.
+// Opening Review computes a fresh report from the CURRENT edited document.
+const reviewDetails = document.querySelector("#simpleReviewDetails");
+reviewDetails?.addEventListener("toggle", () => {
+  if (reviewDetails.open && hasFormattedContent()) runAudit(false);
+});
 
 function debounce(fn, delay) {
   let timer;
@@ -695,7 +698,8 @@ function downloadBlob(blob, filename) {
 }
 
 function downloadAudit() {
-  if (!lastAudit) runAudit(false);
+  // Regenerate the report at download time so edits are reflected accurately.
+  runAudit(false);
   if (!lastAudit) return;
   const lines = [
     `APA7 Module Formatter v${APP_VERSION}`,
