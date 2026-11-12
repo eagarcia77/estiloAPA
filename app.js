@@ -103,6 +103,19 @@ for (const eventName of ["dragleave", "drop"]) {
 }
 els.dropZone.addEventListener("drop", (event) => setFiles(event.dataTransfer.files));
 
+// Opening a document should not require finding the hidden settings panel.
+// Users can drop a file anywhere on the visible document workspace.
+const editorDropArea = document.querySelector(".paper-wrap");
+editorDropArea?.addEventListener("dragover", (event) => {
+  if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
+});
+editorDropArea?.addEventListener("drop", (event) => {
+  if (!event.dataTransfer?.files?.length) return;
+  event.preventDefault();
+  event.stopPropagation();
+  setFiles(event.dataTransfer.files);
+});
+
 for (const control of [els.fontFamily, els.firstLineIndent, els.hangingReferences]) {
   control.addEventListener("change", applyPreviewStyles);
 }
@@ -133,14 +146,6 @@ const reviewDetails = document.querySelector("#simpleReviewDetails");
 reviewDetails?.addEventListener("toggle", () => {
   if (reviewDetails.open && hasFormattedContent()) runAudit(false);
 });
-
-function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
-}
 
 async function waitForGlobal(name, timeoutMs = 12000) {
   const started = Date.now();
