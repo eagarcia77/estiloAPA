@@ -173,7 +173,8 @@ class UiNode {
     const visit = node => {
       for (const child of node.children) {
         if (selector === ".word-ruler-tick" &&
-            child.classList.contains("word-ruler-tick")) items.push(child);
+            (child.classList.contains("word-ruler-tick") ||
+              String(child.className || "").split(" ").includes("word-ruler-tick"))) items.push(child);
         visit(child);
       }
     };
