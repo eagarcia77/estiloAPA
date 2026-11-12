@@ -411,59 +411,37 @@ function nearestIndex(value, anchors) {
 
 function detectTable(lines, startIndex, bodyFontSize) {
   const headerLine = lines[startIndex];
-  const headerCells = splitLineIntoCells(headerLine, 26);
-  if (headerCells.length < 3 || headerCells.length > 6 || headerLine.text.length > 170) return null;
-
-  const columnStarts = headerCells.map((cell) => cell.x);
-  const firstBoundary = (columnStarts[0] + columnStarts[1]) / 2;
-  let endIndex = startIndex + 1;
-  while (endIndex < lines.length) {
-    const line = lines[endIndex];
+  const headerCells = splitLineIntoCells(headerLine, Math.max(16, bodyFontSize * 1.65));
+  if (headerCells.length < 2 || headerCells.length > 8 || headerLine.text.length > 200) return null;
+  const starts = headerCells.map(cell => cell.x);
+  if (starts.some((x, i) => i && x - starts[i - 1] < Math.max(30, bodyFontSize * 3))) return null;
+  const region = [headerLine];
+  const rowGap = Math.max(20, bodyFontSize * 2.5);
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    const line = lines[i];
     if (figureLabelRegex.test(line.text) || referenceHeadingRegex.test(line.text)) break;
-    if (classifyHeading(line, bodyFontSize) && endIndex > startIndex + 1) break;
-    const gap = lines[endIndex - 1].y - line.y;
-    if (gap > 55 && endIndex > startIndex + 2) break;
-    endIndex += 1;
+    if (classifyHeading(line, bodyFontSize)) break;
+    if (region[region.length - 1].y - line.y > rowGap * 1.7) break;
+    const cells = splitLineIntoCells(line, Math.max(16, bodyFontSize * 1.65));
+    const aligned = cells.filter(cell => starts.some(x => Math.abs(cell.x - x) < Math.max(22, bodyFontSize * 2.5)));
+    // Stop at ordinary prose rather than swallowing subsequent paragraphs.
+    if (cells.length === 1 && aligned.length === 0) break;
+    if (cells.length > starts.length + 2) break;
+    region.push(line);
+    if (region.length >= 80) break;
   }
-
-  const region = lines.slice(startIndex, endIndex);
-  const firstColumnY = [];
-  for (const line of region) {
-    for (const item of line.items) if (item.x < firstBoundary) firstColumnY.push(item.y);
-  }
-  const anchors = uniqueAnchors(firstColumnY, Math.max(4, bodyFontSize * 0.45));
-  if (anchors.length < 3) return null;
-
-  const matrix = Array.from({ length: anchors.length }, () => Array.from({ length: columnStarts.length }, () => []));
-  for (const line of region) {
-    for (const item of line.items) {
-      const row = nearestIndex(item.y, anchors);
-      const col = nearestIndex(item.x, columnStarts);
-      matrix[row][col].push(item);
+  if (region.length < 2) return null;
+  const rows = region.map(line => {
+    const cells = Array.from({ length: starts.length }, () => []);
+    for (const cell of splitLineIntoCells(line, Math.max(16, bodyFontSize * 1.65))) {
+      cells[nearestIndex(cell.x, starts)].push(cell.text);
     }
-  }
-
-  const rows = matrix.map((row) => row.map((cellItems) => {
-    const sorted = [...cellItems].sort((a, b) => (b.y - a.y) || (a.x - b.x));
-    const pieces = [];
-    let previousY = null;
-    let buffer = [];
-    const flush = () => {
-      if (!buffer.length) return;
-      pieces.push(joinLineItems(buffer).text);
-      buffer = [];
-    };
-    for (const item of sorted) {
-      if (previousY !== null && Math.abs(previousY - item.y) > Math.max(4, bodyFontSize * 0.55)) flush();
-      buffer.push(item);
-      previousY = item.y;
-    }
-    flush();
-    return pieces.join(" ").replace(/\s+/g, " ").trim();
-  })).filter((row) => row.some(Boolean));
-
-  if (rows.length < 3) return null;
-  return { block: { type: "table", rows }, nextIndex: endIndex };
+    return cells.map(parts => parts.join(" ").trim());
+  });
+  const populated = rows.filter(row => row.filter(Boolean).length >= 2);
+  // Two aligned rows are enough for a small table; avoid false positives.
+  if (populated.length < 2 || populated.length / rows.length < 0.6) return null;
+  return { block: { type: "table", rows }, nextIndex: startIndex + region.length };
 }
 
 function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
