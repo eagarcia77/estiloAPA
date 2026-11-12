@@ -88,8 +88,11 @@
     }
     try {
       const when = new Date().toISOString();
+      const layout = window.EstiloAPAWordPageLayout;
+      const pageSettings = layout && preview().dataset.wordPageCustomized === "true"
+        ? layout.read(preview()) : null;
       store.setItem(DRAFT_KEY, JSON.stringify({
-        version: 1, html, savedAt: when
+        version: 1, html, savedAt: when, pageSettings
       }));
       lastSaved = when;
       draftAvailable = true;
@@ -150,6 +153,12 @@
       const safeHTML = sanitizeDraftHTML(draft.html);
       window.apaResetProtectedDocument?.();
       el.innerHTML = safeHTML;
+      const pageLayout = window.EstiloAPAWordPageLayout;
+      if (pageLayout) {
+        if (draft.pageSettings) pageLayout.apply(el, draft.pageSettings, true);
+        else pageLayout.reset(el);
+        window.EstiloAPAWordLayoutControls?.sync?.();
+      }
       el.dataset.apaReadyForEditing = "true";
       document.getElementById("downloadDocxBtn").disabled = false;
       document.getElementById("downloadHtmlBtn").disabled = false;
