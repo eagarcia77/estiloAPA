@@ -81,12 +81,12 @@ function setup() {
   return { shell, toolbar, preview, initialGroups, els, window, document };
 }
 
-test("six ribbon tabs are created with Inicio selected", () => {
+test("seven ribbon tabs are created with Home selected", () => {
   const h = setup();
   const tabs = h.shell.children.find(child => child.id === "wordRibbonTabs");
   const panels = h.shell.children.find(child => child.id === "wordRibbonPanels");
-  assert.equal(tabs.children.length, 6);
-  assert.equal(panels.children.length, 6);
+  assert.equal(tabs.children.length, 7);
+  assert.equal(panels.children.length, 7);
   assert.equal(panels.children.filter(panel => !panel.hidden).length, 1);
   assert.equal(panels.children.find(panel => !panel.hidden).id, "word-ribbon-panel-inicio");
 });
