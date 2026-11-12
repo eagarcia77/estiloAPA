@@ -579,12 +579,14 @@
     home.append(clip);
 
     const tableTools = makeGroup("Table Editing");
-    tableTools.append(
-      makeButton("Add Row", () => editTable("addRow")),
-      makeButton("Add Column", () => editTable("addColumn")),
-      makeButton("Delete Row", () => editTable("deleteRow")),
-      makeButton("Delete Column", () => editTable("deleteColumn"))
-    );
+    for (const [label, commandName] of [
+      ["Add Row", "addRow"], ["Add Column", "addColumn"],
+      ["Delete Row", "deleteRow"], ["Delete Column", "deleteColumn"]
+    ]) {
+      const tool = makeButton(label, () => editTable(commandName));
+      tool.dataset.wordAction = commandName;
+      tableTools.append(tool);
+    }
     insert.append(tableTools);
     const insertText = makeGroup("Date & Symbols");
     insertText.append(makeButton("Insert Date", () => {
@@ -630,7 +632,9 @@
     const view = document.getElementById("word-ribbon-panel-vista");
     if (view) {
       const navigation = makeGroup("Navigation");
-      navigation.append(makeButton("Document Outline", openOutline));
+      const outline = makeButton("Document Outline", openOutline);
+      outline.id = "wordDocumentOutlineButton";
+      navigation.append(outline);
       const marks = makeButton("Show Paragraph Marks", () => {
         const enabled = document.body.classList.toggle("word-show-paragraph-marks");
         marks.textContent = enabled ? "Hide Paragraph Marks" : "Show Paragraph Marks";
