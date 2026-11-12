@@ -79,10 +79,24 @@ The Word-style Ribbon now contains a set of practical document-editing features,
 
 - **Home:** Undo/Redo with a bounded document history; Bold, Italic, Underline, Clear Formatting, Superscript, Subscript, Strikethrough, font family/size, font color, highlight, numbered/bulleted lists, Find, Replace, Select All, Cut and Copy.
 - **Insert:** APA tables and figures, images, links, page breaks, date, scientific symbols, and basic table editing (add/delete rows or columns). Complex tables with merged cells are protected against unsupported structural edits.
+- **Layout:** US Letter/A4/Legal page size, portrait/landscape, APA 7 margin presets and custom margins, paragraph spacing, keep with next/keep lines, multiple tab stops, and Insert Tab.
 - **APA Layout:** paragraph and reference presets, APA heading levels, indentation, alignment and line spacing.
 - **Review:** on-demand APA checks, Find/Replace, and an optional toggle for native browser spell checking.
 - **View:** full-width or US Letter page view, zoom, focus mode, a document outline built from headings, optional non-printing paragraph marks, and horizontal/vertical rulers.
 - **File:** DOCX/HTML export, optional reapplication of the original APA 7 formatting, and Print Document.
+
+### Word-style Page Layout and paragraph controls
+
+Use **Layout** in the Ribbon for page setup and paragraph options. **US Letter, Portrait, and 1-inch margins** remain the initial Standard APA 7 settings. A thesis profile starts with its existing **1.5-inch left margin** unless the user explicitly chooses otherwise.
+
+- **Paper Size:** US Letter, A4 or US Legal.
+- **Orientation:** Portrait or Landscape.
+- **Margins:** APA 7, Thesis, Narrow, Moderate, Wide or Custom Margins (Top/Right/Bottom/Left).
+- **Paragraph Spacing:** Before and After values, Keep with Next, Keep Lines Together, and Allow Page Breaks. Only selected paragraphs are modified.
+- **Tab Stops:** choose left, center or right alignment and optional dotted leaders; insert a tab explicitly with **Insert Tab**. Multiple tab positions per paragraph are saved.
+- **Reset APA 7 Page:** restore the current academic profile's page defaults. A fresh document import also starts with the selected profile's defaults.
+
+Explicit layout changes remain in local drafts and are converted to DOCX page properties and paragraph/tab-stop settings. The browser editor approximates custom tab-stop alignment; the positions and dot leaders are intended for accurate placement in Word after DOCX export. **Review** does not reapply layout settings while you type.
 
 ### Word-style rulers (inches)
 
@@ -95,7 +109,7 @@ EstiloAPA now displays a **horizontal ruler** above the document and a **vertica
 5. For precise adjustments, focus a marker and use **Arrow Left / Arrow Right** in 1/8-inch steps, or **Home** to return it to zero.
 6. Select **View → Hide Rulers / Show Rulers** to toggle the guides. On narrow screens, the horizontal ruler remains available and the vertical guide is hidden to conserve space.
 
-The ruler uses inches and adapts to **Full Width**, **Page View**, screen resizing and zoom. Its margin bands show where the paper's built-in margins begin; rulers change **paragraph indentation**, not APA 7 page margins. Custom manual indents are saved in the document, restored by Undo/Redo and local drafts, and converted to Word twips in all four DOCX export routes.
+The ruler uses inches and adapts to **Full Width**, **Page View**, screen resizing and zoom. Its margin bands show the current page margins; the ruler adjusts **paragraph indentation**, while the **Layout** controls change page margins when explicitly requested. Custom manual indents are saved in the document, restored by Undo/Redo and local drafts, and converted to Word twips in all four DOCX export routes.
 
 Choosing **Home → No Indent** after any ruler adjustment resets the paragraph indentation to zero. Initial APA 7 formatting still runs only when the document is opened or when **Reapply APA 7** is explicitly selected.
 
