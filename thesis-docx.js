@@ -44,18 +44,15 @@ function thesisInlineRuns(node, api, inherited = {}) {
   const { TextRun, ExternalHyperlink } = api;
   if (node.nodeType === Node.TEXT_NODE) {
     if (!node.nodeValue) return [];
-    return [new TextRun({
-      text: node.nodeValue,
-      font: "Times New Roman",
-      size: 24,
-      bold: inherited.bold,
-      italics: inherited.italics,
-      underline: inherited.underline ? {} : undefined,
-    })];
+    const styles = window.EstiloAPAWordDocxStyles;
+    const options = styles?.runOptions(inherited, "Times New Roman", 24) ||
+      { font: "Times New Roman", size: 24, bold: inherited.bold,
+        italics: inherited.italics, underline: inherited.underline ? {} : undefined };
+    return [new TextRun({ text: node.nodeValue, ...options })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = {
+  const style = window.EstiloAPAWordDocxStyles?.childStyle(node, inherited) || {
     bold: inherited.bold || ["B", "STRONG"].includes(tag),
     italics: inherited.italics || ["I", "EM"].includes(tag),
     underline: inherited.underline || tag === "U",
@@ -65,7 +62,12 @@ function thesisInlineRuns(node, api, inherited = {}) {
     const text = node.textContent || node.getAttribute("href");
     return [new ExternalHyperlink({
       link: node.getAttribute("href"),
-      children: [new TextRun({ text, font: "Times New Roman", size: 24, underline: {}, bold: style.bold, italics: style.italics })],
+      children: [new TextRun({
+        text,
+        ...(window.EstiloAPAWordDocxStyles?.runOptions(style, "Times New Roman", 24) ||
+          { font: "Times New Roman", size: 24, bold: style.bold, italics: style.italics }),
+        underline: {},
+      })],
     })];
   }
   return [...node.childNodes].flatMap((child) => thesisInlineRuns(child, api, style));
