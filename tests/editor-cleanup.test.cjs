@@ -7,7 +7,7 @@ const read = name => fs.readFileSync(path.join(__dirname, "..", name), "utf8");
 test("automatic normalization jobs are discarded, never replayed after editing", () => {
   const source = read("edit-stability-v348.js");
   const win = { setTimeout() { return 9; }, clearTimeout() {}, getSelection() { return null; } };
-  const document = { readyState: "loading", addEventListener() {} };
+  const document = { readyState: "loading", addEventListener() {}, querySelector() { return null; } };
   const runtime = new Function("window", "document", source +
     "\nreturn {queue:aesQueueNormalization,flush:aesFlushPendingNormalizations,reset:aesResetDocument,pending:()=>aesPendingNormalizations.size};"
   )(win, document);
