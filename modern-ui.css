@@ -111,3 +111,44 @@ html { -webkit-text-size-adjust:100%; }
   .word-ribbon-tabs [role="tab"]:active,
   .word-ribbon-view-actions button:active:not(:disabled) { transform:none; }
 }
+
+/* User-controlled accessibility settings: exclude document canvas and exports. */
+.apa-accessibility-tools { margin:.4rem .35rem .65rem; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.apa-accessibility-tools details { border:1px solid #cddde0; border-radius:11px; background:#fff; }
+.apa-accessibility-tools summary { cursor:pointer; padding:.65rem .85rem; font-weight:700; color:#075f51; min-height:44px; }
+.apa-accessibility-tools details[open] > summary { border-bottom:1px solid #dce6e8; background:#edf7f3; }
+.apa-accessibility-options { padding:.75rem .9rem; display:grid; gap:.7rem; }
+.apa-accessibility-options p { margin:0; font-size:.87rem; line-height:1.55; color:#526773; }
+.apa-a11y-toggle { display:flex; align-items:center; gap:.7rem; min-height:44px; font-weight:600; }
+.apa-a11y-toggle input { width:20px; height:20px; accent-color:#087e69; flex:none; }
+.apa-a11y-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.apa-a11y-actions button { min-height:44px; padding:.55rem .85rem; border:1px solid #b6c9cd; border-radius:9px; background:#f7fafb; color:#193c49; cursor:pointer; }
+.apa-accessibility-tools :focus-visible { outline:3px solid #168ab5; outline-offset:2px; }
+body.apa-ui-high-contrast { --bg:#fff; --line:#314452; --muted:#172d3b; }
+body.apa-ui-high-contrast .preview-panel,
+body.apa-ui-high-contrast .preview-toolbar,
+body.apa-ui-high-contrast .word-ribbon-enabled,
+body.apa-ui-high-contrast .word-ribbon-tabs,
+body.apa-ui-high-contrast .word-ribbon-view-actions,
+body.apa-ui-high-contrast .apa-accessibility-tools details { background:#fff; color:#071f29; border-color:#172d3b; }
+body.apa-ui-high-contrast .word-ribbon-tabs [role="tab"] { color:#092e40; }
+body.apa-ui-high-contrast .word-ribbon-tabs [role="tab"][aria-selected="true"] { background:#073e47; color:#fff; box-shadow:none; }
+body.apa-ui-high-contrast .apa-accessibility-tools summary { color:#073e47; }
+body.apa-ui-high-contrast .apa-accessibility-options p { color:#172d3b; }
+body.apa-ui-large-controls .preview-toolbar,
+body.apa-ui-large-controls .word-ribbon-enabled,
+body.apa-ui-large-controls .simple-quick-status,
+body.apa-ui-large-controls .apa-accessibility-tools,
+body.apa-ui-large-controls .simple-secondary { font-size:1.13rem; }
+body.apa-ui-large-controls .simple-primary-actions button,
+body.apa-ui-large-controls .simple-tools-menu > summary,
+body.apa-ui-large-controls .word-ribbon-tabs [role="tab"],
+body.apa-ui-large-controls .word-ribbon-view-actions button { font-size:1rem; min-height:50px; }
+body.apa-ui-reduce-motion .preview-panel *,
+body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+@media (max-width:760px) {
+  .apa-accessibility-tools { margin:.35rem .15rem; }
+  .apa-a11y-actions { display:grid; grid-template-columns:1fr 1fr; }
+  .apa-a11y-actions button { padding:.55rem .3rem; }
+}
+@media print { .apa-accessibility-tools { display:none!important; } }
