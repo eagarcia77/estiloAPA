@@ -679,28 +679,44 @@ function mergeCrossPageBlocks(blocks) {
 function normalizeExtractedStructure(blocks) {
   const result = [];
   let questions = false;
+  let references = false;
+  const questionBoundary = /\s+(?=[1-8]\.\s*(?:¿|[A-ZÁÉÍÓÚÑ]))/g;
+  // Require a surname, initials and a publication year before splitting a citation.
+  const referenceBoundary = /\s+(?=[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'-]+,\s+(?:[A-Z]\.\s*){1,3}(?:,\s*&\s*[A-ZÁÉÍÓÚÑÜ][^()]{0,90})?\s*\((?:19|20)\d{2}[a-z]?\)\.)/g;
   for (const block of blocks) {
-    if (/^h[123]$/.test(block.type)) {
-      if (/^Preguntas de reflexi[oó]n y autoevaluaci[oó]n/i.test(block.text)) questions = true;
-      else if (/^Referencias\b/i.test(block.text)) questions = false;
+    const raw = String(block.text || "").trim();
+    if (/^Preguntas de reflexi[oó]n y autoevaluaci[oó]n/i.test(raw)) {
+      questions = true;
+      references = false;
+    } else if (/^Referencias(?:\s*\(APA\s*7\))?/i.test(raw) && raw.length < 65) {
+      questions = false;
+      references = true;
+    } else if (/^h[123]$/.test(block.type) && !questions && !references) {
+      questions = false;
     }
-    if (questions && block.type === "p" && /^\s*1\.\s+/.test(block.text)) {
-      // Numbered questions were placed on the same physical PDF lines.
-      // Split only on a number following a question mark or sentence boundary.
-      const pieces = block.text.split(/\s+(?=[2-8]\.\s+(?:¿|[A-ZÁÉÍÓÚÑ]))/g);
-      if (pieces.length > 1) {
-        for (const piece of pieces) {
-          const clean = piece.replace(/^\s*[1-8]\.\s*/, "").trim();
-          if (clean) result.push({ ...block, type:"ol-item", text:clean, html:undefined });
+    if (questions && (block.type === "ol-item" || block.type === "p")) {
+      const pieces = raw.split(questionBoundary).filter(Boolean);
+      const isQuestion = block.type === "ol-item" || /^[1-8]\.\s*(?:¿|[A-ZÁÉÍÓÚÑ])/.test(raw);
+      if (isQuestion) {
+        for (const part of pieces) {
+          const clean = part.replace(/^\s*[1-8]\.\s*/, "").trim();
+          if (clean) result.push({...block,type:"ol-item",text:clean,html:undefined});
         }
         continue;
       }
+      // A wrapped question line without a new number belongs to the prior item.
+      const previous = result[result.length - 1];
+      if (previous?.type === "ol-item" && raw && !/^[A-ZÁÉÍÓÚÑ][^.]{0,45}:$/.test(raw)) {
+        previous.text += " " + raw;
+        continue;
+      }
     }
-    if (block.type === "reference") {
-      // A DOI followed by a new author is a strong entry boundary.
-      const pieces = block.text.split(/(?<=https?:\/\/doi\.org\/10\.\d{4,9}\/[^\s]+)\s+(?=[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñü-]+,\s+[A-Z])/g);
-      if (pieces.length > 1) {
-        for (const piece of pieces) result.push({...block,text:piece.trim(),html:escapeHtml(piece.trim())});
+    if (references && (block.type === "reference" || block.type === "p")) {
+      const parts = raw.split(referenceBoundary).filter(Boolean);
+      if (block.type === "reference" || (parts.length > 1 && referenceStartRegex.test(parts[0]))) {
+        for (const part of parts) {
+          result.push({...block,type:"reference",text:part.trim(),html:escapeHtml(part.trim())});
+        }
         continue;
       }
     }
