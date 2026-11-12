@@ -610,6 +610,10 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
     let paragraphHtml = line.html;
     let cursor = index + 1;
     while (cursor < lines.length && shouldJoinLines(lines[cursor - 1], lines[cursor], context)) {
+      // A table heading is a structural boundary, never a continuation of prose.
+      // Previously the paragraph merger consumed "Tabla 1" before the table
+      // detector could inspect it, flattening entire tables into plain text.
+      if (/\bTabla\s+\d+\b/i.test(lines[cursor].text)) break;
       paragraphText = joinWrappedText(paragraphText, lines[cursor].text);
       paragraphHtml = joinWrappedHtml(paragraphHtml, lines[cursor].html);
       cursor += 1;
