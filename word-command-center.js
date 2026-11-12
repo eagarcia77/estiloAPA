@@ -92,10 +92,13 @@
         if (review && !review.open) simple?.toggleReview?.();
         else byId("reauditBtn")?.click();
       },()=>!!byId("simpleReviewDetails")),
-      action("document-outline","Document Outline","View","navigate headings",()=>originalButton("#word-ribbon-panel-vista button[data-word-action='outline']")),
-      action("rulers","Show or Hide Rulers","View","measure inches indent",()=>originalButton("#word-ribbon-panel-vista button[data-word-action='rulers']")),
+      action("document-outline","Document Outline","View","navigate headings",()=>originalButton("#wordDocumentOutlineButton"),
+        ()=>!!byId("wordDocumentOutlineButton")),
+      action("rulers","Show or Hide Rulers","View","measure inches indent",()=>originalButton("#wordRulerToggleButton"),
+        ()=>!!byId("wordRulerToggleButton")),
       action("focus","Focus Mode","View","distraction-free fullscreen",()=>originalButton("#wordRibbonFocus")),
-      action("pageview","Page View / Full Width","View","zoom screen document width",()=>originalButton("#word-ribbon-panel-vista button[data-word-action='pageview']")),
+      action("pageview","Page View / Full Width","View","zoom screen document width",()=>originalButton("#wordPageViewButton"),
+        ()=>!!byId("wordPageViewButton")),
       action("print","Print Document","File","printer",()=>window.print?.()),
       action("shortcuts","Keyboard Shortcuts","Help","learn help key commands",openShortcuts,()=>true,"Ctrl+Shift+P")
     ];
@@ -167,6 +170,7 @@
     input.value="";
     selectedIndex=0;
     shortcutsPanel.hidden=true;
+    resultList.hidden=false;
     render();
     input.focus();
   }
@@ -192,6 +196,8 @@
   function openShortcuts() {
     dialog.hidden=false;
     shortcutsPanel.hidden=false;
+    resultList.hidden=true;
+    hint.textContent="Keyboard shortcuts · Esc to close";
     const shortcuts = [
       ["Command Search","Ctrl/Cmd + Shift + P"],
       ["Word Help","Alt + Q"],
@@ -211,7 +217,7 @@
     }
     const back=make("button","word-command-back","Back to Commands");
     back.type="button";
-    back.addEventListener("click",()=>{shortcutsPanel.hidden=true;input.focus();});
+    back.addEventListener("click",()=>{shortcutsPanel.hidden=true;resultList.hidden=false;render();input.focus();});
     shortcutsPanel.append(back);
     input.focus();
   }
@@ -300,7 +306,7 @@
     raf=0;
     if(!floatingBar || !contextEnabled || !dialog.hidden) return;
     const range=selectedRange();
-    if(!range || !document.hasFocus?.()) {floatingBar.hidden=true;return;}
+    if(!range || (typeof document.hasFocus==="function" && !document.hasFocus())) {floatingBar.hidden=true;return;}
     const rect=range.getBoundingClientRect?.();
     if(!rect || !Number.isFinite(rect.left) || !rect.width) {floatingBar.hidden=true;return;}
     // Tiny selections have no useful contextual target; do not obscure typing.
