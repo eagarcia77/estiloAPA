@@ -297,14 +297,21 @@ function formatReferenceListLayout() {
 }
 
 function initializeReferenceAudit() {
-  ensureReferenceAuditStyles();
-  ensureReferenceAuditPanel();
-  document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(renderReferenceFormattingAudit, 120));
-  document.querySelector("#preview")?.addEventListener("input", () => {
-    clearTimeout(window.__apaRefAuditTimer);
-    window.__apaRefAuditTimer = setTimeout(renderReferenceFormattingAudit, 450);
-  });
-  setTimeout(renderReferenceFormattingAudit, 250);
+  const review = document.querySelector("#simpleReviewDetails");
+  const refresh = () => {
+    if (review && !review.open) return;
+    ensureReferenceAuditStyles();
+    renderReferenceFormattingAudit();
+  };
+  if (review) {
+    review.addEventListener("toggle", refresh);
+    document.querySelector("#preview")?.addEventListener("apa-document-loaded", refresh);
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+    if (review.open) refresh();
+  } else {
+    refresh();
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+  }
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initializeReferenceAudit);
