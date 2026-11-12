@@ -448,8 +448,8 @@ function detectTable(lines, startIndex, bodyFontSize) {
 // and attach intervening text to the nearest column of the current row.
 function detectLabeledTable(lines, labelIndex, bodyFontSize) {
   const label = lines[labelIndex];
-  if (!/^Tabla\\s+\\d+\\b/i.test(label.text.trim())) return null;
-  const stop = /^(?:Nota\\.|Tabla\\s+\\d+\\b|Figura\\s+\\d+\\b|Estudio de caso)/i;
+  if (!/^Tabla\s+\d+\b/i.test(label.text.trim())) return null;
+  const stop = /^(?:Nota\.|Tabla\s+\d+\b|Figura\s+\d+\b|Estudio de caso)/i;
   let end = labelIndex + 1;
   while (end < lines.length && !stop.test(lines[end].text.trim()) &&
          lines[end].y < label.y && label.y - lines[end].y < 530) end += 1;
@@ -501,7 +501,7 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
     const line = lines[index];
     const text = line.text.trim();
 
-    if (/^Tabla\\s+\\d+\\b/i.test(text)) {
+    if (/^Tabla\s+\d+\b/i.test(text)) {
       const labeled = detectLabeledTable(lines, index, bodyFontSize);
       if (labeled) {
         blocks.push({type: "table-label", text, pageNumber: page.pageNumber});
