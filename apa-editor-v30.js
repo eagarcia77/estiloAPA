@@ -178,7 +178,7 @@ function applyEditorBlockStyle(styleName) {
       block.style.setProperty("text-align", block.dataset.apaEditorAlign, "important");
     }
   }
-  dispatchEditorChange(`APA 7 v${APA_EDITOR_VERSION}: estilo aplicado a ${blocks.length} bloque(s).`);
+  dispatchEditorChange(`APA 7 style applied to ${blocks.length} paragraph(s).`);
 }
 
 function markRibbonButtonState(attribute, value) {
@@ -492,75 +492,75 @@ function ensureEditorToolbar() {
   shell.id = "apaEditorShell";
   shell.className = "apa-editor-shell";
   shell.innerHTML = `
-    <div id="apaEditorToolbar" class="apa-editor-toolbar" role="toolbar" aria-label="Herramientas de edición y formato APA 7">
-      <div class="tool-group" aria-label="Historial">
-        <button type="button" class="icon-tool" data-cmd="undo" title="Deshacer" aria-label="Deshacer">↶</button>
-        <button type="button" class="icon-tool" data-cmd="redo" title="Rehacer" aria-label="Rehacer">↷</button>
+    <div id="apaEditorToolbar" class="apa-editor-toolbar" role="toolbar" aria-label="APA 7 editing and formatting tools">
+      <div class="tool-group" aria-label="History">
+        <button type="button" class="icon-tool" data-cmd="undo" title="Undo" aria-label="Undo">↶</button>
+        <button type="button" class="icon-tool" data-cmd="redo" title="Redo" aria-label="Redo">↷</button>
       </div>
-      <div class="tool-group" aria-label="Formato de texto">
-        <button type="button" class="icon-tool" data-cmd="bold" title="Negrita" aria-label="Negrita"><strong>B</strong></button>
-        <button type="button" class="icon-tool" data-cmd="italic" title="Cursiva" aria-label="Cursiva"><em>I</em></button>
-        <button type="button" class="icon-tool" data-cmd="underline" title="Subrayado" aria-label="Subrayado"><u>U</u></button>
-        <button type="button" data-cmd="removeFormat" title="Quitar formato de caracteres">Limpiar</button>
+      <div class="tool-group" aria-label="Text formatting">
+        <button type="button" class="icon-tool" data-cmd="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
+        <button type="button" class="icon-tool" data-cmd="italic" title="Italic" aria-label="Italic"><em>I</em></button>
+        <button type="button" class="icon-tool" data-cmd="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+        <button type="button" data-cmd="removeFormat" title="Clear character formatting">Clear</button>
       </div>
       <div class="tool-group">
-        <label class="sr-only" for="apaBlockStyle">Estilo de bloque</label>
-        <select id="apaBlockStyle" title="Estilo APA 7 del bloque">
-          <option value="">Estilo APA 7…</option>
-          <option value="normal">Párrafo normal</option>
-          <option value="title">Título del trabajo</option>
-          <option value="h1">Encabezado nivel 1</option>
-          <option value="h2">Encabezado nivel 2</option>
-          <option value="h3">Encabezado nivel 3</option>
-          <option value="h4">Encabezado nivel 4</option>
-          <option value="h5">Encabezado nivel 5</option>
-          <option value="reference">Referencia APA</option>
-          <option value="note">Nota de tabla/figura</option>
-          <option value="table-label">Rótulo de tabla</option>
-          <option value="table-title">Título de tabla</option>
-          <option value="figure-label">Rótulo de figura</option>
-          <option value="figure-title">Título de figura</option>
+        <label class="sr-only" for="apaBlockStyle">Block Style</label>
+        <select id="apaBlockStyle" title="APA 7 paragraph style">
+          <option value="">APA 7 Style…</option>
+          <option value="normal">Normal Paragraph</option>
+          <option value="title">Paper Title</option>
+          <option value="h1">Heading Level 1</option>
+          <option value="h2">Heading Level 2</option>
+          <option value="h3">Heading Level 3</option>
+          <option value="h4">Heading Level 4</option>
+          <option value="h5">Heading Level 5</option>
+          <option value="reference">APA Reference</option>
+          <option value="note">Table/Figure Note</option>
+          <option value="table-label">Table Label</option>
+          <option value="table-title">Table Title</option>
+          <option value="figure-label">Figure Label</option>
+          <option value="figure-title">Figure Title</option>
         </select>
       </div>
-      <div class="tool-group" aria-label="Alineación">
-        <button type="button" data-align="left" title="Alinear a la izquierda">Izq.</button>
-        <button type="button" data-align="center" title="Centrar">Centro</button>
-        <button type="button" data-align="right" title="Alinear a la derecha">Der.</button>
+      <div class="tool-group" aria-label="Alignment">
+        <button type="button" data-align="left" title="Align Left">Left</button>
+        <button type="button" data-align="center" title="Align Center">Center</button>
+        <button type="button" data-align="right" title="Align Right">Right</button>
       </div>
-      <div class="tool-group" aria-label="Sangría e interlineado">
-        <button type="button" data-indent="first" title="Sangría de primera línea 0.5 pulgadas">1ª línea .5″</button>
-        <button type="button" data-indent="hanging" title="Sangría francesa 0.5 pulgadas">Francesa .5″</button>
-        <button type="button" data-indent="none" title="Quitar sangría">Sin sangría</button>
-        <select id="apaLineSpacing" title="Interlineado">
-          <option value="">Interlineado…</option>
-          <option value="1">Sencillo</option>
+      <div class="tool-group" aria-label="Indentation and Line Spacing">
+        <button type="button" data-indent="first" title="First Line Indent 0.5 in">First Line .5″</button>
+        <button type="button" data-indent="hanging" title="Hanging Indent 0.5 in">Hanging .5″</button>
+        <button type="button" data-indent="none" title="No Indent">No Indent</button>
+        <select id="apaLineSpacing" title="Line Spacing">
+          <option value="">Line Spacing…</option>
+          <option value="1">Single</option>
           <option value="1.5">1.5</option>
-          <option value="2">Doble</option>
+          <option value="2">Double</option>
         </select>
       </div>
-      <div class="tool-group" aria-label="Presets APA 7">
-        <button type="button" id="apaParagraphPreset">Párrafo APA</button>
-        <button type="button" id="apaReferencePreset">Referencia APA</button>
-        <button type="button" id="insertReferencesHeading">Referencias</button>
+      <div class="tool-group" aria-label="APA 7 Presets">
+        <button type="button" id="apaParagraphPreset">APA Paragraph</button>
+        <button type="button" id="apaReferencePreset">APA Reference</button>
+        <button type="button" id="insertReferencesHeading">References</button>
       </div>
-      <div class="tool-group" aria-label="Insertar">
-        <button type="button" id="insertApaTable">+ Tabla APA</button>
-        <button type="button" id="insertFigureCaption">+ Figura</button>
-        <button type="button" id="insertApaLink">Enlace</button>
-        <button type="button" id="insertPageBreak">Salto pág.</button>
+      <div class="tool-group" aria-label="Insert">
+        <button type="button" id="insertApaTable">+ APA Table</button>
+        <button type="button" id="insertFigureCaption">+ Figure</button>
+        <button type="button" id="insertApaLink">Link</button>
+        <button type="button" id="insertPageBreak">Page Break</button>
       </div>
       <div class="tool-group">
-        <button type="button" id="toggleApaRules" aria-expanded="false" aria-controls="apaRulesPanel">Reglas APA 7</button>
+        <button type="button" id="toggleApaRules" aria-expanded="false" aria-controls="apaRulesPanel">APA 7 Rules</button>
       </div>
     </div>
     <div id="apaRulesPanel" class="apa-rules-panel" hidden>
       <div class="apa-rules-grid">
-        <div class="apa-rule-card"><strong>Texto del cuerpo</strong>Izquierda, doble espacio y sangría de primera línea de 0.5 pulg. Evite justificar el margen derecho.</div>
-        <div class="apa-rule-card"><strong>Encabezados</strong>Nivel 1 centrado/negrita; nivel 2 izquierda/negrita; nivel 3 izquierda/negrita/cursiva; niveles 4–5 con sangría y texto en la misma línea.</div>
-        <div class="apa-rule-card"><strong>Referencias</strong>Encabezado centrado y en negrita, doble espacio, orden alfabético, sin viñetas y sangría francesa de 0.5 pulg.</div>
-        <div class="apa-rule-card"><strong>DOI y URL</strong>DOI como https://doi.org/...; no añada punto final después de DOI o URL.</div>
-        <div class="apa-rule-card"><strong>Tablas</strong>Número en negrita, título en cursiva, sin líneas verticales y solo reglas horizontales necesarias.</div>
-        <div class="apa-rule-card"><strong>Figuras</strong>Número en negrita, título en cursiva y nota debajo cuando sea necesaria para fuente o aclaración.</div>
+        <div class="apa-rule-card"><strong>Body Text</strong>Left-aligned, double-spaced, with a 0.5-inch first-line indent. Do not justify the right margin.</div>
+        <div class="apa-rule-card"><strong>Headings</strong>Level 1 centered and bold; level 2 left and bold; level 3 left, bold, italic; levels 4–5 indented and run-in.</div>
+        <div class="apa-rule-card"><strong>Referencias</strong>Centered bold heading; double spacing, alphabetical order, no bullets, and a 0.5-inch hanging indent.</div>
+        <div class="apa-rule-card"><strong>DOIs and URLs</strong>Format DOI links as https://doi.org/...; do not add a period after a DOI or URL.</div>
+        <div class="apa-rule-card"><strong>Tables</strong>Bold number, italic title, no vertical borders, and only necessary horizontal rules.</div>
+        <div class="apa-rule-card"><strong>Figures</strong>Bold number, italic title, and a note below when required for the source or explanation.</div>
       </div>
     </div>`;
   help?.after(shell);
