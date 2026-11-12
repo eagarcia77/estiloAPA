@@ -226,6 +226,7 @@
     caption.textContent = "Rulers";
     switchButton = document.createElement("button");
     switchButton.type = "button";
+    switchButton.id = "wordRulerToggleButton";
     switchButton.className = "word-ribbon-action";
     switchButton.textContent = "Hide Rulers";
     switchButton.setAttribute("aria-pressed", "true");
