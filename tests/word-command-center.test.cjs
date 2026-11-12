@@ -53,11 +53,13 @@ function setup() {
   root.textContent="Research paragraph";
   root.querySelector=()=>null;
   const actions=new Element("div",document);
+  const view=new Element("div",document);
   const open=new Element("button",document);
   const download=new Element("button",document);
   const noIndent=new Element("button",document);
   elements.set("preview",root);
   elements.set("wordRibbonActions",actions);
+  elements.set("word-ribbon-panel-vista",view);
   elements.set("downloadDocxBtn",download);
   selectorMap.set("#simpleOpenBtn",open);
   selectorMap.set('#apaEditorShell button[data-indent="none"]',noIndent);
@@ -92,7 +94,7 @@ function setup() {
   const ctx=vm.createContext({document,window});
   vm.runInContext(source,ctx);
   return {
-    document,window,root,actions,open,download,noIndent,printed,ribbonTabs,
+    document,window,root,actions,view,open,download,noIndent,printed,ribbonTabs,
     elements,selectorMap,frames,
     get saved(){return selectionSaved;},
     get restored(){return selectionRestored;},
@@ -209,4 +211,19 @@ test("command search styles remain responsive and are excluded from print",()=>{
   assert.match(css,/@media print/);
   assert.match(html,/src="word-command-center\.js"/);
   assert.match(html,/href="word-command-center\.css"/);
+});
+
+test("View can disable the contextual toolbar without removing any document text",()=>{
+  const h=setup(),before=h.root.textContent;
+  const toggle=h.view.children.flatMap(group=>group.children)
+    .find(node=>node.id==="wordContextToggle");
+  assert.ok(toggle);
+  assert.equal(toggle.getAttribute("aria-pressed"),"true");
+  assert.equal(h.window.EstiloAPACommandCenter.execute("selection-toolbar"),true);
+  assert.equal(toggle.textContent,"Selection Toolbar: Off");
+  assert.equal(toggle.getAttribute("aria-pressed"),"false");
+  assert.equal(h.contextual().hidden,true);
+  assert.equal(h.root.textContent,before);
+  toggle.click();
+  assert.equal(toggle.getAttribute("aria-pressed"),"true");
 });
