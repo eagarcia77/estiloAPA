@@ -124,7 +124,7 @@
     return el;
   }
   function updateSelected() {
-    const children = [...resultList.children];
+    const children = [...resultList.children].filter(node=>node.getAttribute("role")==="option");
     children.forEach((node,i) => {
       node.setAttribute("aria-selected",String(i===selectedIndex));
       node.tabIndex = -1;
@@ -183,7 +183,16 @@
   function runCommand(command) {
     if (!command || !command.enabled()) return false;
     close(false);
-    restoreSelection();
+    // Preserve the caret for formatting/insertion commands only. File actions
+    // must retain native user activation for their download/file picker.
+    const editorActions = new Set([
+      "bold","italic","underline","clearformat",
+      "indent-none","indent-first","indent-hanging",
+      "align-left","align-center","align-right",
+      "insert-table","insert-figure","insert-link","insert-page-break",
+      "add-row"
+    ]);
+    if (editorActions.has(command.id)) restoreSelection();
     const result=command.execute();
     recent=[command.id,...recent.filter(id=>id!==command.id)].slice(0,8);
     if (!byId("wordFindPanel") || byId("wordFindPanel").hidden) {
@@ -332,6 +341,11 @@
     launcher.setAttribute("aria-keyshortcuts","Control+Shift+P Alt+Q");
     launcher.setAttribute("aria-haspopup","dialog");
     launcher.title="Find tools and commands (Ctrl+Shift+P or Alt+Q)";
+    // A pointer click can otherwise clear highlighted text before the
+    // command search opens. Keep the selection without stealing keyboard focus.
+    launcher.addEventListener("pointerdown",event=>{
+      if (selectedRange()) { event.preventDefault();storeSelection(); }
+    });
     launcher.addEventListener("click",open);
     actions?.prepend(launcher);
   }
