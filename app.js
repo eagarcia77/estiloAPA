@@ -737,6 +737,13 @@ function downloadHtml() {
   const clone = cleanExportClone();
   const font = els.fontFamily.value;
   const fontSize = fontSettings[font].cssSize;
+  const layoutModel = window.EstiloAPAWordPageLayout;
+  const layoutState = layoutModel?.read(document.querySelector("#preview"));
+  const paper = layoutState && layoutModel.pageDimensions(layoutState);
+  const margin = layoutState?.margins;
+  const pageCss = paper ?
+    `@page { size: ${paper.width}in ${paper.height}in; margin: ${margin.top}in ${margin.right}in ${margin.bottom}in ${margin.left}in; }` :
+    "${pageCss}";
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Documento formateado APA 7</title><style>
