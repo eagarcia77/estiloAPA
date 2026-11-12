@@ -52,7 +52,21 @@ const ready = () => {
         highlighted.scrollIntoView({block:'center',behavior:'auto'});
         highlighted.focus?.({preventScroll:true});
       });
-      li.append(description,locate);list.appendChild(li);
+      li.append(description,locate);
+      if(finding.rule==='image-alt' || finding.rule==='alt-length'){
+        const fix=document.createElement('button');fix.type='button';fix.textContent='Edit alt text';
+        fix.addEventListener('click',()=>{
+          if(!editor.contains(finding.element)){summary.textContent='Document changed. Run the checker again.';return;}
+          const existing=finding.element.getAttribute('alt')||'';
+          const replacement=window.prompt('Describe this image. Leave blank only for decorative images:',existing);
+          if(replacement===null)return;
+          finding.element.setAttribute('alt',replacement.trim());
+          finding.element.dispatchEvent(new Event('input',{bubbles:true}));
+          button.click();
+        });
+        li.append(fix);
+      }
+      list.appendChild(li);
     });
     if(result.findings.length)report.appendChild(list);
     else {const empty=document.createElement('p');empty.textContent='No issues detected by these limited checks. Manual accessibility review is still required.';report.appendChild(empty);}
