@@ -143,7 +143,7 @@ function aesRecordDeleteIntent(event) {
     event.preventDefault();
     const status = document.querySelector("#status");
     if (status) {
-      status.textContent = "Se bloqueó el borrado de casi todo el documento. Seleccione y elimine fragmentos más pequeños o utilice Limpiar.";
+      status.textContent = "Deletion was blocked to protect the document. Select a smaller passage or use Clear Document.";
       status.className = "status error";
     }
     return;
@@ -175,7 +175,7 @@ function aesCheckDeleteIntegrity() {
     root.focus?.();
     const status = document.querySelector("#status");
     if (status) {
-      status.textContent = "Protección Backspace: se restauró el documento tras detectar un borrado masivo.";
+      status.textContent = "Backspace Protection: The document was restored after detecting an unusually large deletion.";
       status.className = "status error";
     }
   } finally {
