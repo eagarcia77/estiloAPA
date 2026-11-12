@@ -931,6 +931,19 @@ function domBlockToDocxParagraph(element, api, font, size) {
   };
   if (element.style.marginTop) options.spacing.before = ptToTwips(computed.marginTop);
   if (element.style.marginBottom) options.spacing.after = ptToTwips(computed.marginBottom);
+  // Preserve formatting explicitly chosen in the editor. These overrides
+  // take precedence over automatic APA defaults during DOCX serialization.
+  const cssFirstLine = element.style.textIndent;
+  const cssLeft = element.style.marginLeft || element.style.paddingLeft;
+  const cssLineHeight = element.style.lineHeight;
+  const cssToTwips = (value) => {
+    const n = Number.parseFloat(value);
+    if (!Number.isFinite(n)) return null;
+    if (/in$/.test(value)) return Math.round(n * 1440);
+    if (/pt$/.test(value)) return Math.round(n * 20);
+    if (/px$/.test(value)) return Math.round(n * 15);
+    return null;
+  };
   const userIndent = element.dataset.apaEditorIndent;
   const rulerIndent = window.EstiloAPAWordRulerIndents?.toDocx(element);
   if (rulerIndent) options.indent = rulerIndent;
@@ -939,6 +952,17 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked && shouldAutoIndentParagraph(element)) options.indent = { firstLine: 720 };
+  if (cssFirstLine && cssToTwips(cssFirstLine) !== null) {
+    options.indent = { ...(options.indent || {}), firstLine: cssToTwips(cssFirstLine) };
+  }
+  if (cssLeft && cssToTwips(cssLeft) !== null) {
+    options.indent = { ...(options.indent || {}), left: cssToTwips(cssLeft) };
+  }
+  if (cssLineHeight) {
+    const explicitLine = cssToTwips(cssLineHeight);
+    if (explicitLine !== null && explicitLine > 0) options.spacing.line = explicitLine;
+    else if (/^[\d.]+$/.test(cssLineHeight)) options.spacing.line = Math.round(Number(cssLineHeight) * 240);
+  }
   // Preserve Word heading semantics and prevent headings from becoming orphans.
   if (isHeading) {
     const heading = api.HeadingLevel;
