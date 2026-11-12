@@ -97,6 +97,8 @@
       action("rulers","Show or Hide Rulers","View","measure inches indent",()=>originalButton("#wordRulerToggleButton"),
         ()=>!!byId("wordRulerToggleButton")),
       action("focus","Focus Mode","View","distraction-free fullscreen",()=>originalButton("#wordRibbonFocus")),
+      action("selection-toolbar","Toggle Selection Toolbar","View","contextual floating quick formatting",
+        ()=>originalButton("#wordContextToggle"),()=>!!byId("wordContextToggle")),
       action("pageview","Page View / Full Width","View","zoom screen document width",()=>originalButton("#wordPageViewButton"),
         ()=>!!byId("wordPageViewButton")),
       action("print","Print Document","File","printer",()=>window.print?.()),
@@ -365,6 +367,24 @@
   function init() {
     if(!root() || !byId("wordRibbonActions") || byId("wordCommandDialog"))return;
     makeDialog();makeFloating();makeLauncher();
+    const view=byId("word-ribbon-panel-vista");
+    if(view) {
+      const toggle=make("button","word-ribbon-action","Selection Toolbar: On");
+      toggle.type="button";
+      toggle.id="wordContextToggle";
+      toggle.setAttribute("aria-pressed","true");
+      toggle.title="Show compact formatting tools only when text is selected";
+      toggle.addEventListener("click",()=>{
+        contextEnabled=!contextEnabled;
+        toggle.textContent="Selection Toolbar: "+(contextEnabled?"On":"Off");
+        toggle.setAttribute("aria-pressed",String(contextEnabled));
+        if(!contextEnabled) floatingBar.hidden=true;
+        else scheduleFloating();
+      });
+      const group=make("div","word-ribbon-group");
+      group.append(make("span","word-ribbon-group-label","Quick Formatting"),toggle);
+      view.append(group);
+    }
     document.addEventListener("keydown",keydown,true);
     document.addEventListener("selectionchange",scheduleFloating);
     root().addEventListener("input",()=>{floatingBar.hidden=true;});
