@@ -11,7 +11,6 @@ const ready = () => {
   .accessibility-report[hidden]{display:none}
   .accessibility-report li{margin:.6rem 0}
   .accessibility-report button{margin-left:.4rem}
-  .accessibility-focus{outline:3px solid #a45d00!important;outline-offset:3px}
   `;
   document.head.appendChild(style);
   const controls = document.createElement('div');
@@ -27,8 +26,7 @@ const ready = () => {
   report.className='accessibility-report';report.hidden=true;
   report.id='accessibilityReport';report.setAttribute('aria-label','Document accessibility findings');
   controls.after(report);
-  let highlighted=null;
-  const clearHighlight=()=>{if(highlighted){highlighted.classList.remove('accessibility-focus');highlighted=null;}};
+  // Use the browser selection rather than a CSS class on editable content.\n  // Temporary editor classes can otherwise leak into exported HTML/DOCX.\n  const clearHighlight=()=>{const selection=window.getSelection();if(selection && selection.rangeCount)selection.removeAllRanges();};
   const title=document.createElement('h3');title.textContent='Accessibility Review';
   const summary=document.createElement('p');summary.setAttribute('role','status');
   const close=document.createElement('button');close.type='button';close.textContent='Close';close.addEventListener('click',()=>{clearHighlight();report.hidden=true;button.focus();});
@@ -48,9 +46,7 @@ const ready = () => {
       locate.addEventListener('click',()=>{
         clearHighlight();
         if(!editor.contains(finding.element)){summary.textContent='Document changed. Run the checker again.';return;}
-        highlighted=finding.element;highlighted.classList.add('accessibility-focus');
-        highlighted.scrollIntoView({block:'center',behavior:'auto'});
-        highlighted.focus?.({preventScroll:true});
+        finding.element.scrollIntoView({block:'center',behavior:'auto'});\n        const selection=window.getSelection();\n        if(selection){\n          const range=document.createRange();range.selectNodeContents(finding.element);\n          selection.removeAllRanges();selection.addRange(range);\n        }
       });
       li.append(description,locate);
       if(finding.rule==='image-alt' || finding.rule==='alt-length'){
