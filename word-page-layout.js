@@ -122,9 +122,8 @@
     else notify("This browser could not insert a tab. Use the desktop DOCX editor.",true);
   }
   function init() {
-    const layoutPanel=document.getElementById("word-ribbon-panel-diseno");
-    const homePanel=document.getElementById("word-ribbon-panel-inicio");
-    if(!layoutPanel || !homePanel || !preview() || !model() ||
+    const layoutPanel=document.getElementById("word-ribbon-panel-pagina");
+    if(!layoutPanel || !preview() || !model() ||
         document.getElementById("wordPageLayoutControls")) return;
     const page=group("Page Setup");
     page.id="wordPageLayoutControls";
@@ -186,7 +185,7 @@
     const together=btn("Keep Lines Together",()=>updateParagraph({keepLines:true}));
     const clearKeep=btn("Allow Page Breaks",()=>updateParagraph({keepNext:false,keepLines:false}));
     paragraph.append(before,after,next,together,clearKeep);
-    homePanel.append(paragraph);
+    layoutPanel.append(paragraph);
 
     const tabGroup=group("Tab Stops");
     const tabField=textField("Tab Position (in)",.25,10,.25,1.5,()=>{});
@@ -203,7 +202,7 @@
     tabGroup.append(tabField.field,tabAlign,tabLeader,
       btn("Set Tab Stop",addTab),btn("Clear Tab Stops",clearTabs),
       btn("Insert Tab",insertTab),tabReadout);
-    homePanel.append(tabGroup);
+    layoutPanel.append(tabGroup);
 
     preview().addEventListener("apa-document-loaded",()=>{
       model().reset(preview());sync();refreshTabs();
