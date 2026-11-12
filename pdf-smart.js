@@ -502,6 +502,14 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
     const text = line.text.trim();
 
     if (/\bTabla\s+\d+\b/i.test(text)) {
+      // A descriptive caption can precede the short table number on the next line.
+      // Prefer the numbered line as the table boundary, preserving the title once.
+      const nextLabel = lines[index + 1]?.text?.trim() || "";
+      if (/^Tabla\s+\d+\s*\./i.test(text) && /^Tabla\s+\d+\s*$/i.test(nextLabel)) {
+        blocks.push({type:"table-title", text:text.replace(/^Tabla\s+\d+\s*\.\s*/i,""), pageNumber:page.pageNumber});
+        index += 1;
+        continue;
+      }
       const labeled = detectLabeledTable(lines, index, bodyFontSize);
       if (labeled) {
         blocks.push({type: "table-label", text, pageNumber: page.pageNumber});
@@ -592,13 +600,22 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
       // PDF extraction can concatenate separate bibliography entries onto
       // one physical line. Split only at a credible author + year boundary.
       const embeddedEntry = /\s+(?=[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü'-]+,\s+[A-Z](?:\.|[a-z]+)[^()]{0,90}\((?:19|20)\d{2}[a-z]?\)\.)/g;
-      const parts = refText.split(embeddedEntry).map(part => part.trim()).filter(Boolean);
+      // Split concatenated APA entries even when a previous URL or DOI ends immediately
+      // before the next author. Avoid splitting ordinary parenthetical citations.
+      const parts = refText.split(embeddedEntry).flatMap(part => part.split(/\s+(?=[A-ZÁÉÍÓÚÑÜ][A-Za-zÁÉÍÓÚÑÜáéíóúñü-]+,\s+[A-Z](?:\.|[a-z]+)[^()]{0,100}\((?:19|20)\d{2}[a-z]?\)\.)/g)).map(part => part.trim()).filter(Boolean);
       if (parts.length > 1) {
         for (const part of parts) blocks.push({type:"reference",text:part,html:escapeHtml(part),pageNumber:page.pageNumber});
       } else {
         blocks.push({ type: "reference", text: refText, html: refHtml, pageNumber: page.pageNumber });
       }
       index = cursor;
+      continue;
+    }
+
+    // Keep a question heading separate from the numbered questions below it.
+    if (/^Preguntas de reflexi[oó]n y autoevaluaci[oó]n\b/i.test(text)) {
+      blocks.push({type:"h2",text,html:escapeHtml(text),pageNumber:page.pageNumber});
+      index += 1;
       continue;
     }
 
@@ -627,7 +644,7 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
       // A table heading is a structural boundary, never a continuation of prose.
       // Previously the paragraph merger consumed "Tabla 1" before the table
       // detector could inspect it, flattening entire tables into plain text.
-      if (/\bTabla\s+\d+\b/i.test(lines[cursor].text)) break;
+      if (/\bTabla\s+\d+\b/i.test(lines[cursor].text) || isListLine(lines[cursor],baseLeft) || /^Preguntas de reflexi[oó]n y autoevaluaci[oó]n\b/i.test(lines[cursor].text)) break;
       paragraphText = joinWrappedText(paragraphText, lines[cursor].text);
       paragraphHtml = joinWrappedHtml(paragraphHtml, lines[cursor].html);
       cursor += 1;
@@ -699,6 +716,8 @@ function blocksToHtml(blocks, sortReferences) {
       const classes = ["apa-heading", `level-${level}`];
       if (referenceHeadingRegex.test(block.text)) classes.push("apa-references-heading");
       output.push(`<h${level} class="${classes.join(" ")}">${block.html || escapeHtml(block.text)}</h${level}>`);
+    } else if (block.type === "table-title") {
+      output.push(`<p class="apa-table-title"><em>${escapeHtml(block.text)}</em></p>`);
     } else if (block.type === "table-label") {
       output.push(`<p class="apa-table-label"><strong>${escapeHtml(block.text)}</strong></p>`);
     } else if (block.type === "figure-label") {
