@@ -12,6 +12,7 @@
   let pendingTimer = null;
   let toggleButton, recoverButton, saveButton;
   let lastSaved = "";
+  let draftAvailable = false;
 
   function storage() {
     try {
@@ -47,10 +48,9 @@
     } catch { return null; }
   }
   function refreshControls() {
-    const draft = readDraft();
     if (recoverButton) {
-      recoverButton.disabled = !draft;
-      recoverButton.title = draft ? "Recover locally saved work" : "No saved draft is available";
+      recoverButton.disabled = !draftAvailable;
+      recoverButton.title = draftAvailable ? "Recover locally saved work" : "No saved draft is available";
     }
     if (saveButton) saveButton.disabled = !hasDocument() || !enabledStorage;
     if (toggleButton) {
@@ -81,6 +81,7 @@
         version: 1, html, savedAt: when
       }));
       lastSaved = when;
+      draftAvailable = true;
       if (!silent) status("Draft saved in this browser. Download DOCX for a portable copy.");
       refreshControls();
       return true;
@@ -159,6 +160,7 @@
     try { store.removeItem(DRAFT_KEY); }
     catch { return false; }
     lastSaved = "";
+    draftAvailable = false;
     refreshControls();
     return true;
   }
@@ -217,6 +219,7 @@
       try { autosave = store.getItem(PREF_KEY) === "true"; }
       catch { autosave = false; }
     }
+    draftAvailable = !!readDraft();
     addFileControls();
     el.addEventListener("input", () => { schedule(); refreshControls(); });
     el.addEventListener("apa-document-loaded", () => {
@@ -240,7 +243,7 @@
     window.EstiloAPALocalDraft = {
       save: () => saveDraft(), recover: recoverDraft, remove: deleteDraft,
       toggleAutosave() { toggleButton?.click(); },
-      getStatus: () => ({ autosave, hasDraft: !!readDraft(), lastSaved })
+      getStatus: () => ({ autosave, hasDraft: draftAvailable, lastSaved })
     };
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
