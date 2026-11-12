@@ -88,13 +88,12 @@ function thesisParagraph(element, api, { allowPageBreak = true, sectionRole = "b
   const isTableTitle = element.classList.contains("thesis-table-title") || element.classList.contains("apa-table-title");
   const isNote = element.classList.contains("thesis-note") || element.classList.contains("apa-note");
 
-  let runs = thesisInlineRuns(element, api);
-  if (!runs.length) runs = [new TextRun({ text, font: "Times New Roman", size: 24 })];
-  if (isMajor || isSection || isFigureLabel || isTableLabel) {
-    runs = [new TextRun({ text, font: "Times New Roman", size: 24, bold: true })];
-  } else if (isFigureTitle || isTableTitle) {
-    runs = [new TextRun({ text, font: "Times New Roman", size: 24, italics: true })];
-  }
+  const baseline = {
+    bold: isMajor || isSection || isFigureLabel || isTableLabel,
+    italics: isFigureTitle || isTableTitle,
+  };
+  let runs = thesisInlineRuns(element, api, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font: "Times New Roman", size: 24, ...baseline })];
 
   let alignment = AlignmentType.LEFT;
   if (isCover || isMajor) alignment = AlignmentType.CENTER;
