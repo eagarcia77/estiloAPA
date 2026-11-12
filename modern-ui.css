@@ -62,3 +62,52 @@ input:focus-visible, select:focus-visible, .apa-paper:focus-visible {
 @media print {
   .preview-panel,.paper-wrap { border:0!important; box-shadow:none!important; background:#fff!important; }
 }
+
+/* Phase 2: comfortable editing, touch targets, and clearer visual hierarchy. */
+:root { color-scheme:light; }
+html { -webkit-text-size-adjust:100%; }
+.preview-panel { isolation:isolate; }
+.preview-toolbar { backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); background:rgba(255,255,255,.97); }
+.simple-primary-actions button, .simple-tools-menu > summary,
+.word-ribbon-tabs [role="tab"], .word-ribbon-view-actions button {
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.simple-primary-actions button:active:not(:disabled),
+.word-ribbon-tabs [role="tab"]:active,
+.word-ribbon-view-actions button:active:not(:disabled) { transform:translateY(1px); }
+.simple-tools-menu[open] > summary { background:#e6f4ef; color:#075f51; border-color:#8abdb0; }
+.simple-tools-content { max-height:min(65dvh,460px); overflow-y:auto; overscroll-behavior:contain; }
+.word-ribbon-enabled .word-ribbon-group { border-right-color:#e4ebf0; }
+.word-ribbon-enabled .word-ribbon-action:not(:disabled):hover { background:#e7f4f0; border-color:#a5cec2; color:#075f51; }
+.word-ribbon-tabs [role="tab"][aria-selected="true"] { font-weight:750; }
+.word-ribbon-status { font-variant-numeric:tabular-nums; }
+.simple-quick-status .status { overflow-wrap:anywhere; }
+.simple-quick-status .status:not(:empty) { border-left:3px solid #14816a; }
+.simple-secondary details[open] > summary { background:#eaf5f1; color:#075f51; }
+.simple-secondary .simple-details-inner { background:#fff; }
+.simple-secondary fieldset { border-color:#dbe5e8; border-radius:12px; }
+.simple-secondary select, .simple-secondary input:not([type="checkbox"]):not([type="file"]) { border-radius:9px; }
+.paper-wrap { scrollbar-gutter:stable; }
+@media (max-width:760px) {
+  .preview-toolbar { position:sticky; top:0; z-index:21; }
+  .simple-primary-actions { align-items:stretch; }
+  .simple-primary-actions #simpleOpenBtn,
+  .simple-primary-actions #downloadDocxBtn { min-height:46px; }
+  .word-ribbon-tabs { -webkit-overflow-scrolling:touch; }
+  .word-ribbon-tabs [role="tab"] { min-height:46px; }
+  .word-ribbon-view-actions .word-ribbon-action { min-height:44px; }
+  .word-ribbon-panel { overscroll-behavior:contain; }
+  .simple-secondary details > summary { min-height:44px; display:list-item; }
+  .paper-wrap { scrollbar-gutter:auto; }
+}
+@media (max-width:390px) {
+  .simple-primary-actions button { font-size:.72rem; letter-spacing:-.015em; }
+  .simple-tools-menu > summary { font-size:.76rem; }
+  .word-ribbon-view-actions .word-ribbon-action { font-size:.69rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .simple-primary-actions button:active:not(:disabled),
+  .word-ribbon-tabs [role="tab"]:active,
+  .word-ribbon-view-actions button:active:not(:disabled) { transform:none; }
+}
