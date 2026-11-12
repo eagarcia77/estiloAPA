@@ -66,16 +66,10 @@ function aesQueueNormalization(timerId, callback, args, generation) {
 }
 
 function aesFlushPendingNormalizations() {
-  if (apaShouldDeferNormalization() || !aesPendingNormalizations.size) return;
-  const tasks = [...aesPendingNormalizations.values()];
+  // Manual editing wins. These timers originated from automatic normalizers
+  // and must NEVER be replayed after the user leaves the editor.
+  // Explicit import/format actions run in their own handlers.
   aesPendingNormalizations.clear();
-  apaWithForcedNormalization(() => {
-    for (const task of tasks) {
-      if (task.generation !== aesDocumentGeneration) continue;
-      try { task.callback(...task.args); }
-      catch (error) { console.error("APA v3.4.8 normalización diferida", error); }
-    }
-  });
 }
 
 // Existing modules use short setTimeout calls after every DOM/input mutation.
@@ -265,7 +259,7 @@ function aesUpdateUi() {
   }
   const help = document.querySelector("#previewHelp");
   if (help) {
-    help.innerHTML = "<strong>APA 7 Editing:</strong> opening a file applies APA 7 formatting automatically. You can then type, delete, paste, and change styles without automatic reformatting. Use Reapply APA 7 only if you want to replace your edits with the original document.";
+    help.textContent = "APA 7 is applied when you open a file. Your edits are preserved; Reapply APA 7 reloads the original document.";
   }
 }
 
@@ -320,20 +314,8 @@ function aesInitialize() {
     aesFinishEditing({ dispatch: false });
   }, true);
 
-  root.addEventListener("apa-editor-idle", () => {
-    aesFlushPendingNormalizations();
-    const status = document.querySelector("#status");
-    if (status?.dataset?.apaEditStatus === "true") {
-      status.textContent = "Cambios de texto conservados. La vista previa salió del modo de edición protegida.";
-      status.className = "status success";
-      delete status.dataset.apaEditStatus;
-    }
-  });
-
-  root.addEventListener("input", () => {
-    const status = document.querySelector("#status");
-    if (status) status.dataset.apaEditStatus = "true";
-  });
+  // Keep normal import/export/error messages; no repetitive success banner
+  // every time the user pauses or leaves the document.
 }
 
 window.apaShouldDeferNormalization = apaShouldDeferNormalization;
