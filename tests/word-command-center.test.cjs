@@ -229,3 +229,14 @@ test("View can disable the contextual toolbar without removing any document text
   toggle.click();
   assert.equal(toggle.getAttribute("aria-pressed"),"true");
 });
+
+test("search exposes APA reference, paragraph and Word list commands",()=>{
+  const h=setup(),api=h.window.EstiloAPACommandCenter;
+  assert.ok(api.search("apa reference").some(cmd=>cmd.id==="apa-reference"));
+  assert.ok(api.search("apa paragraph").some(cmd=>cmd.id==="apa-paragraph"));
+  assert.ok(api.search("bulleted").some(cmd=>cmd.id==="bullets"));
+  assert.ok(api.search("numbered").some(cmd=>cmd.id==="numbering"));
+  assert.ok(api.search("reapply").some(cmd=>cmd.id==="reapply-apa")===false);
+  h.elements.set("formatBtn",new Element("button",h.document));
+  assert.ok(api.search("reapply").some(cmd=>cmd.id==="reapply-apa"));
+});
