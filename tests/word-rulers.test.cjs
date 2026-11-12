@@ -268,3 +268,16 @@ test("rulers can be hidden or shown without changing the document", () => {
   h.flush();
   assert.equal(h.document.body.classList.contains("word-rulers-hidden"), false);
 });
+
+test("dragging the first-line ruler marker commits one deliberate paragraph edit", () => {
+  const h = uiHarness();
+  const marker = h.markers().find(n => n.dataset.rulerKind === "first");
+  const originalParagraph = h.p;
+  marker.emit("pointerdown", { button:0, pointerId:7, preventDefault() {} });
+  marker.emit("pointermove", { pointerId:7, clientX:300 });
+  marker.emit("pointerup", { pointerId:7 });
+  assert.equal(h.p, originalParagraph);
+  assert.equal(h.p.dataset.apaEditorIndent, "custom");
+  assert.equal(h.p.dataset.apaEditorIndentFirst, "0.875");
+  assert.equal(h.inputCount, 1);
+});
