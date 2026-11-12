@@ -86,7 +86,9 @@ function setFiles(fileList) {
 
 els.files.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
-  // Clearing the input immediately can invalidate iPadOS file-provider handles.\n  // Keep the selection alive throughout asynchronous DOCX/PDF decoding.\n  setFiles(files);
+  // Keep the native input intact while Safari reads the selected file.
+  // This supports both DOCX and PDF file-provider uploads.
+  setFiles(files);
 });
 for (const eventName of ["dragenter", "dragover"]) {
   els.dropZone.addEventListener(eventName, (event) => {
