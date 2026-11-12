@@ -827,7 +827,7 @@ function cleanExportClone() {
       if (!target.style.getPropertyValue(prop)) target.style.setProperty(prop, computed.getPropertyValue(prop));
     }
     if (/^(P|H[1-6]|LI|TD|TH)$/.test(source.tagName)) {
-      for (const prop of ["text-indent", "line-height"]) {
+      for (const prop of ["text-indent", "line-height", "margin-left", "margin-top", "margin-bottom"]) {
         if (!target.style.getPropertyValue(prop)) target.style.setProperty(prop, computed.getPropertyValue(prop));
       }
     }
@@ -980,7 +980,7 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "none") options.indent = { left: 0, firstLine: 0 };
   else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
-  else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
+  else if (isRef && els.hangingReferences.checked && !cssFirstLine && !cssLeft) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked && shouldAutoIndentParagraph(element)) options.indent = { firstLine: 720 };
   if (cssFirstLine && cssToTwips(cssFirstLine) !== null) {
     const firstLine = cssToTwips(cssFirstLine);
@@ -1170,6 +1170,7 @@ async function downloadDocx() {
             rows,
             width: { size: 100, type: WidthType.PERCENTAGE },
             ...(widths ? { columnWidths: widths.map(w => Math.round(w / 100 * 9360)) } : {}),
+            layout: api.TableLayoutType?.FIXED,
           }));
         }
         continue;
