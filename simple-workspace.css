@@ -163,3 +163,29 @@ section.audit > .reference-format-audit { display:none !important; }
     box-shadow:none !important;
   }
 }
+
+/* A requested Review/Settings drawer reserves space beside the editor.
+   It never obscures the document, and its closure restores full width. */
+@media (min-width:1080px) {
+  body.simple-review-open:not(.apa-focus-mode) .preview-panel,
+  body.simple-setup-open:not(.apa-focus-mode) .preview-panel {
+    width:calc(100% - min(430px, 40vw));
+    max-width:calc(100% - min(430px, 40vw));
+    transition:width .15s ease;
+  }
+  body:not(.simple-review-open):not(.simple-setup-open) .preview-panel {
+    width:100%;
+    max-width:100%;
+  }
+}
+@media (max-width:1079px) {
+  /* Review is in normal page flow on smaller devices, not a floating overlay. */
+  .layout > .audit, .layout > .controls { max-width:100%; min-width:0; }
+  #simpleReviewDetails .simple-details-inner { overflow-wrap:anywhere; }
+}
+
+/* Review has no permanent footprint in the editor-first workspace.
+   More > Review (or Ribbon > Review APA 7) reveals it on demand. */
+.layout > .audit:has(#simpleReviewDetails:not([open])) {
+  display:none !important;
+}
