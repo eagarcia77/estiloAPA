@@ -185,3 +185,22 @@ test("Browser draft storage is documented as local and not encrypted", () => {
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
   assert.match(html, /word-local-drafts\.js/);
 });
+
+test("AutoSave switches off with a visible warning if the document exceeds storage limits", () => {
+  const h = initialize();
+  h.root.innerHTML = "x".repeat(1700001);
+  h.button("wordToggleAutosave").click();
+  assert.equal(h.data.get("estiloapa.localDraft.autosave.v1"), "true");
+  h.flush();
+  assert.equal(h.button("wordToggleAutosave").textContent, "AutoSave: Off");
+  assert.equal(h.data.get("estiloapa.localDraft.autosave.v1"), "false");
+  assert.match(h.status.textContent, /AutoSave cannot store/);
+  assert.equal(h.data.has("estiloapa.localDraft.v1"), false);
+});
+
+test("Clear Document asks before removing content and stored drafts", () => {
+  const app = fs.readFileSync(path.join(__dirname, "../app.js"), "utf8");
+  assert.match(app, /els\.clearBtn\.addEventListener\("click", event =>/);
+  assert.match(app, /window\.confirm\("Clear the current document and its local draft/);
+  assert.match(app, /event\.stopImmediatePropagation\(\)/);
+});
