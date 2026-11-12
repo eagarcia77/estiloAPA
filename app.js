@@ -268,10 +268,19 @@ async function convertDocx(arrayBuffer) {
 }
 
 async function readPdf(file) {
-  if (!file || file.size === 0) {
-    throw new Error("El PDF está vacío (0 bytes). Guarde una copia local completa y vuelva a intentar.");
+  if (!file) throw new Error("No se recibió un archivo PDF.");
+  // As with DOCX, trust bytes read from iPadOS file providers, not File.size.
+  let buffer;
+  try {
+    buffer = await file.arrayBuffer();
+  } catch (error) {
+    console.error("PDF file provider read failed:", error);
+    throw new Error("Safari no pudo leer el PDF. Descárguelo en Archivos > En mi iPad y vuelva a seleccionarlo.");
   }
-  const data = new Uint8Array(await file.arrayBuffer());
+  if (buffer.byteLength === 0) {
+    throw new Error("Safari recibió 0 bytes del PDF. Descargue una copia local completa e inténtelo nuevamente.");
+  }
+  const data = new Uint8Array(buffer);
   const isPdf = data.length >= 5 && data[0] === 0x25 && data[1] === 0x50 &&
     data[2] === 0x44 && data[3] === 0x46 && data[4] === 0x2d;
   if (!isPdf) {
