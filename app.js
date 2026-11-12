@@ -1001,6 +1001,29 @@ function domBlockToDocxParagraph(element, api, font, size) {
   // Respect explicit line breaks in imported headings and administrative metadata.
   // textRunsFromNode already converts <br> nodes into Word line breaks.
   window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
+  // Final serialization boundary: the docx library validates all indentation
+  // dimensions as non-negative integers. A negative margin (often -720 twips)
+  // must never abort the entire document export.
+  if (options.indent) {
+    const indent = { ...options.indent };
+    for (const key of ["left", "right", "firstLine", "hanging"]) {
+      if (indent[key] === undefined || indent[key] === null) continue;
+      const value = Number(indent[key]);
+      if (!Number.isFinite(value)) { delete indent[key]; continue; }
+      if (key === "firstLine" && value < 0) {
+        indent.hanging = Math.max(Number(indent.hanging) || 0, Math.abs(Math.round(value)));
+        delete indent.firstLine;
+      } else if (key === "hanging" && value < 0) {
+        indent.firstLine = Math.abs(Math.round(value));
+        delete indent.hanging;
+      } else {
+        indent[key] = Math.max(0, Math.round(value));
+      }
+    }
+    if (indent.hanging !== undefined && indent.firstLine !== undefined) delete indent.firstLine;
+    if (indent.hanging !== undefined) indent.left = Math.max(indent.left || 0, indent.hanging);
+    options.indent = indent;
+  }
   return new Paragraph(options);
 }
 
