@@ -26,7 +26,9 @@ const ready = () => {
   report.className='accessibility-report';report.hidden=true;
   report.id='accessibilityReport';report.setAttribute('aria-label','Document accessibility findings');
   controls.after(report);
-  // Use the browser selection rather than a CSS class on editable content.\n  // Temporary editor classes can otherwise leak into exported HTML/DOCX.\n  const clearHighlight=()=>{const selection=window.getSelection();if(selection && selection.rangeCount)selection.removeAllRanges();};
+  // Use the browser selection rather than a CSS class on editable content.
+  // Temporary editor classes can otherwise leak into exported HTML/DOCX.
+  const clearHighlight=()=>{const selection=window.getSelection();if(selection && selection.rangeCount)selection.removeAllRanges();};
   const title=document.createElement('h3');title.textContent='Accessibility Review';
   const summary=document.createElement('p');summary.setAttribute('role','status');
   const close=document.createElement('button');close.type='button';close.textContent='Close';close.addEventListener('click',()=>{clearHighlight();report.hidden=true;button.focus();});
@@ -46,7 +48,12 @@ const ready = () => {
       locate.addEventListener('click',()=>{
         clearHighlight();
         if(!editor.contains(finding.element)){summary.textContent='Document changed. Run the checker again.';return;}
-        finding.element.scrollIntoView({block:'center',behavior:'auto'});\n        const selection=window.getSelection();\n        if(selection){\n          const range=document.createRange();range.selectNodeContents(finding.element);\n          selection.removeAllRanges();selection.addRange(range);\n        }
+        finding.element.scrollIntoView({block:'center',behavior:'auto'});
+        const selection=window.getSelection();
+        if(selection){
+          const range=document.createRange();range.selectNodeContents(finding.element);
+          selection.removeAllRanges();selection.addRange(range);
+        }
       });
       li.append(description,locate);
       if(finding.rule==='image-alt' || finding.rule==='alt-length'){
