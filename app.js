@@ -1,5 +1,7 @@
 const APP_VERSION = "3.4.8";
-const PDFJS_VERSION = "6.1.200";
+// PDF.js 6 uses Map.getOrInsertComputed, unavailable in Safari 18 on iPadOS.
+// Keep the core and worker pinned to the same Safari-compatible release.
+const PDFJS_VERSION = "4.10.38";
 const PDFJS_URL = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.mjs`;
 const PDFJS_WORKER_URL = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.mjs`;
 
