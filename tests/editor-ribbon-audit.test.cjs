@@ -128,9 +128,9 @@ test("the HTML export synchronizer retains explicit indentation", () => {
   assert.match(source, /block\.classList\.toggle\("no-indent"/);
 });
 
-test("the Ribbon preserves all six tabs and original button handlers", () => {
+test("the Ribbon preserves all seven tabs and original button handlers", () => {
   const source = read("word-ribbon.js");
-  for (const name of ["File", "Home", "Insert", "APA Layout", "Review", "View"]) {
+  for (const name of ["File", "Home", "Insert", "Layout", "APA Layout", "Review", "View"]) {
     assert.ok(source.includes(JSON.stringify(name)), name);
   }
   assert.match(source, /target\.append\(group\)/);
