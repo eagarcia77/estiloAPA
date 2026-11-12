@@ -802,6 +802,7 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked) options.indent = { firstLine: 720 };
+  window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
 
@@ -870,7 +871,7 @@ async function downloadDocx() {
     const doc = new Document({
       numbering: { config: [{ reference: "apa-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] },
       sections: [{
-        properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+        properties: { page: window.EstiloAPAWordPageLayout?.getDocxPage() || { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
         headers,
         children,
       }],
