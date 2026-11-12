@@ -153,7 +153,14 @@ function initWordRibbon() {
   filePanel.append(fileGroup);
 
   const reviewGroup = ribbonGroup("Academic Review");
-  reviewGroup.append(ribbonProxy("Review APA 7", "reauditBtn"));
+  reviewGroup.append(ribbonButton("Review APA 7", () => {
+    const details = document.getElementById("simpleReviewDetails");
+    if (details && !details.open) {
+      window.EstiloAPASimple?.toggleReview?.();
+    } else {
+      document.getElementById("reauditBtn")?.click();
+    }
+  }));
   reviewGroup.append(ribbonProxy("Download Report", "downloadAuditBtn"));
   panelMap.get("revisar").append(reviewGroup);
 
