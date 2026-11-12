@@ -62,11 +62,14 @@ function dxInlineRuns(node, api, font, size, inherited = {}) {
   const { TextRun, ExternalHyperlink } = api;
   if (node.nodeType === Node.TEXT_NODE) {
     if (!node.nodeValue) return [];
-    return [new TextRun({ text: node.nodeValue, font, size, bold: !!inherited.bold, italics: !!inherited.italics, underline: inherited.underline ? {} : undefined, color: "000000" })];
+    const styles = window.EstiloAPAWordDocxStyles;
+    const options = styles?.runOptions(inherited, font, size) ||
+      { font, size, bold: !!inherited.bold, italics: !!inherited.italics, underline: inherited.underline ? {} : undefined };
+    return [new TextRun({ text: node.nodeValue, ...options, color: options.color || "000000" })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = {
+  const style = window.EstiloAPAWordDocxStyles?.childStyle(node, inherited) || {
     bold: inherited.bold || tag === "B" || tag === "STRONG",
     italics: inherited.italics || tag === "I" || tag === "EM",
     underline: inherited.underline || tag === "U"
@@ -76,7 +79,11 @@ function dxInlineRuns(node, api, font, size, inherited = {}) {
     const href = node.getAttribute("href");
     return [new ExternalHyperlink({
       link: href,
-      children: [new TextRun({ text: dxText(node.textContent) || href, font, size, color: "0563C1", underline: {}, bold: style.bold, italics: style.italics })]
+      children: [new TextRun({
+        text: dxText(node.textContent) || href,
+        ...(window.EstiloAPAWordDocxStyles?.runOptions(style, font, size) || { font, size, bold: style.bold, italics: style.italics }),
+        color: "0563C1", underline: {}
+      })]
     })];
   }
   return [...node.childNodes].flatMap((child) => dxInlineRuns(child, api, font, size, style));
@@ -109,11 +116,12 @@ function dxParagraph(element, api, font, size, firstLineIndent, hangingReference
   const isFigureTitle = element.classList.contains("apa-figure-title");
   const isNote = element.classList.contains("apa-note") || element.classList.contains("apa-figure-note");
 
-  let runs = dxInlineRuns(element, api, font, size);
-  if (!runs.length) runs = [new TextRun({ text, font, size, color: "000000" })];
-  if (isHeading) runs = [new TextRun({ text, font, size, bold: true, italics: [3, 5].includes(headingLevel), color: "000000" })];
-  if (isTableLabel || isFigureLabel) runs = [new TextRun({ text, font, size, bold: true, color: "000000" })];
-  if (isTableTitle || isFigureTitle) runs = [new TextRun({ text, font, size, italics: true, bold: false, color: "000000" })];
+  const baseline = {
+    bold: isHeading || isTableLabel || isFigureLabel,
+    italics: (isHeading && [3, 5].includes(headingLevel)) || isTableTitle || isFigureTitle,
+  };
+  let runs = dxInlineRuns(element, api, font, size, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font, size, color: "000000", ...baseline })];
 
   let alignment = AlignmentType.LEFT;
   if (headingLevel === 1 || isReferencesHeading) alignment = AlignmentType.CENTER;
