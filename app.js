@@ -915,8 +915,22 @@ function domBlockToDocxParagraph(element, api, font, size) {
   const options = {
     children: runs,
     spacing: { line: 480, after: 0, before: 0 },
-    alignment: isLevel1 ? AlignmentType.CENTER : AlignmentType.LEFT,
+    alignment: (() => {
+      const alignment = element.style.textAlign || window.getComputedStyle(element).textAlign;
+      if (alignment === "center") return AlignmentType.CENTER;
+      if (alignment === "right" || alignment === "end") return AlignmentType.RIGHT;
+      if (alignment === "justify") return AlignmentType.JUSTIFIED;
+      return isLevel1 ? AlignmentType.CENTER : AlignmentType.LEFT;
+    })(),
   };
+  // Explicit editor paragraph spacing takes precedence over default APA spacing.
+  const computed = window.getComputedStyle(element);
+  const ptToTwips = (cssValue) => {
+    const pixels = Number.parseFloat(cssValue);
+    return Number.isFinite(pixels) ? Math.max(0, Math.round(pixels * 15)) : 0;
+  };
+  if (element.style.marginTop) options.spacing.before = ptToTwips(computed.marginTop);
+  if (element.style.marginBottom) options.spacing.after = ptToTwips(computed.marginBottom);
   const userIndent = element.dataset.apaEditorIndent;
   const rulerIndent = window.EstiloAPAWordRulerIndents?.toDocx(element);
   if (rulerIndent) options.indent = rulerIndent;
@@ -998,7 +1012,7 @@ async function downloadDocx() {
           const text = li.textContent.replace(/\s+/g, " ").trim();
           if (!text) continue;
           children.push(new Paragraph({
-            children: [new TextRun({ text, font, size })],
+            children: textRunsFromNode(li, api, font, size),
             bullet: element.tagName === "UL" ? { level: 0 } : undefined,
             numbering: element.tagName === "OL" ? { reference: "apa-numbering", level: 0 } : undefined,
             spacing: { line: 480, after: 0, before: 0 },
@@ -1009,9 +1023,20 @@ async function downloadDocx() {
       if (element.tagName === "TABLE") {
         const rows = [...element.querySelectorAll("tr")].map((row) => new TableRow({
           cantSplit: true,
-          children: [...row.cells].map((cell) => new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text: cell.textContent.trim(), font, size })], spacing: { line: 480, after: 0 } })]
-          }))
+          children: [...row.cells].map((cell) => {
+            const cellParagraphs = [...cell.children].filter(node => /^(P|DIV|H[1-6])$/.test(node.tagName));
+            const paragraphs = cellParagraphs.length ? cellParagraphs.map(node =>
+              domBlockToDocxParagraph(node, api, font, size)
+            ).filter(Boolean) : [new Paragraph({
+              children: textRunsFromNode(cell, api, font, size),
+              spacing: { line: 480, after: 0 },
+            })];
+            return new TableCell({
+              children: paragraphs.length ? paragraphs : [new Paragraph({ text: "" })],
+              columnSpan: Math.max(1, Number(cell.colSpan) || 1),
+              rowSpan: Math.max(1, Number(cell.rowSpan) || 1),
+            });
+          })
         }));
         if (rows.length) children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
         continue;
