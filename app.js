@@ -451,6 +451,27 @@ function applyApaRules(root) {
   autoLinkUrls(root);
 }
 
+// EstiloAPA import policy: indent only substantive paragraphs (3+ sentences).
+// Keep manually applied Ribbon/ruler indentation and APA reference hanging indents.
+function hasThreeSentences(element) {
+  const text = (element.textContent || "").replace(/\s+/g, " ").trim();
+  if (!text) return false;
+  const normalized = text
+    .replace(/\b(?:Dr|Dra|Sr|Sra|Prof|etc|p\.\s*ej|e\.\s*g|i\.\s*e)\./gi, match => match.replace(/\./g, ""))
+    .replace(/\b(?:[A-ZÁÉÍÓÚÑ]\.){2,}/g, match => match.replace(/\./g, ""))
+    .replace(/\b\d+\.\d+\b/g, match => match.replace(".", ""));
+  const endings = normalized.match(/[.!?]+(?=\s|$|["”’»)\]]|\n)/g) || [];
+  return endings.length >= 3;
+}
+
+function shouldAutoIndentParagraph(element) {
+  if (!element || element.tagName !== "P") return false;
+  if (element.closest("table,thead,tbody,tfoot,th,td,figure,figcaption")) return false;
+  if (element.matches(".apa-reference,.apa-title,.apa-heading,.apa-figure-label,.apa-figure-title,.apa-note,.apa-table-label,.no-indent,[role=heading]")) return false;
+  if (element.querySelector("img,svg,table")) return false;
+  return hasThreeSentences(element);
+}
+
 function applyPreviewStyles() {
   const font = els.fontFamily.value;
   els.preview.style.fontFamily = `"${font}", serif`;
@@ -459,7 +480,7 @@ function applyPreviewStyles() {
     // Do not undo direct Ribbon commands during font/format updates.
     if (["none", "first", "hanging"].includes(p.dataset.apaEditorIndent)) continue;
     const exempt = p.matches(".apa-reference,.apa-title,.apa-heading,.apa-figure-label,.apa-figure-title,.apa-note,.no-indent");
-    p.style.textIndent = !exempt && els.firstLineIndent.checked ? ".5in" : "0";
+    p.style.textIndent = !exempt && els.firstLineIndent.checked && shouldAutoIndentParagraph(p) ? ".5in" : "0";
   }
   for (const ref of els.preview.querySelectorAll(".apa-reference")) {
     if (["none", "first", "hanging"].includes(ref.dataset.apaEditorIndent)) continue;
@@ -845,7 +866,7 @@ function downloadHtml() {
 @page { size: letter; margin: 1in; }
 body { margin: 0; font-family: "${font}", serif; font-size: ${fontSize}; line-height: 2; color: #000; }
 section[data-source-file] { display: contents; }
-p { margin: 0; ${els.firstLineIndent.checked ? "text-indent: .5in;" : "text-indent: 0;"} }
+p { margin: 0; text-indent: 0; }
 h1,h2,h3,h4,h5,h6 { font: inherit; margin: 1em 0 0; }
 .level-1 { text-align: center; font-weight: 700; }.level-2 { text-align: left; font-weight: 700; }.level-3 { text-align: left; font-weight: 700; font-style: italic; }
 .apa-reference { ${els.hangingReferences.checked ? "padding-left: .5in; text-indent: -.5in;" : "padding-left: 0; text-indent: 0;"} }
@@ -903,7 +924,7 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "first") options.indent = { left: 0, firstLine: 720 };
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
-  else if (!noIndent && els.firstLineIndent.checked) options.indent = { firstLine: 720 };
+  else if (!noIndent && els.firstLineIndent.checked && shouldAutoIndentParagraph(element)) options.indent = { firstLine: 720 };
   window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
