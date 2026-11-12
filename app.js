@@ -932,7 +932,11 @@ function domBlockToDocxParagraph(element, api, font, size) {
   // Apply APA heading emphasis as inherited styling, not a replacement run.
   // Manual font/color/size changes inside the heading must survive DOCX export.
   const baseline = { bold: isHeading || isFigureLabel, italics: isLevel3 };
-  let runs = textRunsFromNode(element, api, font, size, baseline);
+  // Apply the paragraph's own formatting to its text runs; previously only
+  // descendant spans were considered, dropping font, size, color and emphasis
+  // applied directly to the editor paragraph.
+  const paragraphStyle = window.EstiloAPAWordDocxStyles?.childStyle(element, baseline) || baseline;
+  let runs = textRunsFromNode(element, api, font, size, paragraphStyle);
   if (!runs.length) runs = [new TextRun({ text, font, size, ...baseline })];
   const options = {
     children: runs,
@@ -1123,7 +1127,7 @@ async function downloadDocx() {
           const text = li.textContent.replace(/\s+/g, " ").trim();
           if (!text) continue;
           children.push(new Paragraph({
-            children: textRunsFromNode(li, api, font, size),
+            children: textRunsFromNode(li, api, font, size, window.EstiloAPAWordDocxStyles?.childStyle(li, {}) || {}),
             bullet: element.tagName === "UL" ? { level: 0 } : undefined,
             numbering: element.tagName === "OL" ? { reference: "apa-numbering", level: 0 } : undefined,
             spacing: { line: 480, after: 0, before: 0 },
