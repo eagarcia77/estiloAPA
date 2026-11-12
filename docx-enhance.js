@@ -132,6 +132,7 @@ function paragraphFromElement(element, api, font, size, firstLineIndent, hanging
     if (!noIndent && firstLineIndent) options.indent = { firstLine: 720 };
   }
 
+  window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
 
@@ -315,7 +316,7 @@ async function enhancedDocxExport() {
     numbering: { config: numberingConfigs },
     sections: [{
       properties: {
-        page: {
+        page: window.EstiloAPAWordPageLayout?.getDocxPage() || {
           size: { width: 12240, height: 15840 },
           margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
         }
