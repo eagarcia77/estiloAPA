@@ -324,27 +324,26 @@ function downloadAdvancedCsv() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-let refreshTimer;
-function scheduleRefresh() {
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(renderAdvancedAudit, 450);
-}
-
+// Advanced review is an on-demand tool, not a background editor observer.
+// Running citation analysis after every keystroke makes long documents sluggish.
 function initEnhancements() {
-  ensureStyles();
-  ensurePanel();
-  renderAdvancedAudit();
+  const review = document.querySelector("#simpleReviewDetails");
+  const refresh = () => {
+    if (review && !review.open) return;
+    ensureStyles();
+    renderAdvancedAudit();
+  };
 
-  const preview = getPreview();
-  preview?.addEventListener("input", scheduleRefresh);
-
-  const observer = new MutationObserver(scheduleRefresh);
-  if (preview) observer.observe(preview, { childList: true, subtree: true });
-
-  document.querySelector("#formatBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 700));
-  document.querySelector("#demoBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 300));
-  document.querySelector("#reauditBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 100));
-  document.querySelector("#clearBtn")?.addEventListener("click", () => setTimeout(renderAdvancedAudit, 100));
+  if (review) {
+    review.addEventListener("toggle", refresh);
+    getPreview()?.addEventListener("apa-document-loaded", refresh);
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+    if (review.open) refresh();
+  } else {
+    // Compatibility with the earlier page that had no collapsible Review.
+    refresh();
+    document.querySelector("#reauditBtn")?.addEventListener("click", refresh);
+  }
 }
 
 if (document.readyState === "loading") {
