@@ -78,10 +78,10 @@ The **File** tab also provides **Save Draft**, **Recover Draft**, **AutoSave: On
 The Word-style Ribbon now contains a set of practical document-editing features, in addition to the APA 7 controls already available:
 
 - **Home:** Undo/Redo with a bounded document history; Bold, Italic, Underline, Clear Formatting, Superscript, Subscript, Strikethrough, font family/size, font color, highlight, numbered/bulleted lists, Find, Replace, Select All, Cut and Copy.
-- **Insert:** APA tables and figures, images, links, page breaks, and basic table editing (add/delete rows or columns). Complex tables with merged cells are protected against unsupported structural edits.
+- **Insert:** APA tables and figures, images, links, page breaks, date, scientific symbols, and basic table editing (add/delete rows or columns). Complex tables with merged cells are protected against unsupported structural edits.
 - **APA Layout:** paragraph and reference presets, APA heading levels, indentation, alignment and line spacing.
-- **Review:** on-demand APA checks and Find/Replace.
-- **View:** full-width or US Letter page view, zoom, focus mode and a document outline built from headings.
+- **Review:** on-demand APA checks, Find/Replace, and an optional toggle for native browser spell checking.
+- **View:** full-width or US Letter page view, zoom, focus mode, a document outline built from headings, and optional non-printing paragraph marks.
 - **File:** DOCX/HTML export, optional reapplication of the original APA 7 formatting, and Print Document.
 
 **Keyboard shortcuts (while the document is focused):** Ctrl/Cmd+Z Undo; Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z Redo; Ctrl/Cmd+F Find; Ctrl/Cmd+H Find and Replace; Ctrl/Cmd+S Download DOCX. Native platform editing shortcuts (copy/paste, bold, italic and underline) remain available.
