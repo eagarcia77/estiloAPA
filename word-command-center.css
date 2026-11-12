@@ -1,0 +1,122 @@
+/* EstiloAPA command search: compact, responsive and outside the editable document. */
+.word-command-launcher {
+  min-height:38px;
+  padding:7px 12px;
+  border:1px solid #8fa7c1;
+  border-radius:7px;
+  background:#fff;
+  color:#224b76;
+  font-size:13px;
+  font-weight:650;
+  cursor:pointer;
+}
+.word-command-launcher:hover { background:#e8f2ff; }
+.word-command-launcher:focus-visible,
+.word-command-panel button:focus-visible,
+.word-context-toolbar button:focus-visible {
+  outline:3px solid #2576be; outline-offset:2px;
+}
+.word-command-backdrop {
+  position:fixed; inset:0; z-index:10050;
+  display:flex; align-items:flex-start; justify-content:center;
+  padding: min(12vh,95px) 12px 12px;
+  background:rgba(15,26,45,.48);
+  overflow-y:auto;
+}
+.word-command-backdrop[hidden] {display:none!important;}
+.word-command-panel {
+  display:flex; flex-direction:column; gap:9px;
+  width:min(600px,100%);
+  max-height:min(78dvh,720px);
+  overflow:hidden;
+  padding:16px;
+  background:#fff; color:#162c40;
+  border:1px solid #bccddd; border-radius:13px;
+  box-shadow:0 22px 70px rgba(9,27,49,.28);
+}
+.word-command-header {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  font-size:16px;
+}
+.word-command-close,.word-command-back {
+  min-height:36px; padding:5px 12px; border-radius:6px;
+}
+.word-command-input {
+  min-height:46px; width:100%;
+  font-size:16px; padding:8px 12px; box-sizing:border-box;
+  border:2px solid #437eb8; border-radius:8px;
+  background:#fff; color:#14293f;
+}
+.word-command-results {
+  display:flex; flex-direction:column; gap:3px;
+  min-height:48px; max-height:min(48dvh,470px);
+  overflow:auto; padding:2px;
+}
+.word-command-results[hidden],.word-command-help[hidden] {display:none!important;}
+.word-command-result {
+  display:flex; align-items:center; gap:10px;
+  min-height:42px; padding:8px 10px;
+  text-align:left; background:transparent;
+  border:1px solid transparent; border-radius:7px;
+  cursor:pointer; color:#183553;
+}
+.word-command-result[aria-selected="true"],
+.word-command-result:hover {
+  border-color:#abc7e4; background:#eaf4ff;
+}
+.word-command-result-title {flex:1 1 auto; font-size:13px; font-weight:600;}
+.word-command-result-category {
+  color:#56718b; font-size:11px; white-space:nowrap;
+}
+.word-command-shortcut,
+.word-shortcut-row kbd {
+  padding:3px 6px; border:1px solid #cfdae6;
+  border-radius:5px; color:#495f75;
+  background:#f2f5fa; font:11px/1.4 ui-monospace,monospace;
+}
+.word-command-hint {
+  margin:0; padding-top:6px; border-top:1px solid #e2e9ef;
+  font-size:12px; color:#54687f;
+}
+.word-command-empty {padding:12px; margin:0; color:#59728a;}
+.word-command-help {
+  overflow-y:auto; max-height:44dvh;
+}
+.word-command-help h3 {font-size:15px; margin:0 0 7px;}
+.word-shortcut-row {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; padding:9px 2px; border-bottom:1px solid #e7edf3;
+  font-size:13px;
+}
+.word-command-back {margin-top:10px;}
+/* Selection toolbar: never occupies space and never enters #preview. */
+.word-context-toolbar {
+  position:fixed; z-index:1050;
+  display:flex; flex-wrap:nowrap; gap:3px;
+  max-width:calc(100vw - 16px);
+  padding:5px;
+  background:#fff; border:1px solid #a9c1d8;
+  box-shadow:0 5px 18px rgba(0,0,0,.17); border-radius:8px;
+}
+.word-context-toolbar[hidden] {display:none!important;}
+.word-context-button {
+  min-height:35px; white-space:nowrap; padding:5px 7px;
+  border:1px solid transparent; border-radius:5px;
+  color:#274b72; font-size:12px; font-weight:650;
+  background:transparent; cursor:pointer;
+}
+.word-context-button:hover {background:#eaf4ff; border-color:#b0cde9;}
+@media(max-width:760px) {
+  .word-command-launcher {min-height:42px;flex:1 1 auto;font-size:12px;}
+  .word-command-backdrop {padding:12px 6px;}
+  .word-command-panel {padding:11px;max-height:calc(100dvh - 24px);}
+  .word-command-results {max-height:54dvh;}
+  .word-command-result-category {display:none;}
+}
+@media(pointer:coarse) {
+  /* Long-press selection has native iOS/Android tools; don't overlap them. */
+  .word-context-toolbar {display:none!important;}
+}
+@media print {
+  .word-command-launcher,.word-command-backdrop,.word-context-toolbar {display:none!important;}
+}
