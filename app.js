@@ -1147,8 +1147,12 @@ async function downloadDocx() {
             const paragraphs = cellParagraphs.length ? cellParagraphs.map(node =>
               domBlockToDocxParagraph(node, api, font, size)
             ).filter(Boolean) : [new Paragraph({
-              children: textRunsFromNode(cell, api, font, size),
+              children: textRunsFromNode(cell, api, font, size,
+                window.EstiloAPAWordDocxStyles?.childStyle(cell, {}) || {}),
               spacing: { line: 480, after: 0 },
+              alignment: cell.style.textAlign === "center" ? AlignmentType.CENTER :
+                cell.style.textAlign === "right" ? AlignmentType.RIGHT :
+                cell.style.textAlign === "justify" ? AlignmentType.JUSTIFIED : AlignmentType.LEFT,
             })];
             return new TableCell({
               children: paragraphs.length ? paragraphs : [new Paragraph({ text: "" })],
