@@ -747,11 +747,14 @@ function textRunsFromNode(node, api, font, size, inherited = {}) {
   if (node.nodeType === Node.TEXT_NODE) {
     const text = node.nodeValue;
     if (!text) return [];
-    return [new TextRun({ text, font, size, bold: inherited.bold, italics: inherited.italics, underline: inherited.underline ? {} : undefined })];
+    const word = window.EstiloAPAWordDocxStyles;
+    const options = word?.runOptions(inherited, font, size) ||
+      { font, size, bold: inherited.bold, italics: inherited.italics, underline: inherited.underline ? {} : undefined };
+    return [new TextRun({ text, ...options })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = {
+  const style = window.EstiloAPAWordDocxStyles?.childStyle(node, inherited) || {
     bold: inherited.bold || ["B", "STRONG"].includes(tag),
     italics: inherited.italics || ["I", "EM"].includes(tag),
     underline: inherited.underline || tag === "U",
