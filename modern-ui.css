@@ -247,3 +247,16 @@ body.apa-ui-reduce-motion .apa-accessibility-tools * { animation:none!important;
 @media (max-width:400px) {
  .academic-ribbon-header .academic-quick-button { width:36px; min-width:36px; }
 }
+
+/* Contextual assistance appears only when editing a table or image. */
+.academic-context-tools { display:flex; align-items:center; flex-wrap:wrap; gap:.55rem; margin:.4rem .2rem; padding:.45rem .65rem; border:1px solid #b8d8d0; border-radius:11px; background:#eff9f6; color:#124c42; font:600 .82rem system-ui,-apple-system,sans-serif; }
+.academic-context-tools[hidden] { display:none!important; }
+.academic-context-actions { display:flex; flex-wrap:wrap; gap:.3rem; }
+.academic-context-actions button { min-height:44px; padding:.4rem .65rem; border:1px solid #accbc4; border-radius:8px; background:#fff; color:#124c42; cursor:pointer; }
+.academic-context-actions button:focus-visible { outline:3px solid #168ab5; outline-offset:2px; }
+@media (max-width:760px) {
+ .academic-context-tools { padding:.45rem; }
+ .academic-context-actions { width:100%; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .academic-context-actions button { min-width:0; padding:.4rem .15rem; font-size:.72rem; }
+}
+@media print { .academic-context-tools { display:none!important; } }
