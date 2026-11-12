@@ -126,9 +126,13 @@ test("Collapse Ribbon preserves tabs, editor content and original command nodes"
   assert.ok(actions);
   const collapse = actions.children.find(child => child.id === "wordRibbonCollapse");
   assert.ok(collapse);
-  collapse.click();
+  // Compact Ribbon is the default. Clicking the toggle expands it.
   assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), true);
   assert.equal(collapse.getAttribute("aria-expanded"), "false");
+  collapse.click();
+  assert.equal(h.shell.classList.contains("word-ribbon-collapsed"), false);
+  assert.equal(collapse.getAttribute("aria-expanded"), "true");
+  h.window.EstiloAPARibbon.setCollapsed(true);
   assert.equal(h.preview.textContent, "Preserved content.");
   assert.equal(h.toolbar.children.length, 0);
   h.window.EstiloAPARibbon.activate("insertar");

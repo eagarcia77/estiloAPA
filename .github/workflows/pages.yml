@@ -56,7 +56,7 @@ jobs:
 
       - name: Test Word-style ribbon behavior
         run: |
-          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs tests/no-automatic-restyling.test.cjs tests/auto-apa-import.test.cjs tests/review-panel-close.test.cjs tests/on-demand-review.test.cjs
+          node --test tests/word-ribbon.test.cjs tests/ui-english.test.cjs tests/editor-ribbon-audit.test.cjs tests/responsive-workspace.test.cjs tests/simple-workspace.test.cjs tests/no-indent-persistence.test.cjs tests/no-automatic-restyling.test.cjs tests/auto-apa-import.test.cjs tests/review-panel-close.test.cjs tests/on-demand-review.test.cjs tests/editor-cleanup.test.cjs
 
       - name: Verify v3.4.8 protected editing and local installation files
         shell: bash
@@ -77,8 +77,8 @@ jobs:
           grep -q 'formatReferencesApa7' edit-stability-v348.js
           grep -q 'recoverPdfFiguresV34' edit-stability-v348.js
           grep -q 'edit-stability-v348.js' index.html
-          grep -q 'Edición protegida v3.4.8' index.html
-          grep -q 'Versión 3.4.8' index.html
+          grep -q 'lang="en"' index.html
+          grep -q 'id="simpleReviewDetails"' index.html
           grep -q 'PDF_FIGURE_RECOVERY_VERSION = "3.4.7"' pdf-figure-recovery-v347.js
           grep -q 'DOCX_IMAGES_VERSION = "3.4.6"' docx-images-v346.js
           grep -q 'REFERENCE_FORMAT_VERSION = "3.4.5"' reference-format-v345.js
@@ -128,8 +128,8 @@ jobs:
       - name: Publication summary
         run: |
           echo "### APA7 Academic Formatter v3.4.8 publicado" >> "$GITHUB_STEP_SUMMARY"
-          echo "Vista previa: escribir, borrar, cortar y pegar ya no dispara normalizadores destructivos mientras el cursor está activo." >> "$GITHUB_STEP_SUMMARY"
-          echo "Los normalizadores de estructura, listas, tablas, figuras, referencias e imágenes se aplazan y se ejecutan al terminar la edición o exportar." >> "$GITHUB_STEP_SUMMARY"
-          echo "Se conservan la recuperación PDF v3.4.7, la importación de imágenes DOCX y el formato APA 7 de referencias." >> "$GITHUB_STEP_SUMMARY"
-          echo "Se generó el artefacto APA7-Academic-Formatter-v3.4.8-completo con todos los archivos versionados y la guía de instalación local." >> "$GITHUB_STEP_SUMMARY"
+          echo "APA 7 formatting is applied on import; the editor remains user-controlled." >> "$GITHUB_STEP_SUMMARY"
+          echo "Deferred automatic normalizers are discarded after editing; academic review is on demand." >> "$GITHUB_STEP_SUMMARY"
+          echo "DOCX/PDF image preservation, editable APA 7 references and document export remain available." >> "$GITHUB_STEP_SUMMARY"
+          echo "Complete versioned source ZIP and local installation instructions are included." >> "$GITHUB_STEP_SUMMARY"
           echo "Descarga web: /downloads/APA7-Academic-Formatter-v3.4.8-completo.zip" >> "$GITHUB_STEP_SUMMARY"

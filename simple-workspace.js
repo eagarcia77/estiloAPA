@@ -21,9 +21,17 @@
 
     const open = button("simpleOpenBtn", "Open File", () => {
       review.open = false;
+      // Ensure native file selection remains usable on mobile browsers.
       setup.open = true;
       fileInput.click();
     }, true);
+    // The setup drawer is needed only while picking a file; afterward the
+    // document regains full width, including if the native picker is canceled.
+    const closePickerSetup = () => {
+      setup.open = false;
+    };
+    fileInput.addEventListener("change", closePickerSetup);
+    fileInput.addEventListener("cancel", closePickerSetup);
     // Preserve all listeners previously attached by the application.
     // Moving elements does not clone or recreate their event handlers.
     const sample = document.getElementById("demoBtn");

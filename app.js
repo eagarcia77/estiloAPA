@@ -103,6 +103,19 @@ for (const eventName of ["dragleave", "drop"]) {
 }
 els.dropZone.addEventListener("drop", (event) => setFiles(event.dataTransfer.files));
 
+// Opening a document should not require finding the hidden settings panel.
+// Users can drop a file anywhere on the visible document workspace.
+const editorDropArea = document.querySelector(".paper-wrap");
+editorDropArea?.addEventListener("dragover", (event) => {
+  if (event.dataTransfer?.types?.includes("Files")) event.preventDefault();
+});
+editorDropArea?.addEventListener("drop", (event) => {
+  if (!event.dataTransfer?.files?.length) return;
+  event.preventDefault();
+  event.stopPropagation();
+  setFiles(event.dataTransfer.files);
+});
+
 for (const control of [els.fontFamily, els.firstLineIndent, els.hangingReferences]) {
   control.addEventListener("change", applyPreviewStyles);
 }
@@ -134,18 +147,10 @@ reviewDetails?.addEventListener("toggle", () => {
   if (reviewDetails.open && hasFormattedContent()) runAudit(false);
 });
 
-function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
-}
-
 async function waitForGlobal(name, timeoutMs = 12000) {
   const started = Date.now();
   while (!window[name]) {
-    if (Date.now() - started > timeoutMs) throw new Error(`No se pudo cargar la biblioteca ${name}. Verifique su conexión a Internet.`);
+    if (Date.now() - started > timeoutMs) throw new Error(`Could not load the ${name} library. Check your internet connection.`);
     await new Promise((resolve) => setTimeout(resolve, 60));
   }
   return window[name];
@@ -253,7 +258,7 @@ async function readFile(file) {
   if (extension === "pdf") return readPdf(file);
   if (["html", "htm"].includes(extension)) return sanitizeHtml(await file.text());
   if (["txt", "md"].includes(extension)) return textToHtml(await file.text());
-  throw new Error(`Formato no compatible: ${file.name}`);
+  throw new Error(`Unsupported file format: ${file.name}`);
 }
 
 function replaceDivsWithParagraphs(root) {
@@ -857,15 +862,15 @@ async function downloadDocx() {
     });
     const blob = await Packer.toBlob(doc);
     downloadBlob(blob, "modulo-APA7.docx");
-    setStatus("Documento DOCX generado correctamente.", "success");
+    setStatus("DOCX document exported successfully.", "success");
   } catch (error) {
     console.error(error);
-    setStatus(`No se pudo generar el DOCX: ${error?.message || error}`, "error");
+    setStatus(`Could not export DOCX: ${error?.message || error}`, "error");
   }
 }
 
 window.addEventListener("error", (event) => {
-  if (event?.message) setStatus(`Error de ejecución: ${event.message}`, "error");
+  if (event?.message) setStatus(`Application error: ${event.message}`, "error");
 });
 
-setStatus(`APA7 Module Formatter v${APP_VERSION} listo para ejecutar.`);
+setStatus("");

@@ -1,191 +1,129 @@
-/* Single-focus document-first workspace.
-   Retains the full APA functionality in accessible collapsible sections. */
+/* EstiloAPA: document-first workspace. Advanced tools remain available on demand. */
+.site-header { border-bottom:2px solid var(--yellow); }
 .site-header .header-inner {
-  max-width: none;
-  width: 100%;
-  padding: .6rem clamp(.6rem,1.6vw,1.5rem);
-  align-items: center;
+  max-width:none; width:100%; margin:0;
+  padding:.35rem clamp(.5rem,1.6vw,1.5rem);
+  align-items:center;
 }
-.site-header h1 { font-size: clamp(1.1rem, 2.5vw, 1.85rem); margin:0; }
-.site-header .subtitle { font-size:.84rem; max-width: 70ch; }
-.site-header .eyebrow { font-size:.66rem; }
-.layout { gap: clamp(.35rem, .9vw, .8rem); padding-block:.45rem 1.5rem; }
-.preview-panel { padding: clamp(.5rem, 1.2vw, 1rem); }
-.preview-toolbar { align-items:center; gap:.35rem; }
-.preview-toolbar #preview-title { font-size:1.05rem; margin:0; }
-.preview-toolbar .eyebrow { display:none; }
-.simple-primary-actions { justify-content:flex-end; gap:.35rem; margin:0; }
-.simple-primary-actions button { min-height:39px; padding:.45rem .7rem; font-size:.83rem; }
-.simple-primary-actions #simpleOpenBtn { order:-5; }
-.simple-primary-actions #demoBtn { order:-4; }
-.simple-primary-actions #formatBtn { order:-3; }
-.simple-primary-actions #downloadDocxBtn { order:-2; }
-.simple-primary-actions #downloadHtmlBtn { order:-1; }
-.simple-quick-status:empty { display:none; }
-.simple-quick-status .status { margin:.4rem 0; }
-.preview-panel #previewHelp { margin:.35rem 0 .55rem; font-size:.8rem; }
-.simple-secondary {
-  padding:0;
-  overflow:visible;
-  border-radius:10px;
-  box-shadow:none;
-}
-.simple-secondary details > summary {
-  cursor:pointer;
-  padding:.65rem 1rem;
-  font-weight:700;
-  color:var(--green-dark);
-  list-style-position:inside;
-}
-.simple-secondary details > summary:hover { background:#f4faf7; }
-.simple-secondary .simple-details-inner { padding: .35rem 1rem 1.1rem; }
-.simple-secondary .drop-zone { min-height:100px; margin:.6rem 0; }
-.simple-secondary .drop-zone .drop-icon { font-size:1.25rem; }
-.simple-secondary .button-row { gap:.5rem; }
-.simple-secondary #fileList { margin:.4rem 0; }
-.simple-secondary fieldset { margin-block:.5rem; }
-.simple-secondary .section-heading { margin:.25rem 0; }
-/* Keep the document-first sequence full-width. */
-.layout > .simple-secondary { grid-column:1 / -1; }
-body.apa-focus-mode .simple-secondary { display:none !important; }
-@media (max-width:760px) {
-  .site-header .subtitle { display:none; }
-  .preview-toolbar { flex-direction:column; align-items:stretch; }
-  .simple-primary-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .simple-primary-actions button { width:100%; }
-  .simple-primary-actions #simpleOpenBtn,
-  .simple-primary-actions #downloadDocxBtn { font-weight:750; }
-  .simple-secondary .simple-details-inner { padding:.5rem; }
-}
-@media print {
-  .simple-primary-actions, .simple-secondary, .simple-quick-status, #previewHelp { display:none!important; }
-}
+.site-header h1 { margin:0; font-size:clamp(1rem,1.8vw,1.35rem); }
+.site-header .eyebrow,
+.site-header .subtitle,
+.site-header .badge,
+body > footer { display:none; }
 
-/* Minimal editor-first command surface (advanced features remain available). */
-body { --editor-bar-height: 56px; }
-.site-header { border-bottom-width: 2px; }
-.site-header .eyebrow, .site-header .subtitle, .site-header .badge { display:none; }
-.site-header .header-inner { padding-block:.35rem; }
-.site-header h1 { font-size: clamp(1rem, 1.8vw, 1.35rem); letter-spacing:-.015em; }
-.layout { padding-top:.25rem; }
+.layout {
+  max-width:none; width:100%; padding:.3rem clamp(.25rem,.6vw,.8rem) 1rem;
+  gap:.4rem;
+}
 .preview-panel {
-  min-width:0;
-  border-radius:9px;
-  box-shadow:none;
+  grid-column:1 / -1;
+  width:100%; min-width:0;
   padding:clamp(.25rem,.65vw,.6rem);
+  border-radius:9px; box-shadow:none;
 }
 .preview-toolbar {
-  position:sticky;
-  top:0;
-  z-index:20;
-  background:#fff;
-  padding:.35rem .4rem;
-  border-bottom:1px solid var(--line);
+  position:sticky; top:0; z-index:20;
+  display:flex; justify-content:flex-end; align-items:center;
+  gap:.35rem; padding:.35rem .4rem; margin:0;
+  background:#fff; border-bottom:1px solid var(--line);
 }
-.preview-toolbar #preview-title { font-size:.92rem; }
-.simple-primary-actions { align-items:center; gap:.3rem; }
-.simple-primary-actions button { min-height:38px; font-size:.8rem; border-radius:7px; }
+/* Keep the accessible heading while minimizing visual chrome. */
+.preview-toolbar #preview-title {
+  font-size:.9rem; margin:0; font-weight:650;
+}
+.preview-toolbar .eyebrow { display:none; }
+.simple-primary-actions {
+  display:flex; align-items:center; justify-content:flex-end;
+  gap:.3rem; margin:0;
+}
+.simple-primary-actions button { min-height:40px; padding:.4rem .65rem; font-size:.82rem; border-radius:7px; }
 .simple-primary-actions #simpleOpenBtn { order:0; }
-.simple-primary-actions #formatBtn { order:1; }
-.simple-primary-actions #downloadDocxBtn { order:2; }
-.simple-tools-menu { position:relative; order:3; }
+.simple-primary-actions #downloadDocxBtn { order:1; }
+.simple-tools-menu { position:relative; order:2; flex:0 0 auto; }
 .simple-tools-menu > summary {
   display:flex; align-items:center; justify-content:center; cursor:pointer;
-  min-height:38px; border-radius:7px; border:1px solid #b7c4c1;
-  padding:.4rem .8rem; background:#f6f8fa; font-weight:700; font-size:.8rem;
+  min-height:40px; border:1px solid #b7c4c1; border-radius:7px;
+  padding:.4rem .75rem; background:#f6f8fa; font-weight:700; font-size:.82rem;
 }
 .simple-tools-menu[open] > summary { border-color:var(--green); }
 .simple-tools-content {
   position:absolute; top:calc(100% + 5px); right:0; z-index:40;
-  min-width:210px; display:flex; flex-direction:column;
-  gap:.35rem; padding:.6rem; border:1px solid var(--line);
-  border-radius:9px; box-shadow:0 8px 25px rgba(0,0,0,.14);
-  background:#fff;
+  display:flex; flex-direction:column; gap:.3rem;
+  min-width:215px; padding:.55rem;
+  background:#fff; border:1px solid var(--line); border-radius:9px;
+  box-shadow:0 8px 25px rgba(0,0,0,.14);
 }
 .simple-tools-content button { width:100%; text-align:left; }
 .simple-tools-menu:not([open]) .simple-tools-content { display:none; }
-.preview-panel #previewHelp { font-size:.76rem; margin:.2rem .3rem; }
-.paper-wrap { border-radius:6px; }
-.apa-paper { min-height:max(75vh,560px); }
-.layout > .simple-secondary { margin:0 .2rem; }
-.simple-secondary > details:not([open]) { background:#fff; }
-.simple-secondary details > summary { font-size:.82rem; padding:.48rem .75rem; }
-@media (min-width:1080px) {
-  .simple-secondary:has(details[open]) {
-    position:fixed; right:1rem; top:95px; bottom:1rem;
-    z-index:30; width:min(415px,38vw);
-    overflow:auto; background:#fff;
-    border:1px solid var(--line);
-    box-shadow:0 10px 34px rgba(0,0,0,.16);
-  }
-  body.simple-setup-open .preview-panel, body.simple-review-open .preview-panel {
-    padding-right:clamp(.25rem,.65vw,.6rem);
-  }
+.simple-quick-status:empty, .simple-quick-status .status:empty { display:none; }
+.simple-quick-status .status { margin:.3rem .4rem; padding:.35rem .55rem; font-size:.85rem; }
+/* Editor instructions remain readable by assistive technologies, without
+   consuming document space on each re-render. */
+.preview-panel #previewHelp {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
 }
-@media (max-width:760px) {
-  .preview-toolbar { align-items:stretch; gap:.25rem; }
-  .preview-toolbar #preview-title { display:none; }
-  .simple-primary-actions {
-    display:flex; flex-wrap:nowrap; gap:.2rem; justify-content:space-between;
-  }
-  .simple-primary-actions > button { flex:1 1 0; min-width:0; padding:.35rem .3rem; font-size:.73rem; }
-  .simple-primary-actions #formatBtn { white-space:normal; }
-  .simple-tools-menu { flex:0 0 auto; }
-  .simple-tools-menu > summary { padding:.4rem .5rem; }
-  .simple-tools-content { right:0; min-width:min(75vw,240px); }
-  .apa-paper { min-height:75dvh; }
-}
-@media print {
-  .simple-tools-menu { display:none !important; }
-  .preview-toolbar { position:static; }
-}
+.paper-wrap { width:100%; min-width:0; border-radius:6px; overflow-x:auto; }
+.apa-paper { min-height:max(75dvh,560px); }
 
-/* Review UI lives entirely inside its own native <details> element. */
+/* Settings and Review remain completely absent until explicitly opened. */
+.layout > .simple-secondary { grid-column:1 / -1; min-width:0; margin:0 .2rem; padding:0; border-radius:9px; box-shadow:none; }
+.layout > .controls:has(#simpleDocumentOptions:not([open])),
+.layout > .audit:has(#simpleReviewDetails:not([open])) { display:none !important; }
+.simple-secondary details > summary {
+  cursor:pointer; padding:.55rem .8rem; font-size:.84rem;
+  font-weight:700; color:var(--green-dark);
+}
+.simple-secondary details > summary:hover { background:#f4faf7; }
+.simple-secondary .simple-details-inner { min-width:0; padding:.35rem .85rem 1rem; }
+.simple-secondary .drop-zone { min-height:110px; margin:.6rem 0; }
+.simple-secondary .button-row { gap:.5rem; }
+.simple-secondary fieldset { margin-block:.55rem; }
+#simpleReviewDetails:not([open]) .simple-details-inner { display:none !important; }
+#simpleReviewDetails .simple-details-inner { min-width:0; overflow-wrap:anywhere; }
+.simple-close-review {
+  display:block; margin:0 0 .6rem auto;
+  position:sticky; top:0; z-index:2;
+  min-height:40px; background:#fff; border:1px solid #aebbb8;
+}
+/* Older audit modules must never create an always-visible orphan panel. */
 section.audit > .advanced-audit,
 section.audit > .reference-format-audit { display:none !important; }
-#simpleReviewDetails:not([open]) .simple-details-inner { display:none !important; }
-#simpleReviewDetails .simple-details-inner { min-width:0; }
-.simple-close-review {
-  display:block;
-  margin:0 0 .65rem auto;
-  position:sticky;
-  top:0;
-  z-index:2;
-  background:#fff;
-  border:1px solid #aebbb8;
-  min-height:40px;
-}
-@media (min-width:1080px) {
-  /* Floating panel exists only while explicitly open; never covers editor afterward. */
-  .layout > .audit:has(#simpleReviewDetails:not([open])) {
-    position:static !important;
-    width:auto !important;
-    box-shadow:none !important;
-  }
-}
+body.apa-focus-mode .simple-secondary { display:none !important; }
 
-/* A requested Review/Settings drawer reserves space beside the editor.
-   It never obscures the document, and its closure restores full width. */
 @media (min-width:1080px) {
+  .simple-secondary:has(details[open]) {
+    position:fixed; right:1rem; top:70px; bottom:1rem; z-index:30;
+    width:min(415px,38vw); overflow:auto; background:#fff;
+    border:1px solid var(--line); box-shadow:0 10px 34px rgba(0,0,0,.16);
+  }
   body.simple-review-open:not(.apa-focus-mode) .preview-panel,
   body.simple-setup-open:not(.apa-focus-mode) .preview-panel {
     width:calc(100% - min(430px, 40vw));
     max-width:calc(100% - min(430px, 40vw));
-    transition:width .15s ease;
   }
   body:not(.simple-review-open):not(.simple-setup-open) .preview-panel {
-    width:100%;
-    max-width:100%;
+    width:100%; max-width:100%;
   }
 }
 @media (max-width:1079px) {
-  /* Review is in normal page flow on smaller devices, not a floating overlay. */
+  /* Native inline sections work better than floating overlays on mobile. */
   .layout > .audit, .layout > .controls { max-width:100%; min-width:0; }
-  #simpleReviewDetails .simple-details-inner { overflow-wrap:anywhere; }
 }
-
-/* Review has no permanent footprint in the editor-first workspace.
-   More > Review (or Ribbon > Review APA 7) reveals it on demand. */
-.layout > .audit:has(#simpleReviewDetails:not([open])) {
-  display:none !important;
+@media (max-width:760px) {
+  .site-header .header-inner { padding:.4rem .6rem; }
+  .preview-toolbar { gap:.25rem; }
+  .preview-toolbar #preview-title { display:none; }
+  .simple-primary-actions { display:flex; flex-wrap:nowrap; gap:.2rem; width:100%; }
+  .simple-primary-actions > button { flex:1 1 0; min-width:0; padding:.4rem .3rem; font-size:.77rem; }
+  .simple-tools-menu > summary { padding:.4rem .55rem; }
+  .simple-tools-content { min-width:min(80vw,240px); }
+  .simple-secondary .simple-details-inner { padding:.5rem; }
+  .apa-paper { min-height:75dvh; }
+}
+@media print {
+  .site-header,.preview-toolbar,.simple-primary-actions,.simple-secondary,
+  .simple-quick-status,#previewHelp,.simple-tools-menu,body > footer { display:none!important; }
+  .preview-panel { padding:0!important; border:0!important; box-shadow:none!important; }
+  .layout { padding:0!important; }
 }
