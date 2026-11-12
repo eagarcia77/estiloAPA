@@ -84,7 +84,7 @@
       action("insert-figure","Insert Figure","Insert","caption image",()=>originalButton("#insertFigureCaption"),documentReady),
       action("insert-link","Insert Link","Insert","hyperlink url",()=>originalButton("#insertApaLink"),documentReady),
       action("insert-page-break","Insert Page Break","Insert","next page",()=>originalButton("#insertPageBreak"),documentReady),
-      action("add-row","Add Table Row","Insert","table rows",()=>originalButton("#word-ribbon-panel-insertar button[data-word-action='addRow']"),documentReady),
+      action("add-row","Add Table Row","Insert","table rows",()=>originalButton("#wordTableAddRow"),documentReady),
       action("layout","Page Layout","Layout","page size orientation margins",()=>ribbon()?.activate?.("pagina"),()=>!!ribbon()),
       action("apa-layout","APA Layout","APA Layout","academic style paragraph",()=>ribbon()?.activate?.("diseno"),()=>!!ribbon()),
       action("review","Review APA 7","Review","citations references audit",()=>{
