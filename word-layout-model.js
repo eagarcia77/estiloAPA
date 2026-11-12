@@ -43,7 +43,7 @@
     for (const side of ["top","right","bottom","left"]) {
       margins[side] = numeric(basis[side], .25, 2.5, basic.margins[side]);
     }
-    const atLeast = .75;
+    const atLeast = 3.5;
     if (margins.left + margins.right > pageWidth - atLeast ||
         margins.top + margins.bottom > pageHeight - atLeast) {
       return null;
