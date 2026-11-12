@@ -62,6 +62,17 @@ EstiloAPA sigue un proceso centrado en el documento:
 
 La ventana principal reserva el espacio para Document Editor. Las opciones secundarias se agrupan en More y Document Settings. Se conservaron los perfiles institucionales y de tesis, las herramientas del Ribbon, los análisis académicos y los exportadores. Se eliminaron avisos repetidos de modo protegido, reglas CSS duplicadas y sobrescrituras obsoletas del título y de las instrucciones.
 
+### Browser Drafts and AutoSave
+
+The **File** tab also provides **Save Draft**, **Recover Draft**, **AutoSave: On/Off**, and **Delete Draft**.
+
+- **Save Draft** saves the current editable HTML document in this browser.
+- **Recover Draft** asks for confirmation before replacing the current document. The restored document retains manual APA 7 formatting: the import normalizers are not run again.
+- **AutoSave** is **off by default**. Enable it explicitly to save after pauses in typing and when the browser tab becomes hidden.
+- **Delete Draft** removes the browser copy. Clear Document also removes it to avoid offering recovery of an intentionally cleared document.
+- Drafts are stored **locally, without encryption**. They are not uploaded by this feature. Other people using the same browser profile may be able to access them.
+- Browser storage capacity is limited; large image-rich documents may not fit. For reliable storage outside the browser, always use **Download DOCX**.
+
 ### Word-style editing tools
 
 The Word-style Ribbon now contains a set of practical document-editing features, in addition to the APA 7 controls already available:
