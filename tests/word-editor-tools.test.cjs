@@ -290,3 +290,23 @@ test("Table operations reject merged-cell structures to protect complex APA tabl
     assert.ok(source.includes('editTable("' + tool + '")'), tool);
   }
 });
+
+test("Undo and Redo preserve the chosen No Indent markup", () => {
+  const h = setup();
+  const api = h.window.EstiloAPAWordTools;
+  const withoutIndent = '<p data-apa-editor-indent="none" style="text-indent:0!important;padding-left:0!important">Text</p>';
+  fireInput(h, withoutIndent, "formatParagraph");
+  api.undo();
+  assert.equal(h.root.innerHTML, "<p>Original paragraph.</p>");
+  api.redo();
+  assert.equal(h.root.innerHTML, withoutIndent);
+});
+
+test("Word tools remain optional rather than replacing the APA 7 workflow", () => {
+  const app = fs.readFileSync(path.join(__dirname, "../app.js"), "utf8");
+  const editor = fs.readFileSync(path.join(__dirname, "../apa-editor-v30.js"), "utf8");
+  assert.match(app, /void formatSelectedFiles\(importRequestId\)/);
+  assert.match(editor, /function applyIndent\(value\)/);
+  assert.match(editor, /data-indent="none"/);
+  assert.match(editor, /data-indent="hanging"/);
+});
