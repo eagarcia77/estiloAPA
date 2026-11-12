@@ -931,7 +931,9 @@ function domBlockToDocxParagraph(element, api, font, size) {
   const noIndent = isRef || isHeading || isFigureLabel || element.classList.contains("apa-note") || element.classList.contains("no-indent");
   // Apply APA heading emphasis as inherited styling, not a replacement run.
   // Manual font/color/size changes inside the heading must survive DOCX export.
-  const baseline = { bold: isHeading || isFigureLabel, italics: isLevel3 };
+  // Editor-first export: semantic heading classes do not override manual formatting.
+  // The captured editor CSS supplies the actual character styling.
+  const baseline = {};
   // Apply the paragraph's own formatting to its text runs; previously only
   // descendant spans were considered, dropping font, size, color and emphasis
   // applied directly to the editor paragraph.
@@ -942,15 +944,17 @@ function domBlockToDocxParagraph(element, api, font, size) {
     children: runs,
     spacing: { line: 480, after: 0, before: 0 },
     alignment: (() => {
-      const alignment = element.style.textAlign || window.getComputedStyle(element).textAlign;
+      const alignment = element.style.textAlign;
       if (alignment === "center") return AlignmentType.CENTER;
       if (alignment === "right" || alignment === "end") return AlignmentType.RIGHT;
       if (alignment === "justify") return AlignmentType.JUSTIFIED;
-      return isLevel1 ? AlignmentType.CENTER : AlignmentType.LEFT;
+      return AlignmentType.LEFT;
     })(),
   };
   // Explicit editor paragraph spacing takes precedence over default APA spacing.
-  const computed = window.getComputedStyle(element);
+  // The detached export clone has a snapshot of the live editor's computed CSS.
+  // Avoid resolving styles against the detached node, where rules may be missing.
+  const computed = element.style;
   const ptToTwips = (cssValue) => {
     const pixels = Number.parseFloat(cssValue);
     return Number.isFinite(pixels) ? Math.max(0, Math.round(pixels * 15)) : 0;
