@@ -118,3 +118,19 @@
   outline:2px solid #8bb9ec;
 }
 @media print { .word-outline { display:none !important; } }
+
+/* Word-style non-printing paragraph marks (visual only, never exported). */
+body.word-show-paragraph-marks #preview p::after,
+body.word-show-paragraph-marks #preview li::after {
+  content:" ¶";
+  color:#6e8cb2;
+  font-size:.85em;
+  user-select:none;
+  pointer-events:none;
+}
+@media print {
+  body.word-show-paragraph-marks #preview p::after,
+  body.word-show-paragraph-marks #preview li::after {
+    content:none !important;
+  }
+}
