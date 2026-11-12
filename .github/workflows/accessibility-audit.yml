@@ -1,0 +1,25 @@
+name: Accessibility audit regression tests
+on:
+  push:
+    branches:
+      - main
+      - feature/accessibility-audit-core-20261112
+  pull_request:
+    paths:
+      - 'js/accessibility-audit-core.js'
+      - 'accessibility-checker-ui.js'
+      - 'tests/accessibility-audit-core.test.cjs'
+      - '.github/workflows/accessibility-audit.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run accessibility core tests
+        run: node --test tests/accessibility-audit-core.test.cjs
+      - name: Check browser module syntax
+        run: node --check accessibility-checker-ui.js
