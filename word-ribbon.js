@@ -4,6 +4,7 @@ const RIBBON_TABS = [
   ["archivo", "File"],
   ["inicio", "Home"],
   ["insertar", "Insert"],
+  ["pagina", "Layout"],
   ["diseno", "APA Layout"],
   ["revisar", "Review"],
   ["vista", "View"],
