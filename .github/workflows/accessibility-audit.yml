@@ -9,6 +9,8 @@ on:
       - 'js/accessibility-audit-core.js'
       - 'accessibility-checker-ui.js'
       - 'tests/accessibility-audit-core.test.cjs'
+      - 'safari-stream-compat.js'
+      - 'tests/safari-stream-compat.test.cjs'
       - '.github/workflows/accessibility-audit.yml'
   workflow_dispatch:
 jobs:
@@ -20,6 +22,6 @@ jobs:
         with:
           node-version: '22'
       - name: Run accessibility core tests
-        run: node --test tests/accessibility-audit-core.test.cjs
+        run: node --test tests/accessibility-audit-core.test.cjs tests/safari-stream-compat.test.cjs
       - name: Check browser module syntax
         run: node --check accessibility-checker-ui.js
