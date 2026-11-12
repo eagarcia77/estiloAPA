@@ -649,6 +649,13 @@ async function formatSelectedFiles(requestId = importRequestId) {
       const section = document.createElement("section");
       section.dataset.sourceFile = file.name;
       section.innerHTML = html;
+      // Never replace an existing document with an empty conversion result.
+      // Images/tables without text are legitimate content and must be retained.
+      const hasImportedContent = Boolean(section.textContent.trim() ||
+        section.querySelector("img,svg,table,canvas,video,math"));
+      if (!hasImportedContent) {
+        throw new Error("El archivo se pudo abrir, pero no se extrajo contenido editable. No se reemplazó el documento anterior. Si es un PDF escaneado, necesita reconocimiento de texto (OCR).");
+      }
       applyApaRules(section);
       wrapper.append(section);
       if (i < files.length - 1) {
