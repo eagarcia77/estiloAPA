@@ -112,3 +112,17 @@ test("More menu toggles without changing the document",()=>{
   assert.equal(more.open,false);
   assert.equal(h.nodes.get("preview").textContent,"Preserved editorial content");
 });
+
+test("Open File closes its temporary setup drawer after file selection",()=>{
+  const h=boot();
+  h.find("simpleOpenBtn").click();
+  assert.equal(h.nodes.get("simpleDocumentOptions").open,true);
+  for(const handler of h.nodes.get("files").listeners.change || []) handler({});
+  assert.equal(h.nodes.get("simpleDocumentOptions").open,false);
+});
+test("Canceling the picker also restores the editor workspace",()=>{
+  const h=boot();
+  h.find("simpleOpenBtn").click();
+  for(const handler of h.nodes.get("files").listeners.cancel || []) handler({});
+  assert.equal(h.nodes.get("simpleDocumentOptions").open,false);
+});
