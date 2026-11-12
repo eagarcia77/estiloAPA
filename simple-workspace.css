@@ -183,3 +183,9 @@ section.audit > .reference-format-audit { display:none !important; }
   .layout > .audit, .layout > .controls { max-width:100%; min-width:0; }
   #simpleReviewDetails .simple-details-inner { overflow-wrap:anywhere; }
 }
+
+/* Review has no permanent footprint in the editor-first workspace.
+   More > Review (or Ribbon > Review APA 7) reveals it on demand. */
+.layout > .audit:has(#simpleReviewDetails:not([open])) {
+  display:none !important;
+}
