@@ -17,6 +17,13 @@ function thesisHtmlDownload() {
   const clone = thesisHtmlClone();
   const degree = document.querySelector("#formatProfile")?.value === "thesis-doctoral" ? "Disertación doctoral" : "Tesis de maestría";
   const mode = document.querySelector("#preview")?.dataset?.thesisStructureMode || "";
+  const layoutModel = window.EstiloAPAWordPageLayout;
+  const layoutState = layoutModel?.read(document.querySelector("#preview"));
+  const paper = layoutState && layoutModel.pageDimensions(layoutState);
+  const margin = layoutState?.margins;
+  const pageCss = paper ?
+    `@page { size: ${paper.width}in ${paper.height}in; margin: ${margin.top}in ${margin.right}in ${margin.bottom}in ${margin.left}in; }` :
+    "${pageCss}";
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${degree} — formato institucional</title>
