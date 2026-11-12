@@ -509,8 +509,11 @@
     home.append(edit);
 
     const lists = makeGroup("Lists");
-    lists.append(makeButton("Bullets", () => command("insertUnorderedList")),
-      makeButton("Numbering", () => command("insertOrderedList")));
+    const bullets = makeButton("Bullets", () => command("insertUnorderedList"));
+    bullets.id = "wordBulletsButton";
+    const numbering = makeButton("Numbering", () => command("insertOrderedList"));
+    numbering.id = "wordNumberingButton";
+    lists.append(bullets, numbering);
     home.append(lists);
 
     const character = makeGroup("Character");
