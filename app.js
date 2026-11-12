@@ -958,7 +958,13 @@ function collectExportBlocks(clone) {
   const blocks = [];
   const visit = (parent) => {
     for (const element of [...parent.children]) {
-      if (element.matches("section[data-source-file]")) visit(element);
+      // Editor wrappers must not become a single flattened Word paragraph.
+      // Descend only through structural containers; preserve real paragraphs,
+      // figures, lists and tables as independent export blocks.
+      const structural = ["DIV", "SECTION", "ARTICLE", "MAIN"].includes(element.tagName);
+      const hasBlocks = [...element.children].some(child =>
+        /^(P|H[1-6]|DIV|SECTION|ARTICLE|MAIN|TABLE|FIGURE|UL|OL|IMG)$/.test(child.tagName));
+      if (structural && hasBlocks) visit(element);
       else blocks.push(element);
     }
   };
@@ -1048,7 +1054,21 @@ async function downloadDocx() {
             });
           })
         }));
-        if (rows.length) children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+        if (rows.length) {
+          const liveTables = [...els.preview.querySelectorAll("table")];
+          const tableIndex = [...clone.querySelectorAll("table")].indexOf(element);
+          const liveTable = liveTables[tableIndex];
+          const liveWidths = liveTable ? [...liveTable.rows[0]?.cells || []].map(cell => cell.getBoundingClientRect().width) : [];
+          const totalWidth = liveWidths.reduce((a,b)=>a+b,0);
+          const widths = totalWidth > 0 && liveWidths.length === rows[0].cells.length
+            ? liveWidths.map(w => Math.max(1, Math.round(w / totalWidth * 100)))
+            : null;
+          children.push(new Table({
+            rows,
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            ...(widths ? { columnWidths: widths.map(w => Math.round(w / 100 * 9360)) } : {}),
+          }));
+        }
         continue;
       }
       if (element.tagName === "FIGURE" || element.tagName === "IMG") {
