@@ -737,6 +737,13 @@ function downloadHtml() {
   const clone = cleanExportClone();
   const font = els.fontFamily.value;
   const fontSize = fontSettings[font].cssSize;
+  const layoutModel = window.EstiloAPAWordPageLayout;
+  const layoutState = layoutModel?.read(document.querySelector("#preview"));
+  const paper = layoutState && layoutModel.pageDimensions(layoutState);
+  const margin = layoutState?.margins;
+  const pageCss = paper ?
+    `@page { size: ${paper.width}in ${paper.height}in; margin: ${margin.top}in ${margin.right}in ${margin.bottom}in ${margin.left}in; }` :
+    "${pageCss}";
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Documento formateado APA 7</title><style>
@@ -802,6 +809,7 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked) options.indent = { firstLine: 720 };
+  window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
 
@@ -870,7 +878,7 @@ async function downloadDocx() {
     const doc = new Document({
       numbering: { config: [{ reference: "apa-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] },
       sections: [{
-        properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+        properties: { page: window.EstiloAPAWordPageLayout?.getDocxPage() || { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
         headers,
         children,
       }],
