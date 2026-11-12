@@ -41,11 +41,14 @@ function inlineRuns(node, api, font, size, inherited = {}) {
   const { TextRun, ExternalHyperlink } = api;
   if (node.nodeType === Node.TEXT_NODE) {
     if (!node.nodeValue) return [];
-    return [new TextRun({ text: node.nodeValue, font, size, bold: inherited.bold, italics: inherited.italics, underline: inherited.underline ? {} : undefined })];
+    const styles = window.EstiloAPAWordDocxStyles;
+    const options = styles?.runOptions(inherited, font, size) ||
+      { font, size, bold: inherited.bold, italics: inherited.italics, underline: inherited.underline ? {} : undefined };
+    return [new TextRun({ text: node.nodeValue, ...options })];
   }
   if (node.nodeType !== Node.ELEMENT_NODE) return [];
   const tag = node.tagName;
-  const style = {
+  const style = window.EstiloAPAWordDocxStyles?.childStyle(node, inherited) || {
     bold: inherited.bold || ["B", "STRONG"].includes(tag),
     italics: inherited.italics || ["I", "EM"].includes(tag),
     underline: inherited.underline || tag === "U"
@@ -55,7 +58,11 @@ function inlineRuns(node, api, font, size, inherited = {}) {
     const text = node.textContent || node.getAttribute("href");
     return [new ExternalHyperlink({
       link: node.getAttribute("href"),
-      children: [new TextRun({ text, font, size, color: "0563C1", underline: {}, bold: style.bold, italics: style.italics })]
+      children: [new TextRun({
+        text,
+        ...(window.EstiloAPAWordDocxStyles?.runOptions(style, font, size) || { font, size, bold: style.bold, italics: style.italics }),
+        color: "0563C1", underline: {}
+      })]
     })];
   }
   return [...node.childNodes].flatMap((child) => inlineRuns(child, api, font, size, style));
@@ -96,17 +103,12 @@ function paragraphFromElement(element, api, font, size, firstLineIndent, hanging
   const isFigureTitle = element.classList.contains("apa-figure-title");
   const isNote = element.classList.contains("apa-note");
 
-  let runs = inlineRuns(element, api, font, size, { bold: isModuleKeywords });
-  if (!runs.length) runs = [new TextRun({ text, font, size })];
-
-  if (isHeading) {
-    const headingItalic = [3, 5].includes(headingLevel);
-    runs = [new TextRun({ text, font, size, bold: true, italics: headingItalic })];
-  } else if (isTableLabel || isFigureLabel) {
-    runs = [new TextRun({ text, font, size, bold: true })];
-  } else if (isTableTitle || isFigureTitle) {
-    runs = [new TextRun({ text, font, size, italics: true })];
-  }
+  const baseline = {
+    bold: isModuleKeywords || isHeading || isTableLabel || isFigureLabel,
+    italics: (isHeading && [3, 5].includes(headingLevel)) || isTableTitle || isFigureTitle,
+  };
+  let runs = inlineRuns(element, api, font, size, baseline);
+  if (!runs.length) runs = [new TextRun({ text, font, size, ...baseline })];
 
   let alignment = AlignmentType.LEFT;
   if (headingLevel === 1 || isReferencesHeading) alignment = AlignmentType.CENTER;
