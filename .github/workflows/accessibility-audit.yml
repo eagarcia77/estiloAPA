@@ -25,7 +25,6 @@ jobs:
         run: node --test tests/accessibility-audit-core.test.cjs tests/safari-stream-compat.test.cjs
       - name: Check browser module syntax
         run: |
-          node --check app.js
-          node --check pdf-smart.js
-          node --check accessibility-checker-ui.js
-          node --check safari-stream-compat.js
+          for file in *.js js/*.js; do
+            if [ -f "$file" ]; then node --check "$file" || exit 1; fi
+          done
