@@ -33,7 +33,7 @@
         var h=match[1];if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');
         return [0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16);});
       }
-      match=/^rgba?\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*(?:,\\s*([\\d.]+))?\\s*\\)$/i.exec(value.trim());
+      match=/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([\d.]+))?\s*\)$/i.exec(value.trim());
       if (!match || (match[4]!==undefined && Number(match[4])!==1))return null;
       var values=[Number(match[1]),Number(match[2]),Number(match[3])];
       return values.every(function(n){return n>=0&&n<=255;})?values:null;
