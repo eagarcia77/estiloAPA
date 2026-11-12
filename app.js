@@ -402,6 +402,46 @@ function normalizeReferences(root) {
   }
 }
 
+// APA 7 reference typography is applied once during import/formatting,
+// never during DOCX export. Preserve any existing manual inline emphasis.
+function normalizeReferenceItalics(root) {
+  for (const ref of root.querySelectorAll(".apa-reference")) {
+    if (ref.querySelector("em,i,[style*='italic']")) continue;
+    const text = ref.textContent.replace(/\\s+/g, " ").trim();
+    const year = /\\((?:19|20)\\d{2}[a-z]?|s\\.\\s*f\\.|n\\.\\s*d\\.\\)/i.exec(text);
+    if (!year) continue;
+    const afterYear = text.slice(year.index + year[0].length).replace(/^\\s*\\.\\s*/, "");
+    if (!afterYear || /^https?:/i.test(afterYear)) continue;
+    // Journal articles have a plain article title followed by a journal and volume;
+    // ambiguous references are deliberately left unchanged for manual review.
+    if (/\\b\\d+\\s*\\(\\d+\\)\\s*,\\s*\\d/.test(afterYear)) continue;
+    const urlIndex = afterYear.search(/\\s+https?:\\/\\//i);
+    let title = urlIndex >= 0 ? afterYear.slice(0, urlIndex).trim() : afterYear;
+    const edition = /\\s+\\((?:\\d+(?:st|nd|rd|th)?\\s+ed\\.|edici[oó]n[^)]*)\\)/i.exec(title);
+    if (edition) title = title.slice(0, edition.index);
+    // A book/report/webpage title ends at its sentence boundary; abbreviations
+    // and ambiguous journal-like sources should not be formatted automatically.
+    const sentence = title.match(/^(.+?)(?:\\.\\s+(?=[A-ZÁÉÍÓÚÑ])|\\.$)/);
+    if (sentence) title = sentence[1];
+    title = title.replace(/\\.$/, "").trim();
+    if (title.length < 5) continue;
+    const walker = document.createTreeWalker(ref, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    // Only wrap titles entirely contained in one text node; never flatten rich text.
+    for (const node of nodes) {
+      const index = node.nodeValue.indexOf(title);
+      if (index < 0 || node.parentElement.closest("a,em,i")) continue;
+      const span = document.createElement("em");
+      span.textContent = title;
+      const suffix = node.splitText(index);
+      suffix.splitText(title.length);
+      suffix.replaceWith(span);
+      break;
+    }
+  }
+}
+
 function normalizeFigures(root) {
   for (const p of root.querySelectorAll("p")) {
     const text = p.textContent.trim();
@@ -447,6 +487,7 @@ function applyApaRules(root) {
   replaceDivsWithParagraphs(root);
   normalizeHeadingLevels(root);
   normalizeReferences(root);
+  normalizeReferenceItalics(root);
   normalizeFigures(root);
   autoLinkUrls(root);
 }
