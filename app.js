@@ -953,7 +953,18 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked && shouldAutoIndentParagraph(element)) options.indent = { firstLine: 720 };
   if (cssFirstLine && cssToTwips(cssFirstLine) !== null) {
-    options.indent = { ...(options.indent || {}), firstLine: cssToTwips(cssFirstLine) };
+    const firstLine = cssToTwips(cssFirstLine);
+    const indent = { ...(options.indent || {}) };
+    if (firstLine < 0) {
+      // docx expects a positive hanging indent, not a negative firstLine.
+      delete indent.firstLine;
+      indent.hanging = Math.abs(firstLine);
+      indent.left = Math.max(indent.left || 0, indent.hanging);
+    } else {
+      delete indent.hanging;
+      indent.firstLine = firstLine;
+    }
+    options.indent = indent;
   }
   if (cssLeft && cssToTwips(cssLeft) !== null) {
     options.indent = { ...(options.indent || {}), left: cssToTwips(cssLeft) };
@@ -962,6 +973,21 @@ function domBlockToDocxParagraph(element, api, font, size) {
     const explicitLine = cssToTwips(cssLineHeight);
     if (explicitLine !== null && explicitLine > 0) options.spacing.line = explicitLine;
     else if (/^[\d.]+$/.test(cssLineHeight)) options.spacing.line = Math.round(Number(cssLineHeight) * 240);
+  }
+  // Normalize negative ruler/CSS indentation values before docx validates them.
+  // Negative first-line offsets in Word are represented as positive hanging values.
+  if (options.indent) {
+    const indent = { ...options.indent };
+    if (Number.isFinite(indent.firstLine) && indent.firstLine < 0) {
+      indent.hanging = Math.abs(indent.firstLine);
+      delete indent.firstLine;
+      indent.left = Math.max(0, indent.left || 0, indent.hanging);
+    }
+    if (Number.isFinite(indent.hanging) && indent.hanging < 0) {
+      indent.firstLine = Math.abs(indent.hanging);
+      delete indent.hanging;
+    }
+    options.indent = indent;
   }
   // Preserve Word heading semantics and prevent headings from becoming orphans.
   if (isHeading) {
