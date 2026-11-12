@@ -925,6 +925,17 @@ function domBlockToDocxParagraph(element, api, font, size) {
   else if (userIndent === "hanging") options.indent = { left: 720, hanging: 720 };
   else if (isRef && els.hangingReferences.checked) options.indent = { left: 720, hanging: 720 };
   else if (!noIndent && els.firstLineIndent.checked && shouldAutoIndentParagraph(element)) options.indent = { firstLine: 720 };
+  // Preserve Word heading semantics and prevent headings from becoming orphans.
+  if (isHeading) {
+    const heading = api.HeadingLevel;
+    options.heading = isLevel1 ? heading?.HEADING_1 : isLevel2 ? heading?.HEADING_2 : heading?.HEADING_3;
+    options.keepNext = true;
+    options.keepLines = true;
+  }
+  // Keep figure captions with their neighboring content when pagination allows.
+  if (isFigureLabel) options.keepNext = true;
+  // Respect explicit line breaks in imported headings and administrative metadata.
+  // textRunsFromNode already converts <br> nodes into Word line breaks.
   window.EstiloAPAWordPageLayout?.decorateParagraph(element, options);
   return new Paragraph(options);
 }
@@ -997,8 +1008,9 @@ async function downloadDocx() {
       }
       if (element.tagName === "TABLE") {
         const rows = [...element.querySelectorAll("tr")].map((row) => new TableRow({
+          cantSplit: true,
           children: [...row.cells].map((cell) => new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text: cell.textContent.trim(), font, size })] })]
+            children: [new Paragraph({ children: [new TextRun({ text: cell.textContent.trim(), font, size })], spacing: { line: 480, after: 0 } })]
           }))
         }));
         if (rows.length) children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
