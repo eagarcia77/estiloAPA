@@ -41,9 +41,9 @@ test("ruler markers apply CSS indents without replacing content", () => {
   const before = p.target.innerHTML;
   assert.equal(model.apply(p.target, { left: .75, first: 1.0, right: .25 }), true);
   assert.equal(p.target.dataset.apaEditorIndent, "custom");
-  assert.equal(p.values.get("padding-left").value, ".75in");
-  assert.equal(p.values.get("text-indent").value, ".25in");
-  assert.equal(p.values.get("padding-right").value, ".25in");
+  assert.equal(p.values.get("padding-left").value, "0.75in");
+  assert.equal(p.values.get("text-indent").value, "0.25in");
+  assert.equal(p.values.get("padding-right").value, "0.25in");
   assert.equal(p.values.get("text-indent").priority, "important");
   assert.equal(p.target.innerHTML, before);
 });
