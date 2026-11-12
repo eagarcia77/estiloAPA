@@ -173,6 +173,7 @@ function initWordRibbon() {
     layoutButton.setAttribute("aria-pressed", String(enabled));
     layoutButton.title = enabled ? "Expand document to available screen width" : "Show US Letter page preview";
   });
+  layoutButton.id = "wordPageViewButton";
   layoutButton.setAttribute("aria-pressed", "false");
   layoutButton.title = "Show US Letter page preview";
   viewGroup.append(layoutButton);
