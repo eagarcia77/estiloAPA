@@ -58,15 +58,17 @@ test("Open File expands document options and triggers the real input",()=>{
   assert.equal(h.nodes.get("simpleDocumentOptions").open,true);
   assert.equal(h.nodes.get("files").clicked,1);
 });
-test("advanced setup and review can be toggled independently",()=>{
+test("advanced setup and review never overlap the editor",()=>{
   const h=boot();
   h.find("simpleSettingsBtn").click();
   assert.equal(h.nodes.get("simpleDocumentOptions").open,true);
   assert.equal(h.nodes.get("simpleReviewDetails").open,false);
   h.find("simpleReviewBtn").click();
   assert.equal(h.nodes.get("simpleReviewDetails").open,true);
-  h.find("simpleSettingsBtn").click();
   assert.equal(h.nodes.get("simpleDocumentOptions").open,false);
+  h.find("simpleSettingsBtn").click();
+  assert.equal(h.nodes.get("simpleDocumentOptions").open,true);
+  assert.equal(h.nodes.get("simpleReviewDetails").open,false);
 });
 test("document and original status remain untouched",()=>{
   const h=boot();
