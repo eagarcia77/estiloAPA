@@ -65,12 +65,16 @@
         ()=>!!byId("wordSaveLocalDraft") && !byId("wordSaveLocalDraft").disabled),
       action("recover","Recover Draft","File","restore recovery backup",()=>originalButton("#wordRecoverLocalDraft"),
         ()=>!!byId("wordRecoverLocalDraft") && !byId("wordRecoverLocalDraft").disabled),
+      action("autosave","Toggle AutoSave","File","automatically save backup local",()=>originalButton("#wordToggleAutosave"),
+        ()=>!!byId("wordToggleAutosave") && !byId("wordToggleAutosave").disabled),
       action("undo","Undo","Home","history back",()=>tools?.undo?.(),()=>!!tools,"Ctrl+Z"),
       action("redo","Redo","Home","history forward",()=>tools?.redo?.(),()=>!!tools,"Ctrl+Y"),
       action("bold","Bold","Home","strong text",()=>originalButton('#apaEditorShell button[data-cmd="bold"]'),documentReady,"Ctrl+B"),
       action("italic","Italic","Home","emphasis text",()=>originalButton('#apaEditorShell button[data-cmd="italic"]'),documentReady,"Ctrl+I"),
       action("underline","Underline","Home","emphasis text",()=>originalButton('#apaEditorShell button[data-cmd="underline"]'),documentReady,"Ctrl+U"),
       action("clearformat","Clear Character Formatting","Home","remove font style",()=>originalButton('#apaEditorShell button[data-cmd="removeFormat"]'),documentReady),
+      action("bullets","Bulleted List","Home","bullet list items",()=>originalButton("#wordBulletsButton"),documentReady),
+      action("numbering","Numbered List","Home","numbering ordered list",()=>originalButton("#wordNumberingButton"),documentReady),
       action("indent-none","No Indent","Home","zero first line left indent",()=>originalButton('#apaEditorShell button[data-indent="none"]'),documentReady),
       action("indent-first","First Line Indent","Home","paragraph first indent half inch",()=>originalButton('#apaEditorShell button[data-indent="first"]'),documentReady),
       action("indent-hanging","Hanging Indent","Home","references indent hanging",()=>originalButton('#apaEditorShell button[data-indent="hanging"]'),documentReady),
@@ -84,6 +88,11 @@
       action("insert-figure","Insert Figure","Insert","caption image",()=>originalButton("#insertFigureCaption"),documentReady),
       action("insert-link","Insert Link","Insert","hyperlink url",()=>originalButton("#insertApaLink"),documentReady),
       action("insert-page-break","Insert Page Break","Insert","next page",()=>originalButton("#insertPageBreak"),documentReady),
+      action("apa-paragraph","APA Paragraph Preset","APA Layout","normal paragraph apa7",()=>originalButton("#apaParagraphPreset"),documentReady),
+      action("apa-reference","APA Reference Preset","APA Layout","hanging citation bibliographic",()=>originalButton("#apaReferencePreset"),documentReady),
+      action("references-heading","Insert References Heading","APA Layout","bibliography",()=>originalButton("#insertReferencesHeading"),documentReady),
+      action("reapply-apa","Reapply APA 7 to Original","APA Layout","reset formatting original document confirmation",()=>originalButton("#formatBtn"),
+        ()=>!!byId("formatBtn") && !byId("formatBtn").disabled),
       action("add-row","Add Table Row","Insert","table rows",()=>originalButton("#wordTableAddRow"),documentReady),
       action("layout","Page Layout","Layout","page size orientation margins",()=>ribbon()?.activate?.("pagina"),()=>!!ribbon()),
       action("apa-layout","APA Layout","APA Layout","academic style paragraph",()=>ribbon()?.activate?.("diseno"),()=>!!ribbon()),
@@ -188,11 +197,11 @@
     // Preserve the caret for formatting/insertion commands only. File actions
     // must retain native user activation for their download/file picker.
     const editorActions = new Set([
-      "bold","italic","underline","clearformat",
+      "bold","italic","underline","clearformat","bullets","numbering",
       "indent-none","indent-first","indent-hanging",
       "align-left","align-center","align-right",
       "insert-table","insert-figure","insert-link","insert-page-break",
-      "add-row"
+      "add-row","apa-paragraph","apa-reference","references-heading"
     ]);
     if (editorActions.has(command.id)) restoreSelection();
     const result=command.execute();
