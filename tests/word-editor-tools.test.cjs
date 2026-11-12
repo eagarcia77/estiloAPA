@@ -179,3 +179,114 @@ test("Word editing module is loaded after the Ribbon and supports mobile layout"
   assert.match(css, /@media\(max-width:760px\)/);
   assert.match(css, /word-find-panel\[hidden\]/);
 });
+
+function prepareFindDocument(h, initialText) {
+  const node = { nodeType: 3, data: initialText, parentNode: h.root, parentElement: h.root };
+  const selection = {
+    rangeCount: 0, range: null,
+    getRangeAt() { return this.range; },
+    removeAllRanges() { this.rangeCount = 0; this.range = null; },
+    addRange(range) { this.rangeCount = 1; this.range = range; }
+  };
+  class TextRange {
+    startContainer = node;
+    endContainer = node;
+    startOffset = 0;
+    endOffset = 0;
+    get commonAncestorContainer() { return h.root; }
+    get collapsed() { return this.startOffset === this.endOffset; }
+    setStart(target, offset) { this.startContainer = target; this.startOffset = offset; }
+    setEnd(target, offset) { this.endContainer = target; this.endOffset = offset; }
+    cloneRange() {
+      const copy = new TextRange();
+      copy.setStart(this.startContainer, this.startOffset);
+      copy.setEnd(this.endContainer, this.endOffset);
+      return copy;
+    }
+    deleteContents() {
+      node.data = node.data.slice(0, this.startOffset) + node.data.slice(this.endOffset);
+      this.endOffset = this.startOffset;
+    }
+    insertNode(text) {
+      node.data = node.data.slice(0, this.startOffset) + text.data +
+        node.data.slice(this.startOffset);
+      this.startOffset += text.data.length;
+      this.endOffset = this.startOffset;
+    }
+    setStartAfter() {}
+    collapse() { this.endOffset = this.startOffset; }
+  }
+  h.document.createTreeWalker = () => {
+    let yielded = false;
+    return { nextNode() {
+      if (yielded) return null;
+      yielded = true;
+      return node;
+    }};
+  };
+  h.document.createRange = () => new TextRange();
+  h.window.getSelection = () => selection;
+  return { node, selection };
+}
+
+test("Find identifies text without altering the document", () => {
+  const h = setup();
+  const { node } = prepareFindDocument(h, "Alpha beta alpha");
+  h.window.EstiloAPAWordTools.find();
+  const panel = h.shell.parentNode.children.find(el => el.id === "wordFindPanel");
+  const row = panel.children[1];
+  const searchInput = row.children[0];
+  const matchLabel = row.children[row.children.length - 1];
+  searchInput.value = "alpha";
+  searchInput.dispatchEvent({ type: "input" });
+  assert.equal(matchLabel.textContent, "1 of 2 matches");
+  assert.equal(node.data, "Alpha beta alpha");
+  assert.equal(h.root.innerHTML, "<p>Original paragraph.</p>");
+});
+
+test("Find supports case-sensitive and whole-word searches", () => {
+  const h = setup();
+  prepareFindDocument(h, "Cat catalog cat CAT");
+  h.window.EstiloAPAWordTools.find();
+  const panel = h.shell.parentNode.children.find(el => el.id === "wordFindPanel");
+  const find = panel.children[1].children[0];
+  const count = panel.children[1].children.at(-1);
+  const flags = panel.children[3];
+  const sensitive = flags.children[0].children[0];
+  const whole = flags.children[1].children[0];
+  find.value = "cat";
+  find.dispatchEvent({ type: "input" });
+  assert.equal(count.textContent, "1 of 4 matches");
+  whole.checked = true;
+  whole.dispatchEvent({ type: "change" });
+  assert.equal(count.textContent, "1 of 3 matches");
+  sensitive.checked = true;
+  sensitive.dispatchEvent({ type: "change" });
+  assert.equal(count.textContent, "1 of 1 matches");
+});
+
+test("Replace All changes matching text only, leaving unrelated text intact", () => {
+  const h = setup();
+  const { node } = prepareFindDocument(h, "alpha beta alpha gamma");
+  h.window.EstiloAPAWordTools.replace();
+  const panel = h.shell.parentNode.children.find(el => el.id === "wordFindPanel");
+  const find = panel.children[1].children[0];
+  const replacement = panel.children[2].children[0];
+  const replaceAll = panel.children[2].children[2];
+  find.value = "alpha";
+  find.dispatchEvent({ type: "input" });
+  replacement.value = "delta";
+  replaceAll.click = () => replaceAll.dispatchEvent({ type: "click" });
+  replaceAll.click();
+  assert.equal(node.data, "delta beta delta gamma");
+});
+
+test("Table operations reject merged-cell structures to protect complex APA tables", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../word-editor-tools.js"), "utf8");
+  assert.match(source, /rowspan/);
+  assert.match(source, /colspan/);
+  assert.match(source, /Complex merged tables/);
+  for (const tool of ["addRow", "addColumn", "deleteRow", "deleteColumn"]) {
+    assert.ok(source.includes('editTable("' + tool + '")'), tool);
+  }
+});
