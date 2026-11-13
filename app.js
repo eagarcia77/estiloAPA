@@ -749,7 +749,8 @@ function auditDocument(root) {
   const refsHeading = root.querySelector(".apa-references-heading");
   const resourceNotesInBibliography = [...root.querySelectorAll(".apa-reference-review-note")]
     .filter(el => /^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading)\s*:/i.test(el.textContent.trim()) &&
-      !!el.previousElementSibling?.closest?.("section,div"));
+      [...root.querySelectorAll(".apa-references-heading")].some(heading =>
+        !!(heading.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)));
   // Review notes are preserved rather than silently counted as sources.
   if (resourceNotesInBibliography.length) {
     findings.push({ level: "warn", text: `${resourceNotesInBibliography.length} nota(s) de recursos sugeridos no son referencias APA 7; ubíquelas fuera de la bibliografía.` });
