@@ -408,6 +408,13 @@ function normalizeReferences(root) {
         } else {
           block.classList.remove("apa-reference");
           block.classList.add("apa-reference-review-note");
+          // Teaching resource notes are not bibliography entries. Move them
+          // before the references heading on initial import only; preserve
+          // their text, inline formatting and subsequent user edits.
+          if (/^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading)\s*:/i.test(text) && heading) {
+            flush();
+            heading.before(block);
+          }
         }
       }
     }
