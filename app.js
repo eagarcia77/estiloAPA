@@ -635,9 +635,11 @@ function parseReferences(root) {
     const yearMatch = text.match(new RegExp(`\\((${yearToken})[^)]*\\)`, "i"));
     const year = yearMatch ? yearMatch[1].toLowerCase().replace(/\s/g, "") : "";
     const beforeYear = yearMatch ? text.slice(0, yearMatch.index).trim() : text;
-    let author = beforeYear.split(",")[0].trim();
-    if (!author.includes(",") && /\.$/.test(author)) author = author.replace(/\.$/, "");
-    if (author.length > 80) author = author.split(".")[0];
+    // Personal authors use the first surname; institutional authors must
+    // retain their complete name (e.g. International Telecommunication Union).
+    const personalAuthor = /^([^,]{2,80}),\s*(?:[A-ZÁÉÍÓÚÑ]\.\s*){1,4}(?:,|&|y|$)/i.exec(beforeYear);
+    let author = personalAuthor ? personalAuthor[1].trim() : beforeYear.replace(/[.\s]+$/, "").trim();
+    if (author.length > 160) author = author.slice(0, 160);
     const authorKey = normalizeKeyPart(author);
     return {
       index: index + 1,
@@ -696,6 +698,8 @@ function auditDocument(root) {
   const citations = parseCitations(root);
   const referenceKeys = new Set(references.map((ref) => ref.key).filter(Boolean));
   const citationKeys = new Set(citations.map((citation) => citation.key));
+  // The audit is a heuristic: aliases, translated organization names and
+  // citations using an acronym can require human review.
   const unmatchedCitations = citations.filter((citation) => !referenceKeys.has(citation.key));
   const uncitedReferences = references.filter((ref) => ref.key && !citationKeys.has(ref.key));
 
@@ -734,7 +738,7 @@ function auditDocument(root) {
   if (citations.length && references.length) {
     if (!unmatchedCitations.length) {
       points += 15;
-      findings.push({ level: "ok", text: "Todas las citas detectadas tienen una referencia coincidente por autor principal y año." });
+      findings.push({ level: "ok", text: "Todas las citas reconocidas coinciden por autor y año; compruebe manualmente siglas y variantes de nombres." });
     } else {
       const examples = unmatchedCitations.slice(0, 4).map((c) => `“${c.raw}”`).join(", ");
       findings.push({ level: "error", text: `${unmatchedCitations.length} cita(s) no tienen una referencia coincidente. Ejemplos: ${examples}.` });
