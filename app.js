@@ -894,6 +894,67 @@ function renderAudit(result) {
     <span><strong>${result.metrics.unmatchedCitations}</strong> sin referencia</span>
     <span><strong>${result.metrics.uncitedReferences}</strong> sin cita</span>`;
   els.downloadAuditBtn.disabled = false;
+  if (typeof renderReferenceInspector === "function") renderReferenceInspector();
+}
+
+// Compact reference inspector. It reads the current editor DOM without
+// normalizing or rewriting any user content.
+const referenceInspector = document.createElement("section");
+referenceInspector.className = "reference-inspector";
+referenceInspector.setAttribute("aria-label", "Inspector de referencias APA 7");
+const inspectorHeading = document.createElement("h3");
+inspectorHeading.textContent = "Inspector de referencias";
+const inspectorHint = document.createElement("p");
+inspectorHint.textContent = "Seleccione una referencia para localizarla. Los datos son extraídos del documento y no están verificados en internet.";
+const inspectorEntries = document.createElement("div");
+referenceInspector.append(inspectorHeading, inspectorHint, inspectorEntries);
+els.auditList?.parentElement?.append(referenceInspector);
+
+function renderReferenceInspector() {
+  inspectorEntries.replaceChildren();
+  const refs = parseReferences(els.preview);
+  if (!refs.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No se detectaron referencias APA 7 en el documento.";
+    inspectorEntries.append(empty);
+    return;
+  }
+  for (const ref of refs) {
+    const item = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = `#${ref.index} · ${ref.author || "Autor por revisar"} · ${ref.year || "Fecha por revisar"}`;
+    const details = document.createElement("p");
+    details.textContent = ref.text;
+    const metadata = document.createElement("p");
+    metadata.textContent = `Año: ${ref.hasYear ? "detectado" : "por revisar"} · DOI: ${ref.hasDoi ? "detectado" : "no detectado"} · URL: ${ref.hasUrl ? "detectada" : "no detectada"} · Metadatos externos: sin verificar`;
+    const controls = document.createElement("div");
+    const locate = document.createElement("button");
+    locate.type = "button";
+    locate.textContent = "Ir a la referencia";
+    locate.addEventListener("click", () => {
+      ref.element.scrollIntoView({ behavior: "smooth", block: "center" });
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(ref.element);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      els.preview.focus();
+    });
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.textContent = "Copiar referencia";
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(ref.element.textContent.trim());
+        setStatus("Referencia copiada al portapapeles.", "success");
+      } catch {
+        setStatus("No se pudo copiar automáticamente. Seleccione el texto en el editor.", "warn");
+      }
+    });
+    controls.append(locate, copy);
+    item.append(summary, details, metadata, controls);
+    inspectorEntries.append(item);
+  }
 }
 
 // Keep the APA report current without reformatting the user's edited text.
