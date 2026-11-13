@@ -410,7 +410,7 @@ function normalizeReferenceItalics(root) {
   for (const ref of root.querySelectorAll(".apa-reference")) {
     if (ref.querySelector("em,i,[style*='italic']")) continue;
     const text = ref.textContent.replace(/\s+/g, " ").trim();
-    const year = /\((?:19|20)\d{2}[a-z]?|s\.\s*f\.|n\.\s*d\.\)/i.exec(text);
+    const year = /\((?:(?:19|20)\d{2}[a-z]?|s\.\s*f\.|n\.\s*d\.)\)/i.exec(text);
     if (!year) continue;
     const rest = text.slice(year.index + year[0].length).replace(/^\s*\.\s*/, "").trim();
     if (!rest || /^https?:/i.test(rest)) continue;
@@ -464,16 +464,19 @@ function normalizeApaTableCaptions(root) {
   for (const table of root.querySelectorAll("table")) {
     const label = table.previousElementSibling;
     const caption = label?.previousElementSibling;
-    if (!label || !caption || !/^(P|DIV)$/.test(label.tagName) ||
-        !/^(P|DIV)$/.test(caption.tagName)) continue;
+    if (!label || !caption || !/^(P|DIV|H[1-6])$/.test(label.tagName) ||
+        !/^(P|DIV|H[1-6])$/.test(caption.tagName)) continue;
     const number = label.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.?$/i);
     const combined = caption.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.\s+(.+)$/i);
     if (!number || !combined || number[2].toLowerCase() !== combined[2].toLowerCase()) continue;
     // Only touch duplicate generated captions with no manual inline markup.
     if (caption.children.length || label.children.length) continue;
-    caption.textContent = combined[1] + " " + combined[2];
-    caption.classList.add("apa-table-label");
-    caption.style.fontWeight = "bold";
+    // Imported headings must become ordinary APA table captions, not Word headings.
+    const captionNode = /^H[1-6]$/.test(caption.tagName) ? document.createElement("p") : caption;
+    if (captionNode !== caption) caption.replaceWith(captionNode);
+    captionNode.textContent = combined[1] + " " + combined[2];
+    captionNode.className = "apa-table-label";
+    captionNode.style.fontWeight = "bold";
     label.textContent = combined[3];
     label.classList.add("apa-table-title");
     label.style.fontStyle = "italic";
