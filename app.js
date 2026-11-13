@@ -951,8 +951,65 @@ function renderReferenceInspector() {
         setStatus("No se pudo copiar automáticamente. Seleccione el texto en el editor.", "warn");
       }
     });
-    controls.append(locate, copy);
-    item.append(summary, details, metadata, controls);
+    const lookup = document.createElement("button");
+    lookup.type = "button";
+    lookup.textContent = "Consultar Crossref";
+    const resultBox = document.createElement("div");
+    resultBox.setAttribute("aria-live", "polite");
+    lookup.addEventListener("click", async () => {
+      lookup.disabled = true;
+      resultBox.replaceChildren();
+      resultBox.textContent = "Consultando metadatos bibliográficos…";
+      try {
+        const doi = ref.text.match(/(?:doi\.org\/|doi:\\s*)(10\.\d{4,9}\/[^\\s<>]+)/i)?.[1]?.replace(/[.,;]+$/, "");
+        const query = ref.text.slice(0, 230);
+        const endpoint = doi
+          ? "https://api.crossref.org/works/" + encodeURIComponent(doi)
+          : "https://api.crossref.org/works?rows=3&query.bibliographic=" + encodeURIComponent(query);
+        const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("Crossref HTTP " + response.status);
+        const message = (await response.json())?.message;
+        const candidates = doi ? [message] : (message?.items || []);
+        resultBox.replaceChildren();
+        if (!candidates.length) {
+          resultBox.textContent = "No se encontraron resultados. No se modificó el documento.";
+          return;
+        }
+        const normalize = value => String(value || "").normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        const citedSurname = normalize(ref.author.split(",")[0]);
+        const citedYear = ref.year.replace(/[a-z]$/, "");
+        for (const candidate of candidates) {
+          if (!candidate?.DOI) continue;
+          const title = String(candidate.title?.[0] || "").replace(/<[^>]+>/g, "");
+          const authors = (candidate.author || []).map(a => a.family || a.name).filter(Boolean);
+          const year = candidate.published?.["date-parts"]?.[0]?.[0] ||
+            candidate.issued?.["date-parts"]?.[0]?.[0] || "";
+          const authorsMatch = authors.some(a => normalize(a).includes(citedSurname));
+          const yearMatch = String(year) === citedYear;
+          const row = document.createElement("p");
+          row.textContent = `${title} · ${authors.join(", ") || "Autor no disponible"} · ${year || "Año no disponible"} · ${candidate.publisher || "Editorial no disponible"}`;
+          const link = document.createElement("a");
+          link.href = "https://doi.org/" + encodeURI(candidate.DOI);
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Consultar DOI";
+          const confidence = document.createElement("small");
+          confidence.textContent = authorsMatch && yearMatch
+            ? " Autor y año coinciden; confirme título y edición antes de corregir."
+            : " Coincidencia no confirmada: revise autor, año, título y edición.";
+          resultBox.append(row, link, confidence);
+        }
+        if (!resultBox.childNodes.length) resultBox.textContent = "No se encontraron registros con DOI.";
+      } catch (error) {
+        resultBox.textContent = "No se pudo completar la consulta. Compruebe la conexión o intente nuevamente.";
+        console.warn("Reference inspector Crossref request failed", error);
+      } finally {
+        lookup.disabled = false;
+      }
+    });
+    controls.append(locate, copy, lookup);
+    item.append(summary, details, metadata, controls, resultBox);
     inspectorEntries.append(item);
   }
 }
