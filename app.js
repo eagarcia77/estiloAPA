@@ -961,7 +961,7 @@ function renderReferenceInspector() {
       resultBox.replaceChildren();
       resultBox.textContent = "Consultando metadatos bibliográficos…";
       try {
-        const doi = ref.text.match(/(?:doi\.org\/|doi:\\s*)(10\.\d{4,9}\/[^\\s<>]+)/i)?.[1]?.replace(/[.,;]+$/, "");
+        const doi = ref.text.match(/(?:doi\.org\/|doi:\s*)(10\.\d{4,9}\/[^\s<>]+)/i)?.[1]?.replace(/[.,;]+$/, "");
         const query = ref.text.slice(0, 230);
         const endpoint = doi
           ? "https://api.crossref.org/works/" + encodeURIComponent(doi)
@@ -1008,7 +1008,56 @@ function renderReferenceInspector() {
         lookup.disabled = false;
       }
     });
-    controls.append(locate, copy, lookup);
+    const bookLookup = document.createElement("button");
+    bookLookup.type = "button";
+    bookLookup.textContent = "Consultar Open Library";
+    bookLookup.addEventListener("click", async () => {
+      bookLookup.disabled = true;
+      resultBox.replaceChildren();
+      resultBox.textContent = "Buscando posibles libros en Open Library…";
+      try {
+        const title = ref.text.replace(/^.*?\((?:19|20)\d{2}[a-z]?\)\.\s*/i, "")
+          .split(/\s+\((?:\d+(?:st|nd|rd|th)\s+ed\.|\d+\.ª\s+ed\.)\)/i)[0]
+          .split(/\.\s+(?=[A-ZÁÉÍÓÚÑ])/)[0].trim();
+        if (title.length < 12) {
+          resultBox.textContent = "No se pudo identificar un título suficientemente específico.";
+          return;
+        }
+        const response = await fetch("https://openlibrary.org/search.json?limit=5&fields=key,title,author_name,first_publish_year,edition_count&title=" + encodeURIComponent(title));
+        if (!response.ok) throw new Error("Open Library HTTP " + response.status);
+        const normalize = value => String(value || "").normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        const surname = normalize(ref.author.split(",")[0]);
+        const docs = (await response.json())?.docs || [];
+        const matches = docs.filter(doc =>
+          normalize(doc.title) === normalize(title) &&
+          surname.length > 2 &&
+          (doc.author_name || []).some(name => normalize(name).includes(surname)));
+        resultBox.replaceChildren();
+        if (!matches.length) {
+          resultBox.textContent = "No se encontró coincidencia exacta de título y autor. No se modificó el documento.";
+          return;
+        }
+        for (const doc of matches) {
+          const entry = document.createElement("p");
+          entry.textContent = `${doc.title} · ${(doc.author_name || []).join(", ")} · Primera publicación: ${doc.first_publish_year || "sin dato"} · Ediciones catalogadas: ${doc.edition_count || "sin dato"}`;
+          const link = document.createElement("a");
+          link.href = "https://openlibrary.org" + doc.key;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Revisar registro y edición";
+          const note = document.createElement("small");
+          note.textContent = " El año de primera publicación no confirma el año de la edición citada.";
+          resultBox.append(entry, link, note);
+        }
+      } catch (error) {
+        resultBox.textContent = "No fue posible consultar Open Library. Intente nuevamente.";
+        console.warn("Reference inspector Open Library request failed", error);
+      } finally {
+        bookLookup.disabled = false;
+      }
+    });
+    controls.append(locate, copy, lookup, bookLookup);
     item.append(summary, details, metadata, controls, resultBox);
     inspectorEntries.append(item);
   }
