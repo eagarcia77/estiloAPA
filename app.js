@@ -355,6 +355,14 @@ function normalizeHeadingLevels(root) {
   }
 }
 
+function isApaReferenceEntry(text) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  // Exclude teaching notes and resource recommendations embedded in the
+  // references section; require a recognizable APA author/date structure.
+  if (/^(?:recursos? sugeridos?|lecturas? recomendadas?|nota(?:s)? sobre|recommended resources|additional reading)\s*:/i.test(value)) return false;
+  return /^.{2,180}?\.\s*\((?:(?:19|20)\d{2}[a-z]?|s\.\s*f\.|n\.\s*d\.)\)\.\s+\S/i.test(value);
+}
+
 function normalizeReferences(root) {
   const containers = root.matches?.("section") ? [root] : [...root.querySelectorAll("section[data-source-file]")];
   if (!containers.length) containers.push(root);
@@ -394,8 +402,13 @@ function normalizeReferences(root) {
         heading = null;
       }
       if (inReferences && ["P", "LI", "DIV"].includes(block.tagName)) {
-        block.classList.add("apa-reference");
-        referenceBlocks.push(block);
+        if (isApaReferenceEntry(text)) {
+          block.classList.add("apa-reference");
+          referenceBlocks.push(block);
+        } else {
+          block.classList.remove("apa-reference");
+          block.classList.add("apa-reference-review-note");
+        }
       }
     }
     flush();
@@ -630,7 +643,7 @@ function normalizeKeyPart(value) {
 }
 
 function parseReferences(root) {
-  return [...root.querySelectorAll(".apa-reference")].map((element, index) => {
+  return [...root.querySelectorAll(".apa-reference")].filter(element => isApaReferenceEntry(element.textContent)).map((element, index) => {
     const text = element.textContent.replace(/\s+/g, " ").trim();
     const yearMatch = text.match(new RegExp(`\\((${yearToken})[^)]*\\)`, "i"));
     const year = yearMatch ? yearMatch[1].toLowerCase().replace(/\s/g, "") : "";
