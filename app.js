@@ -859,6 +859,33 @@ function renderAudit(result) {
     const li = document.createElement("li");
     li.className = item.level;
     li.textContent = item.text;
+    const refMatch = /^Referencia (\d+) —/.exec(item.text);
+    if (refMatch) {
+      const number = Number(refMatch[1]);
+      const target = parseReferences(els.preview)[number - 1]?.element;
+      if (target) {
+        li.tabIndex = 0;
+        li.setAttribute("role", "button");
+        li.setAttribute("aria-label", "Ir a la referencia " + number + " en el editor");
+        li.title = "Seleccionar esta referencia en el editor";
+        const navigate = () => {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.focus?.();
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        };
+        li.addEventListener("click", navigate);
+        li.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            navigate();
+          }
+        });
+      }
+    }
     els.auditList.append(li);
   }
   els.metrics.innerHTML = `
