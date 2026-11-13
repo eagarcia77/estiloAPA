@@ -696,7 +696,8 @@ function apaAuthorAliases(author) {
     .toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
   if (!clean) return [];
   const tokens = clean.split(" ");
-  const aliases = new Set([tokens[0], clean]);
+  const aliases = new Set([clean]);
+  if (tokens.length === 1) aliases.add(tokens[0]);
   // An organizational acronym is derived only from its actual author name,
   // never from a guessed translation or an unrelated organization.
   if (tokens.length >= 2) {
