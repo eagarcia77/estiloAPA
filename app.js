@@ -427,15 +427,33 @@ function normalizeReferenceItalics(root) {
     const walker = document.createTreeWalker(ref, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
+    // Word imports can split one title across several spans/text runs.
+    // Map its character range onto the original text nodes instead of
+    // requiring the entire title to occur inside one node.
+    const full = nodes.map(node => node.nodeValue).join("");
+    const start = full.indexOf(title);
+    if (start < 0) continue;
+    let cursor = 0, first = null, last = null;
     for (const node of nodes) {
-      const index = node.nodeValue.indexOf(title);
-      if (index < 0 || node.parentElement.closest("a,em,i")) continue;
-      const remainder = node.splitText(index);
-      remainder.splitText(title.length);
+      const next = cursor + node.nodeValue.length;
+      if (!first && start >= cursor && start < next)
+        first = { node, offset: start - cursor };
+      if (first && start + title.length <= next) {
+        last = { node, offset: start + title.length - cursor };
+        break;
+      }
+      cursor = next;
+    }
+    if (!first || !last) continue;
+    try {
+      const range = document.createRange();
+      range.setStart(first.node, first.offset);
+      range.setEnd(last.node, last.offset);
       const em = document.createElement("em");
-      em.textContent = title;
-      remainder.replaceWith(em);
-      break;
+      em.append(range.extractContents());
+      range.insertNode(em);
+    } catch (error) {
+      console.warn("APA reference title could not be italicized:", error);
     }
   }
 }
