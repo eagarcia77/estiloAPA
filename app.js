@@ -883,6 +883,63 @@ async function verifyReferenceDois() {
   setStatus(`Crossref: ${verified} DOI verificados; ${changed} referencias actualizadas con autorización. Revise datos y cursivas.`, "success");
 }
 
+// Search Crossref for references without DOI. Add only a verified DOI;
+// do not rewrite the author's original APA typography or publication data.
+async function discoverMissingReferenceDois() {
+  const refs = parseReferences(els.preview).filter(ref => !ref.hasDoi && ref.hasYear);
+  if (!refs.length) {
+    setStatus("No hay referencias con año y sin DOI que puedan buscarse en Crossref.", "success");
+    return;
+  }
+  let matches = 0, accepted = 0;
+  const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  for (const ref of refs.slice(0, 12)) {
+    const afterYear = ref.text.replace(/^.*?\((?:19|20)\d{2}[a-z]?\)\.\s*/i, "");
+    const title = afterYear.split(/\.\s+(?=[A-ZÁÉÍÓÚÑ])/)[0].replace(/\s*\([^)]*ed\.\).*$/i, "").trim();
+    if (title.length < 18) continue;
+    try {
+      const url = "https://api.crossref.org/works?rows=3&query.bibliographic=" +
+        encodeURIComponent(ref.author + " " + title);
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) continue;
+      const items = (await response.json())?.message?.items || [];
+      const candidate = items.find(item => {
+        const candidateTitle = normalize(item.title?.[0]);
+        const originalTitle = normalize(title);
+        const publishedYear = item.published?.["date-parts"]?.[0]?.[0] || item.issued?.["date-parts"]?.[0]?.[0];
+        const candidateAuthors = (item.author || []).map(a => normalize(a.family || a.name)).join(" ");
+        const surname = normalize(ref.author.split(",")[0]);
+        return item.DOI && originalTitle.length >= 18 &&
+          (candidateTitle === originalTitle || (candidateTitle.includes(originalTitle) && originalTitle.length >= 35)) &&
+          String(publishedYear) === ref.year.replace(/[a-z]$/, "") &&
+          surname.length > 2 && candidateAuthors.includes(surname);
+      });
+      if (!candidate) continue;
+      matches++;
+      const doiUrl = "https://doi.org/" + candidate.DOI;
+      if (window.confirm("Coincidencia bibliográfica encontrada en Crossref:\n\n" +
+          (candidate.title?.[0] || "") + "\n" + doiUrl +
+          "\n\n¿Añadir únicamente este DOI a la referencia original?")) {
+        const suffix = /[.]\s*$/.test(ref.element.textContent) ? " " : ". ";
+        ref.element.append(document.createTextNode(suffix + doiUrl));
+        accepted++;
+      }
+    } catch (error) {
+      console.warn("Crossref bibliographic lookup failed", error);
+    }
+  }
+  runAudit(false);
+  setStatus(`Búsqueda bibliográfica: ${matches} coincidencias estrictas; ${accepted} DOI añadidos con autorización.`, "success");
+}
+
+const discoverDoiButton = document.createElement("button");
+discoverDoiButton.type = "button";
+discoverDoiButton.textContent = "Buscar DOI faltantes en internet";
+discoverDoiButton.title = "Busca por título, autor y año en Crossref; solo añade DOI tras su aprobación.";
+discoverDoiButton.addEventListener("click", () => void discoverMissingReferenceDois());
+els.auditList?.parentElement?.append(discoverDoiButton);
+
 const doiVerifyButton = document.createElement("button");
 doiVerifyButton.type = "button";
 doiVerifyButton.textContent = "Verificar DOI en Crossref";
