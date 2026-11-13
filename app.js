@@ -1237,17 +1237,29 @@ async function downloadDocx() {
     const clone = cleanExportClone();
     [...clone.querySelectorAll("img")].forEach((img, index) => { img.dataset.exportImageIndex = String(index); });
     const children = [];
+    const numberingConfigs = [];
+    let orderedListIndex = 0;
 
     for (const element of normalizeExportTableCaptions(collectExportBlocks(clone))) {
       if (element.tagName === "HR") continue;
       if (["UL", "OL"].includes(element.tagName)) {
+        const isOrdered = element.tagName === "OL";
+        const listRef = isOrdered ? `apa-numbering-${++orderedListIndex}` : null;
+        if (isOrdered) numberingConfigs.push({
+          reference: listRef,
+          levels: [{
+            level: 0, format: "decimal", text: "%1.", alignment: "left",
+            start: Math.max(1, Number(element.getAttribute("start")) || 1),
+            style: { paragraph: { indent: { left: 720, hanging: 360 } } },
+          }],
+        });
         for (const li of element.querySelectorAll(":scope > li")) {
           const text = li.textContent.replace(/\s+/g, " ").trim();
           if (!text) continue;
           children.push(new Paragraph({
             children: textRunsFromNode(li, api, font, size, window.EstiloAPAWordDocxStyles?.childStyle(li, {}) || {}),
             bullet: element.tagName === "UL" ? { level: 0 } : undefined,
-            numbering: element.tagName === "OL" ? { reference: "apa-numbering", level: 0 } : undefined,
+            numbering: isOrdered ? { reference: listRef, level: 0 } : undefined,
             spacing: { line: 480, after: 0, before: 0 },
           }));
         }
@@ -1343,7 +1355,7 @@ async function downloadDocx() {
     } : undefined;
 
     const doc = new Document({
-      numbering: { config: [{ reference: "apa-numbering", levels: [{ level: 0, format: "decimal", text: "%1.", alignment: "left" }] }] },
+      numbering: { config: numberingConfigs },
       sections: [{
         properties: { page: window.EstiloAPAWordPageLayout?.getDocxPage() || { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
         headers,
