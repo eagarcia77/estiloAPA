@@ -778,6 +778,24 @@ function auditDocument(root) {
       const examples = incomplete.slice(0, 3).map(ref => `#${ref.index}: ${ref.text.slice(0, 90)}`).join(" | ");
       findings.push({ level: "warn", text: `${incomplete.length} referencia(s) posiblemente incompleta(s); verificar datos bibliográficos: ${examples}.` });
     }
+    // Per-reference review: distinguish local format checks from external
+    // bibliographic verification. A DOI/URL alone does not prove correctness.
+    for (const ref of references) {
+      const issues = [];
+      if (!ref.hasYear) issues.push("fecha no reconocida");
+      if (!/\)\.\s+\S/.test(ref.text)) issues.push("revisar separación entre fecha y título");
+      if (/\bdoi:\s*10\./i.test(ref.text) && !/https?:\/\/doi\.org\//i.test(ref.text))
+        issues.push("DOI sin formato URL APA 7");
+      if (/\b(?:pendiente|unknown|missing|por verificar)\b/i.test(ref.text))
+        issues.push("datos pendientes de verificar");
+      if (!ref.element.querySelector("em,i") && !ref.element.querySelector('[style*="italic"]'))
+        issues.push("comprobar cursivas del título o publicación");
+      const status = issues.length ? "Revisar: " + issues.join("; ") : "Sin incidencias estructurales evidentes";
+      findings.push({
+        level: issues.length ? "warn" : "ok",
+        text: `Referencia ${ref.index} — ${ref.author} (${ref.year || "sin fecha"}): ${status}. Verificación externa de metadatos: pendiente.`
+      });
+    }
     const malformedDoi = references.filter((ref) => /\bdoi:\s*10\./i.test(ref.text) && !/https?:\/\/doi\.org\//i.test(ref.text));
     if (malformedDoi.length) findings.push({ level: "warn", text: `${malformedDoi.length} referencia(s) usan “doi:” en lugar del formato URL https://doi.org/... recomendado en APA 7.` });
   } else if (refsHeading) {
