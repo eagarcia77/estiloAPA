@@ -747,6 +747,13 @@ function auditDocument(root) {
   if (els.pageNumbers.checked) findings.push({ level: "ok", text: "La exportación DOCX incluirá numeración de página en el encabezado." });
 
   const refsHeading = root.querySelector(".apa-references-heading");
+  const resourceNotesInBibliography = [...root.querySelectorAll(".apa-reference-review-note")]
+    .filter(el => /^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading)\s*:/i.test(el.textContent.trim()) &&
+      !!el.previousElementSibling?.closest?.("section,div"));
+  // Review notes are preserved rather than silently counted as sources.
+  if (resourceNotesInBibliography.length) {
+    findings.push({ level: "warn", text: `${resourceNotesInBibliography.length} nota(s) de recursos sugeridos no son referencias APA 7; ubíquelas fuera de la bibliografía.` });
+  }
   if (refsHeading) {
     points += 10;
     findings.push({ level: "ok", text: "Se identificó una sección de Referencias." });
