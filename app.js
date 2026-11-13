@@ -348,7 +348,7 @@ function replaceDivsWithParagraphs(root) {
 function normalizeHeadingLevels(root) {
   const headingMap = new Map([
     ["H1", "level-1"], ["H2", "level-2"], ["H3", "level-3"],
-    ["H4", "level-3"], ["H5", "level-3"], ["H6", "level-3"],
+    ["H4", "level-4"], ["H5", "level-5"], ["H6", "level-5"],
   ]);
   for (const heading of root.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
     heading.classList.add("apa-heading", headingMap.get(heading.tagName) || "level-2");
@@ -528,12 +528,43 @@ function autoLinkUrls(root) {
   }
 }
 
+function normalizeApaTableNotes(root) {
+  // Only annotate notes immediately following a table. Do not touch ordinary
+  // paragraphs containing the word "Nota" or overwrite manually italicized runs.
+  for (const table of root.querySelectorAll("table")) {
+    const note = table.nextElementSibling;
+    if (!note || !/^(P|DIV)$/.test(note.tagName)) continue;
+    const match = /^(Nota|Note)\./i.exec(note.textContent.trim());
+    if (!match) continue;
+    note.classList.add("apa-note", "no-indent");
+    const first = note.firstChild;
+    if (first?.nodeType === Node.TEXT_NODE && /^\s*(Nota|Note)\./i.test(first.nodeValue)) {
+      const prefix = first.nodeValue.match(/^(\s*(?:Nota|Note)\.)/i)[1];
+      first.nodeValue = first.nodeValue.slice(prefix.length);
+      const emphasis = document.createElement("em");
+      emphasis.textContent = prefix;
+      note.insertBefore(emphasis, first);
+    } else if (!note.querySelector("em,i,[style*='italic']")) {
+      const walker = document.createTreeWalker(note, NodeFilter.SHOW_TEXT);
+      const firstText = walker.nextNode();
+      if (!firstText) continue;
+      const prefix = firstText.nodeValue.match(/^(\s*(?:Nota|Note)\.)/i)?.[1];
+      if (!prefix) continue;
+      firstText.nodeValue = firstText.nodeValue.slice(prefix.length);
+      const emphasis = document.createElement("em");
+      emphasis.textContent = prefix;
+      firstText.parentNode.insertBefore(emphasis, firstText);
+    }
+  }
+}
+
 function applyApaRules(root) {
   replaceDivsWithParagraphs(root);
   normalizeHeadingLevels(root);
   normalizeReferences(root);
   normalizeReferenceItalics(root);
   normalizeApaTableCaptions(root);
+  normalizeApaTableNotes(root);
   normalizeFigures(root);
   autoLinkUrls(root);
 }
