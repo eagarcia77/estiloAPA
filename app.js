@@ -999,6 +999,41 @@ function renderReferenceInspector() {
             ? " Autor y año coinciden; confirme título y edición antes de corregir."
             : " Coincidencia no confirmada: revise autor, año, título y edición.";
           resultBox.append(row, link, confidence);
+          // Read-only comparison: source metadata must never silently replace
+          // an APA reference, because editions and publication types differ.
+          const compare = document.createElement("table");
+          const caption = document.createElement("caption");
+          caption.textContent = "Comparación con la referencia del documento";
+          compare.append(caption);
+          const fields = [
+            ["Autor", ref.author || "No identificado", authors.join(", ") || "No disponible"],
+            ["Año", ref.year || "No identificado", String(year || "No disponible")],
+            ["DOI", ref.text.match(/10\\.\\d{4,9}\\/[^\\s<>]+/i)?.[0] || "No indicado", candidate.DOI],
+            ["Título", "Consultar texto original arriba", title || "No disponible"],
+            ["Editorial", "Consultar texto original arriba", candidate.publisher || "No disponible"]
+          ];
+          const header = document.createElement("tr");
+          for (const label of ["Campo", "Documento", "Crossref"]) {
+            const th = document.createElement("th");
+            th.scope = "col";
+            th.textContent = label;
+            header.append(th);
+          }
+          compare.append(header);
+          for (const values of fields) {
+            const tr = document.createElement("tr");
+            values.forEach((value, index) => {
+              const cell = document.createElement(index === 0 ? "th" : "td");
+              if (index === 0) cell.scope = "row";
+              cell.textContent = value;
+              tr.append(cell);
+            });
+            compare.append(tr);
+          }
+          const warning = document.createElement("p");
+          warning.textContent = "Comparación informativa. Confirme el título, tipo de publicación y edición antes de editar manualmente la referencia.";
+          resultBox.append(compare, warning);
+
         }
         if (!resultBox.childNodes.length) resultBox.textContent = "No se encontraron registros con DOI.";
       } catch (error) {
