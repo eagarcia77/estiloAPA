@@ -469,17 +469,21 @@ function normalizeApaTableCaptions(root) {
     const number = label.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.?$/i);
     const combined = caption.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.\s+(.+)$/i);
     if (!number || !combined || number[2].toLowerCase() !== combined[2].toLowerCase()) continue;
-    // Only touch duplicate generated captions with no manual inline markup.
-    if (caption.children.length || label.children.length) continue;
+    // A Word heading commonly contains a <strong> run, so rejecting all
+    // inline children prevented normalization of the real exported fixture.
+    // The exact duplicate-text match above protects unrelated captions.
+    // Preserve manual edits elsewhere: only this recognized pair is changed.
     // Imported headings must become ordinary APA table captions, not Word headings.
     const captionNode = /^H[1-6]$/.test(caption.tagName) ? document.createElement("p") : caption;
     if (captionNode !== caption) caption.replaceWith(captionNode);
     captionNode.textContent = combined[1] + " " + combined[2];
     captionNode.className = "apa-table-label";
     captionNode.style.fontWeight = "bold";
-    label.textContent = combined[3];
-    label.classList.add("apa-table-title");
-    label.style.fontStyle = "italic";
+    const titleNode = /^H[1-6]$/.test(label.tagName) ? document.createElement("p") : label;
+    if (titleNode !== label) label.replaceWith(titleNode);
+    titleNode.textContent = combined[3];
+    titleNode.className = "apa-table-title no-indent";
+    titleNode.style.fontStyle = "italic";
   }
 }
 
