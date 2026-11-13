@@ -833,6 +833,50 @@ els.preview?.addEventListener("input", () => {
   }, 750);
 });
 
+// DOI metadata lookup uses Crossref's public API. No secret or paid key.
+// Never replace a reference unless the user confirms the exact suggestion.
+async function verifyReferenceDois() {
+  const refs = parseReferences(els.preview);
+  const candidates = refs.filter(ref => /(?:doi\.org\/|doi:\\s*)(10\.\d{4,9}\/[^\s<>]+)/i.test(ref.text));
+  if (!candidates.length) {
+    setStatus("No se encontraron DOI para verificar. Las referencias sin DOI requieren una búsqueda bibliográfica manual.", "warn");
+    return;
+  }
+  let verified = 0, changed = 0;
+  for (const ref of candidates.slice(0, 15)) {
+    const doi = ref.text.match(/(?:doi\.org\/|doi:\\s*)(10\.\d{4,9}\/[^\s<>]+)/i)?.[1]?.replace(/[.,;]+$/, "");
+    if (!doi) continue;
+    try {
+      const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, { headers: { Accept: "application/json" } });
+      if (!response.ok) continue;
+      const item = (await response.json())?.message;
+      if (!item?.title?.[0] || !item?.DOI) continue;
+      verified++;
+      const authors = (item.author || []).map(a => a.family ? `${a.family}, ${(a.given || "").split(/\s+/).filter(Boolean).map(n => n[0] + ".").join(" ")}` : a.name).filter(Boolean);
+      const year = item.published?.["date-parts"]?.[0]?.[0] || item.issued?.["date-parts"]?.[0]?.[0];
+      const title = item.title[0].replace(/<[^>]+>/g, "");
+      const journal = item["container-title"]?.[0] || "";
+      const suggestion = `${authors.join(", ") || item.publisher || "Autor por verificar"}. (${year || "s. f."}). ${title}. ${journal ? journal + ". " : ""}https://doi.org/${item.DOI}`;
+      if (window.confirm(`Metadatos encontrados en Crossref para DOI ${doi}:\n\n${suggestion}\n\n¿Reemplazar esta referencia? Revise después volumen, número, páginas y cursivas APA 7.`)) {
+        ref.element.textContent = suggestion;
+        ref.element.classList.add("apa-reference");
+        changed++;
+      }
+    } catch (error) {
+      console.warn("Crossref DOI lookup failed", doi, error);
+    }
+  }
+  runAudit(false);
+  setStatus(`Crossref: ${verified} DOI verificados; ${changed} referencias actualizadas con autorización. Revise datos y cursivas.`, "success");
+}
+
+const doiVerifyButton = document.createElement("button");
+doiVerifyButton.type = "button";
+doiVerifyButton.textContent = "Verificar DOI en Crossref";
+doiVerifyButton.title = "Consulta metadatos bibliográficos; solicita aprobación antes de reemplazar una referencia.";
+doiVerifyButton.addEventListener("click", () => void verifyReferenceDois());
+els.auditList?.parentElement?.append(doiVerifyButton);
+
 function runAudit(announce = true) {
   if (!hasFormattedContent()) return;
   // An academic review must not silently restyle edited paragraphs.
