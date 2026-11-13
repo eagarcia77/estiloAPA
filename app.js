@@ -414,10 +414,16 @@ function normalizeReferenceItalics(root) {
     if (!year) continue;
     const rest = text.slice(year.index + year[0].length).replace(/^\s*\.\s*/, "").trim();
     if (!rest || /^https?:/i.test(rest)) continue;
-    // Avoid false positives on journal articles: journal/volume need separate parsing.
-    if (/,\s*\d+\s*(?:\(\d+\))?\s*,\s*\d/.test(rest)) continue;
+    // Do not guess italics for journal articles, chapters in edited books,
+    // or sources with a journal volume/issue pattern. They require different
+    // APA 7 emphasis rules and should remain available for manual editing.
+    if (/[,]\s*\d+\s*(?:\(\d+\))?\s*[,]\s*\d/.test(rest) ||
+        /\b(?:In|En)\s+[^.]+\((?:Ed\.|Eds\.|ed\.|eds\.)\)/.test(rest) ||
+        /\b\d+\s*\(\d+\)\s*[,，]\s*\d/.test(rest)) continue;
     let title = rest.split(/\s+https?:\/\//i)[0].trim();
-    const edition = /\s+\((?:\d+(?:st|nd|rd|th)?\s+ed\.|edici[oó]n[^)]*)\)/i.exec(title);
+    // Editions and report identifiers are metadata, not part of the italicized
+    // book/report title. Preserve the original text and its punctuation.
+    const edition = /\s+\((?:\d+(?:st|nd|rd|th)?\s+ed\.|\d+\.ª\s+ed\.|edici[oó]n[^)]*|NIST\s+(?:CSWP|SP|IR)\s+[\w.-]+|(?:Report|Informe)\s+(?:No\.|núm\.)\s*[\w.-]+)\)/i.exec(title);
     if (edition) title = title.slice(0, edition.index);
     const sentence = title.match(/^(.+?)(?:\.\s+(?=[A-ZÁÉÍÓÚÑ])|\.$)/);
     if (sentence) title = sentence[1];
