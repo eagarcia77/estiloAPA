@@ -940,6 +940,59 @@ discoverDoiButton.title = "Busca por título, autor y año en Crossref; solo añ
 discoverDoiButton.addEventListener("click", () => void discoverMissingReferenceDois());
 els.auditList?.parentElement?.append(discoverDoiButton);
 
+// Book lookup is advisory: APA 7 does not include ISBN in references.
+// Open Library records may describe a different printing or edition.
+async function verifyBooksInOpenLibrary() {
+  const refs = parseReferences(els.preview).filter(ref => ref.hasYear && !ref.hasDoi);
+  if (!refs.length) {
+    setStatus("No se encontraron referencias candidatas para consultar en Open Library.", "warn");
+    return;
+  }
+  const normalize = value => String(value || "").normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  let reviewed = 0, matches = 0;
+  for (const ref of refs.slice(0, 12)) {
+    const rest = ref.text.replace(/^.*?\((?:19|20)\d{2}[a-z]?\)\.\s*/i, "");
+    const title = rest.split(/\s+\((?:\d+(?:st|nd|rd|th)\s+ed\.|\d+\.ª\s+ed\.)\)/i)[0]
+      .split(/\.\s+(?=[A-ZÁÉÍÓÚÑ])/)[0].trim();
+    if (title.length < 12 || /^https?:/i.test(title)) continue;
+    try {
+      const response = await fetch("https://openlibrary.org/search.json?limit=5&fields=key,title,author_name,first_publish_year,edition_key,isbn,publisher,edition_count&title=" +
+        encodeURIComponent(title));
+      if (!response.ok) continue;
+      reviewed++;
+      const items = (await response.json())?.docs || [];
+      const match = items.find(item => {
+        const a = normalize(item.title), b = normalize(title);
+        const authors = (item.author_name || []).map(normalize).join(" ");
+        const surname = normalize(ref.author.split(",")[0]);
+        // Year of first publication is NOT the year of the edition cited.
+        return a === b && surname.length > 2 && authors.includes(surname);
+      });
+      if (!match) continue;
+      matches++;
+      const recordUrl = "https://openlibrary.org" + match.key;
+      const message = "Posible registro de libro localizado (NO modifica su referencia):\n\n" +
+        match.title + "\nAutores: " + (match.author_name || []).join("; ") +
+        "\nPrimera publicación registrada: " + (match.first_publish_year || "sin dato") +
+        "\nEdiciones catalogadas: " + (match.edition_count || "sin dato") +
+        "\n\nEl año de primera publicación no confirma el año ni la edición citada. " +
+        "El ISBN no se añade a referencias APA 7.\n\n¿Abrir el registro para verificar la edición?";
+      if (window.confirm(message)) window.open(recordUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.warn("Open Library lookup failed", error);
+    }
+  }
+  setStatus(`Open Library: ${reviewed} consultas; ${matches} posibles libros identificados. No se modificaron referencias.`, "success");
+}
+
+const openLibraryButton = document.createElement("button");
+openLibraryButton.type = "button";
+openLibraryButton.textContent = "Verificar libros en Open Library";
+openLibraryButton.title = "Consulta catálogos de libros sin modificar las referencias; verifique edición y fecha.";
+openLibraryButton.addEventListener("click", () => void verifyBooksInOpenLibrary());
+els.auditList?.parentElement?.append(openLibraryButton);
+
 const doiVerifyButton = document.createElement("button");
 doiVerifyButton.type = "button";
 doiVerifyButton.textContent = "Verificar DOI en Crossref";
