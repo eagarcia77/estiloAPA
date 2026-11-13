@@ -1033,6 +1033,37 @@ function renderReferenceInspector() {
           const warning = document.createElement("p");
           warning.textContent = "Comparación informativa. Confirme el título, tipo de publicación y edición antes de editar manualmente la referencia.";
           resultBox.append(compare, warning);
+          // Apply only a missing DOI after explicit review. Appending a text
+          // node preserves the original reference's italics and other runs.
+          if (!ref.hasDoi && authorsMatch && yearMatch) {
+            const proposedDoi = "https://doi.org/" + candidate.DOI;
+            const preview = document.createElement("p");
+            preview.textContent = "Vista previa del cambio: " +
+              ref.element.textContent.trim().replace(/\\s+$/, "") +
+              (/\\.\\s*$/.test(ref.element.textContent) ? " " : ". ") + proposedDoi;
+            const applyDoi = document.createElement("button");
+            applyDoi.type = "button";
+            applyDoi.textContent = "Añadir solamente este DOI";
+            applyDoi.addEventListener("click", () => {
+              if (!ref.element.isConnected || !els.preview.contains(ref.element)) {
+                setStatus("La referencia cambió; vuelva a consultar los datos.", "warn");
+                return;
+              }
+              if (/(?:https?:\\/\\/doi\\.org\\/|doi:\\s*)10\\.\\d{4,9}\\//i.test(ref.element.textContent)) {
+                setStatus("Esta referencia ya contiene un DOI. No se realizaron cambios.", "warn");
+                return;
+              }
+              if (!window.confirm("¿Añadir únicamente " + proposedDoi +
+                " a esta referencia? No se cambiarán los demás campos.")) return;
+              const suffix = /\\.\\s*$/.test(ref.element.textContent) ? " " : ". ";
+              ref.element.append(document.createTextNode(suffix + proposedDoi));
+              applyDoi.disabled = true;
+              setStatus("DOI añadido con aprobación. Revise la referencia en el editor.", "success");
+              runAudit(false);
+            });
+            resultBox.append(preview, applyDoi);
+          }
+
 
         }
         if (!resultBox.childNodes.length) resultBox.textContent = "No se encontraron registros con DOI.";
