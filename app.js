@@ -1197,6 +1197,33 @@ async function imageToDocxRun(img, api) {
   }
 }
 
+function normalizeExportTableCaptions(blocks) {
+  // Export-only fallback: Word imports may wrap captions in separate containers,
+  // so DOM sibling-based import normalization cannot always see both paragraphs.
+  const result = [...blocks];
+  for (let i = 2; i < result.length; i++) {
+    if (result[i].tagName !== "TABLE") continue;
+    const label = result[i - 1], combined = result[i - 2];
+    if (!label || !combined || !/^(P|DIV|H[1-6])$/.test(label.tagName) ||
+        !/^(P|DIV|H[1-6])$/.test(combined.tagName)) continue;
+    const a = label.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.?$/i);
+    const b = combined.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.\s+(.+)$/i);
+    if (!a || !b || a[2].toLowerCase() !== b[2].toLowerCase()) continue;
+    // Operate only on the detached export clone; never overwrite manual editor changes.
+    const number = document.createElement("p");
+    number.textContent = b[1] + " " + b[2];
+    number.className = "apa-table-label no-indent";
+    number.style.fontWeight = "bold";
+    const title = document.createElement("p");
+    title.textContent = b[3];
+    title.className = "apa-table-title no-indent";
+    title.style.fontStyle = "italic";
+    result[i - 2] = number;
+    result[i - 1] = title;
+  }
+  return result;
+}
+
 async function downloadDocx() {
   try {
     const api = await waitForGlobal("docx");
@@ -1207,7 +1234,7 @@ async function downloadDocx() {
     [...clone.querySelectorAll("img")].forEach((img, index) => { img.dataset.exportImageIndex = String(index); });
     const children = [];
 
-    for (const element of collectExportBlocks(clone)) {
+    for (const element of normalizeExportTableCaptions(collectExportBlocks(clone))) {
       if (element.tagName === "HR") continue;
       if (["UL", "OL"].includes(element.tagName)) {
         for (const li of element.querySelectorAll(":scope > li")) {
