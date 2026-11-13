@@ -1269,10 +1269,16 @@ async function downloadDocx() {
                 cell.style.textAlign === "justify" ? AlignmentType.JUSTIFIED : AlignmentType.LEFT,
             })];
             const isHeader = row === element.querySelector("tr");
+            const isLast = row === [...element.querySelectorAll("tr")].at(-1);
+            const borderLine = { style: api.BorderStyle?.SINGLE || "single", size: 8, color: "000000" };
+            const noBorder = { style: api.BorderStyle?.NONE || "none", size: 0, color: "FFFFFF" };
+            // Explicit cell borders override Word's default table-grid style.
             return new TableCell({
-              borders: isHeader ? {
-                bottom: { style: api.BorderStyle?.SINGLE || "single", size: 8, color: "000000" },
-              } : undefined,
+              borders: {
+                top: isHeader ? borderLine : noBorder,
+                bottom: (isHeader || isLast) ? borderLine : noBorder,
+                left: noBorder, right: noBorder,
+              },
               children: paragraphs.length ? paragraphs : [new Paragraph({ text: "" })],
               columnSpan: Math.max(1, Number(cell.colSpan) || 1),
               rowSpan: Math.max(1, Number(cell.rowSpan) || 1),
