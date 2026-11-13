@@ -741,6 +741,15 @@ function auditDocument(root) {
     if (missingYear.length) findings.push({ level: "warn", text: `${missingYear.length} referencia(s) no muestran año, “n.d.” o “s.f.” fácilmente detectable.` });
     else points += 5;
 
+    // Highlight incomplete records for research instead of fabricating fields.
+    const incomplete = references.filter(ref => !ref.hasYear ||
+      !/\)\.\s+\S/.test(ref.text) ||
+      /^\s*https?:\/\//i.test(ref.text) ||
+      /\b(?:doi|editorial|publisher|autor|author|fecha|date)\s*:\s*(?:pendiente|desconocid[oa]|unknown|missing)\b/i.test(ref.text));
+    if (incomplete.length) {
+      const examples = incomplete.slice(0, 3).map(ref => `#${ref.index}: ${ref.text.slice(0, 90)}`).join(" | ");
+      findings.push({ level: "warn", text: `${incomplete.length} referencia(s) posiblemente incompleta(s); verificar datos bibliográficos: ${examples}.` });
+    }
     const malformedDoi = references.filter((ref) => /\bdoi:\s*10\./i.test(ref.text) && !/https?:\/\/doi\.org\//i.test(ref.text));
     if (malformedDoi.length) findings.push({ level: "warn", text: `${malformedDoi.length} referencia(s) usan “doi:” en lugar del formato URL https://doi.org/... recomendado en APA 7.` });
   } else if (refsHeading) {
@@ -813,6 +822,16 @@ function renderAudit(result) {
     <span><strong>${result.metrics.uncitedReferences}</strong> sin cita</span>`;
   els.downloadAuditBtn.disabled = false;
 }
+
+// Keep the APA report current without reformatting the user's edited text.
+let apaAuditTimer = null;
+els.preview?.addEventListener("input", () => {
+  if (importingDocument) return;
+  window.clearTimeout(apaAuditTimer);
+  apaAuditTimer = window.setTimeout(() => {
+    if (hasFormattedContent()) runAudit(false);
+  }, 750);
+});
 
 function runAudit(announce = true) {
   if (!hasFormattedContent()) return;
