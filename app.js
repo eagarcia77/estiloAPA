@@ -405,35 +405,60 @@ function normalizeReferences(root) {
 // APA 7 reference typography is applied once during import/formatting,
 // never during DOCX export. Preserve any existing manual inline emphasis.
 function normalizeReferenceItalics(root) {
-  // Applied only during import. Export always uses the user's edited DOM.
+  // Format only recognisable book, institutional report and standalone web titles
+  // during initial import. Never run during export or subsequent user edits.
   for (const ref of root.querySelectorAll(".apa-reference")) {
     if (ref.querySelector("em,i,[style*='italic']")) continue;
     const text = ref.textContent.replace(/\s+/g, " ").trim();
     const year = /\((?:19|20)\d{2}[a-z]?|s\.\s*f\.|n\.\s*d\.\)/i.exec(text);
     if (!year) continue;
-    let title = text.slice(year.index + year[0].length).replace(/^\s*\.\s*/, "").trim();
-    if (!title || /^https?:/i.test(title)) continue;
-    title = title.split(/\s+https?:\/\//i)[0].trim();
-    // Do not mistake a journal article title for a book/report title.
-    if (/,\s*\d+\s*(?:\(\d+\))?\s*,\s*\d/.test(title)) continue;
-    title = title.replace(/\s+\((?:\d+(?:st|nd|rd|th)?\s+ed\.|edici[oó]n[^)]*)\).*$/i, "").trim();
-    const match = title.match(/^(.+?)(?:\.\s+(?=[A-ZÁÉÍÓÚÑ])|\.$)/);
-    if (match) title = match[1];
+    const rest = text.slice(year.index + year[0].length).replace(/^\s*\.\s*/, "").trim();
+    if (!rest || /^https?:/i.test(rest)) continue;
+    // Avoid false positives on journal articles: journal/volume need separate parsing.
+    if (/,\s*\d+\s*(?:\(\d+\))?\s*,\s*\d/.test(rest)) continue;
+    let title = rest.split(/\s+https?:\/\//i)[0].trim();
+    const edition = /\s+\((?:\d+(?:st|nd|rd|th)?\s+ed\.|edici[oó]n[^)]*)\)/i.exec(title);
+    if (edition) title = title.slice(0, edition.index);
+    const sentence = title.match(/^(.+?)(?:\.\s+(?=[A-ZÁÉÍÓÚÑ])|\.$)/);
+    if (sentence) title = sentence[1];
     title = title.replace(/\.$/, "").trim();
     if (title.length < 5) continue;
+    // Work with text nodes, never innerHTML: preserve existing links and runs.
     const walker = document.createTreeWalker(ref, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
       const index = node.nodeValue.indexOf(title);
       if (index < 0 || node.parentElement.closest("a,em,i")) continue;
-      const tail = node.splitText(index);
-      tail.splitText(title.length);
-      const emphasis = document.createElement("em");
-      emphasis.textContent = title;
-      tail.replaceWith(emphasis);
+      const remainder = node.splitText(index);
+      remainder.splitText(title.length);
+      const em = document.createElement("em");
+      em.textContent = title;
+      remainder.replaceWith(em);
       break;
     }
+  }
+}
+
+function normalizeApaTableCaptions(root) {
+  // Repair the specific duplicated caption pattern produced by Word import:
+  // "Tabla 1. Title" followed by "Tabla 1" immediately before the table.
+  for (const table of root.querySelectorAll("table")) {
+    const label = table.previousElementSibling;
+    const caption = label?.previousElementSibling;
+    if (!label || !caption || !/^(P|DIV)$/.test(label.tagName) ||
+        !/^(P|DIV)$/.test(caption.tagName)) continue;
+    const number = label.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.?$/i);
+    const combined = caption.textContent.trim().match(/^(Tabla|Table)\s+(\d+[a-z]?)\.\s+(.+)$/i);
+    if (!number || !combined || number[2].toLowerCase() !== combined[2].toLowerCase()) continue;
+    // Only touch duplicate generated captions with no manual inline markup.
+    if (caption.children.length || label.children.length) continue;
+    caption.textContent = combined[1] + " " + combined[2];
+    caption.classList.add("apa-table-label");
+    caption.style.fontWeight = "bold";
+    label.textContent = combined[3];
+    label.classList.add("apa-table-title");
+    label.style.fontStyle = "italic";
   }
 }
 
@@ -483,6 +508,7 @@ function applyApaRules(root) {
   normalizeHeadingLevels(root);
   normalizeReferences(root);
   normalizeReferenceItalics(root);
+  normalizeApaTableCaptions(root);
   normalizeFigures(root);
   autoLinkUrls(root);
 }
