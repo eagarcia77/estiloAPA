@@ -1008,7 +1008,7 @@ function renderReferenceInspector() {
           const fields = [
             ["Autor", ref.author || "No identificado", authors.join(", ") || "No disponible"],
             ["Año", ref.year || "No identificado", String(year || "No disponible")],
-            ["DOI", ref.text.match(/10\\.\\d{4,9}\\/[^\\s<>]+/i)?.[0] || "No indicado", candidate.DOI],
+            ["DOI", ref.text.match(/10\.\d{4,9}\/[^\s<>]+/i)?.[0] || "No indicado", candidate.DOI],
             ["Título", "Consultar texto original arriba", title || "No disponible"],
             ["Editorial", "Consultar texto original arriba", candidate.publisher || "No disponible"]
           ];
