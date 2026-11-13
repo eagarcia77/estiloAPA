@@ -691,17 +691,35 @@ function parseCitations(root) {
   return citations;
 }
 
+function apaAuthorAliases(author) {
+  const clean = String(author || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  const tokens = clean.split(" ");
+  const aliases = new Set([tokens[0], clean]);
+  // An organizational acronym is derived only from its actual author name,
+  // never from a guessed translation or an unrelated organization.
+  if (tokens.length >= 2) {
+    const stop = new Set(["de","del","la","las","los","el","of","the","and","for","y","en","on","a"]);
+    const acronym = tokens.filter(t => !stop.has(t)).map(t => t[0]).join("");
+    if (acronym.length >= 2) aliases.add(acronym);
+  }
+  return [...aliases];
+}
+
 function auditDocument(root) {
   const findings = [];
   let points = 35;
   const references = parseReferences(root);
   const citations = parseCitations(root);
-  const referenceKeys = new Set(references.map((ref) => ref.key).filter(Boolean));
-  const citationKeys = new Set(citations.map((citation) => citation.key));
-  // The audit is a heuristic: aliases, translated organization names and
-  // citations using an acronym can require human review.
-  const unmatchedCitations = citations.filter((citation) => !referenceKeys.has(citation.key));
-  const uncitedReferences = references.filter((ref) => ref.key && !citationKeys.has(ref.key));
+  // Match full institutional names and their derived initials, while keeping
+  // author-year suffixes (2025a vs 2025b) distinct.
+  const authorYearMatch = (citation, ref) => citation.year === ref.year &&
+    apaAuthorAliases(citation.author).some(alias => apaAuthorAliases(ref.author).includes(alias));
+  const unmatchedCitations = citations.filter(citation =>
+    !references.some(ref => authorYearMatch(citation, ref)));
+  const uncitedReferences = references.filter(ref => ref.key &&
+    !citations.some(citation => authorYearMatch(citation, ref)));
 
   findings.push({ level: "ok", text: "Márgenes de 1 pulgada e interlineado doble configurados para la exportación." });
   findings.push({ level: "ok", text: `Fuente APA compatible seleccionada: ${els.fontFamily.value}.` });
