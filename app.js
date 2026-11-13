@@ -1268,7 +1268,11 @@ async function downloadDocx() {
                 cell.style.textAlign === "right" ? AlignmentType.RIGHT :
                 cell.style.textAlign === "justify" ? AlignmentType.JUSTIFIED : AlignmentType.LEFT,
             })];
+            const isHeader = row === element.querySelector("tr");
             return new TableCell({
+              borders: isHeader ? {
+                bottom: { style: api.BorderStyle?.SINGLE || "single", size: 8, color: "000000" },
+              } : undefined,
               children: paragraphs.length ? paragraphs : [new Paragraph({ text: "" })],
               columnSpan: Math.max(1, Number(cell.colSpan) || 1),
               rowSpan: Math.max(1, Number(cell.rowSpan) || 1),
@@ -1284,8 +1288,17 @@ async function downloadDocx() {
           const widths = totalWidth > 0 && liveWidths.length === rows[0].cells.length
             ? liveWidths.map(w => Math.max(1, Math.round(w / totalWidth * 100)))
             : null;
+          // APA 7 table rules: horizontal top, header separator and bottom.
+          // No vertical lines or interior grid. Word units: 8 = 1 pt.
+          const rule = { style: api.BorderStyle?.SINGLE || "single", size: 8, color: "000000" };
+          const none = { style: api.BorderStyle?.NONE || "none", size: 0, color: "FFFFFF" };
+          const borders = {
+            top: rule, bottom: rule, insideHorizontal: none,
+            left: none, right: none, insideVertical: none,
+          };
           children.push(new Table({
             rows,
+            borders,
             width: { size: 100, type: WidthType.PERCENTAGE },
             ...(widths ? { columnWidths: widths.map(w => Math.round(w / 100 * 9360)) } : {}),
             layout: api.TableLayoutType?.FIXED,
