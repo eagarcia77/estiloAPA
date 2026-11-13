@@ -1030,12 +1030,21 @@ function renderReferenceInspector() {
             });
             compare.append(tr);
           }
+          if (!authorsMatch || !yearMatch || !normalize(ref.element.textContent).includes(normalize(title))) {
+            const mismatch = document.createElement("p");
+            mismatch.textContent = "No se habilitan correcciones: deben coincidir autor, año y título. Compruebe manualmente la fuente.";
+            resultBox.append(mismatch);
+          }
           const warning = document.createElement("p");
           warning.textContent = "Comparación informativa. Confirme el título, tipo de publicación y edición antes de editar manualmente la referencia.";
           resultBox.append(compare, warning);
           // Apply only a missing DOI after explicit review. Appending a text
           // node preserves the original reference's italics and other runs.
-          if (!ref.hasDoi && authorsMatch && yearMatch) {
+          const normalizedReference = normalize(ref.element.textContent);
+          const normalizedTitle = normalize(title);
+          const titleMatch = normalizedTitle.length >= 12 &&
+            normalizedReference.includes(normalizedTitle);
+          if (!ref.hasDoi && authorsMatch && yearMatch && titleMatch) {
             const proposedDoi = "https://doi.org/" + candidate.DOI;
             const preview = document.createElement("p");
             const currentText = ref.element.textContent.trim();
@@ -1051,6 +1060,10 @@ function renderReferenceInspector() {
               }
               if (/(?:https?:\/\/doi\.org\/|doi:\s*)10\.\d{4,9}\//i.test(ref.element.textContent)) {
                 setStatus("Esta referencia ya contiene un DOI. No se realizaron cambios.", "warn");
+                return;
+              }
+              if (ref.element.textContent.trim() !== currentText) {
+                setStatus("La referencia fue editada después de la consulta. Verifique nuevamente antes de aplicar.", "warn");
                 return;
               }
               if (!window.confirm("¿Añadir únicamente " + proposedDoi +
