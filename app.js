@@ -1043,8 +1043,10 @@ function domBlockToDocxParagraph(element, api, font, size) {
   const isRef = element.classList.contains("apa-reference");
   const isLevel1 = element.classList.contains("level-1") || element.tagName === "H1";
   const isLevel2 = element.classList.contains("level-2") || element.tagName === "H2";
-  const isLevel3 = element.classList.contains("level-3") || ["H3", "H4", "H5", "H6"].includes(element.tagName);
-  const isHeading = isLevel1 || isLevel2 || isLevel3;
+  const isLevel3 = element.classList.contains("level-3") || element.tagName === "H3";
+  const isLevel4 = element.classList.contains("level-4") || element.tagName === "H4";
+  const isLevel5 = element.classList.contains("level-5") || ["H5", "H6"].includes(element.tagName);
+  const isHeading = isLevel1 || isLevel2 || isLevel3 || isLevel4 || isLevel5;
   const isFigureLabel = element.classList.contains("apa-figure-label");
   const noIndent = isRef || isHeading || isFigureLabel || element.classList.contains("apa-note") || element.classList.contains("no-indent");
   // Apply APA heading emphasis as inherited styling, not a replacement run.
@@ -1056,6 +1058,8 @@ function domBlockToDocxParagraph(element, api, font, size) {
   // descendant spans were considered, dropping font, size, color and emphasis
   // applied directly to the editor paragraph.
   const paragraphStyle = window.EstiloAPAWordDocxStyles?.childStyle(element, baseline) || baseline;
+  // Inline APA levels 4 and 5 must not be treated as centered block headings.
+  // Their run emphasis is inherited from the editor, preserving manual changes.
   let runs = textRunsFromNode(element, api, font, size, paragraphStyle);
   if (!runs.length) runs = [new TextRun({ text, font, size, ...baseline })];
   const options = {
