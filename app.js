@@ -870,6 +870,25 @@ function auditDocument(root) {
   };
 }
 
+function getApaAuditCriteria(result) {
+  const has = (level, phrase) => result.findings.some(f => f.level === level && f.text.includes(phrase));
+  return [
+    ["Márgenes e interlineado", "Configurado para exportar", "Confirmar márgenes de 2.54 cm y doble espacio en el DOCX final."],
+    ["Fuente", "Configurado para exportar", "Fuente seleccionada: " + els.fontFamily.value + ". Confirmar tamaño y consistencia en Word."],
+    ["Numeración de páginas", els.pageNumbers.checked ? "Configurado para exportar" : "Revisar", "Inspeccionar encabezado y secuencia de páginas del DOCX."],
+    ["Encabezados", "Revisión pendiente", "Comprobar niveles 1 a 5, jerarquía y estilo visual."],
+    ["Tablas", "Revisión pendiente", "Verificar número, título, notas, bordes y legibilidad de columnas."],
+    ["Figuras", "Revisión pendiente", "Verificar número, título, notas y accesibilidad cuando corresponda."],
+    ["Citas en el texto", result.metrics.unmatchedCitations ? "No cumple (coincidencias)" : result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
+      result.metrics.unmatchedCitations + " cita(s) sin referencia detectada(s); comprobar citas narrativas, parentéticas y textuales."],
+    ["Lista de referencias", has("error", "Referencias está vacía") ? "No cumple" : result.metrics.references ? "Revisión parcial" : "Revisión pendiente",
+      result.metrics.references + " referencia(s) reconocida(s). Verificar sangría, orden, cursivas y metadatos."],
+    ["Correspondencia referencias-citas", result.metrics.uncitedReferences ? "No cumple (coincidencias)" : result.metrics.references && result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
+      result.metrics.uncitedReferences + " referencia(s) sin cita reconocida(s)."],
+    ["Verificación bibliográfica externa", "No verificado", "Confirmar título, autores, edición, editorial y DOI con fuentes originales."]
+  ];
+}
+
 function renderAudit(result) {
   lastAudit = result;
   els.score.textContent = `${result.score}%`;
@@ -957,22 +976,7 @@ function renderAudit(result) {
     matrixHeader.append(cell);
   }
   matrixTable.append(matrixHeader);
-  const has = (level, phrase) => result.findings.some(f => f.level === level && f.text.includes(phrase));
-  const rows = [
-    ["Márgenes e interlineado", "Configurado para exportar", "Confirmar márgenes de 2.54 cm y doble espacio en el DOCX final."],
-    ["Fuente", "Configurado para exportar", "Fuente seleccionada: " + els.fontFamily.value + ". Confirmar tamaño y consistencia en Word."],
-    ["Numeración de páginas", els.pageNumbers.checked ? "Configurado para exportar" : "Revisar", "Inspeccionar encabezado y secuencia de páginas del DOCX."],
-    ["Encabezados", "Revisión pendiente", "Comprobar niveles 1 a 5, jerarquía y estilo visual."],
-    ["Tablas", "Revisión pendiente", "Verificar número, título, notas, bordes y legibilidad de columnas."],
-    ["Figuras", "Revisión pendiente", "Verificar número, título, notas y accesibilidad cuando corresponda."],
-    ["Citas en el texto", result.metrics.unmatchedCitations ? "No cumple (coincidencias)" : result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
-      result.metrics.unmatchedCitations + " cita(s) sin referencia detectada(s); comprobar citas narrativas, parentéticas y textuales."],
-    ["Lista de referencias", has("error", "Referencias está vacía") ? "No cumple" : result.metrics.references ? "Revisión parcial" : "Revisión pendiente",
-      result.metrics.references + " referencia(s) reconocida(s). Verificar sangría, orden, cursivas y metadatos."],
-    ["Correspondencia referencias-citas", result.metrics.uncitedReferences ? "No cumple (coincidencias)" : result.metrics.references && result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
-      result.metrics.uncitedReferences + " referencia(s) sin cita reconocida(s)."],
-    ["Verificación bibliográfica externa", "No verificado", "Confirmar título, autores, edición, editorial y DOI con fuentes originales."]
-  ];
+  const rows = getApaAuditCriteria(result);
   for (const [criterion, status, evidence] of rows) {
     const tr = document.createElement("tr");
     for (const [index, value] of [criterion, status, evidence].entries()) {
@@ -1607,6 +1611,10 @@ function downloadAudit() {
     "",
     "NO CUMPLE (ERRORES DETECTADOS):",
     ...lastAudit.findings.filter(item => item.level === "error").map(item => "- " + item.text),
+    "",
+    "MATRIZ DE CUMPLIMIENTO APA 7 (POR CRITERIO):",
+    ...getApaAuditCriteria(lastAudit).map(([criterion, status, evidence]) =>
+      criterion + " | " + status + " | " + evidence),
     "",
     "PENDIENTE DE VERIFICAR:",
     ...lastAudit.findings.filter(item => item.level === "warn").map(item => "- " + item.text),
