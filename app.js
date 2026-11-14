@@ -870,6 +870,35 @@ function auditDocument(root) {
     findings.push({level: "warn", text: label + "verificar visualmente líneas horizontales APA 7, notas y legibilidad de columnas tras exportar."});
   }
 
+  // Review each figure and heading without changing imported content.
+  const figures = [...root.querySelectorAll("figure")];
+  for (const img of root.querySelectorAll("img")) {
+    if (!img.closest("figure")) figures.push(img);
+  }
+  for (const [index, figure] of figures.entries()) {
+    const image = figure.matches("img") ? figure : figure.querySelector("img");
+    const label = "Figura " + (index + 1) + " — ";
+    const caption = figure.querySelector("figcaption")?.textContent.trim() || "";
+    const previous = figure.previousElementSibling?.textContent.trim() || "";
+    if (!/^(?:figura|figure)\s+\d+\b/i.test(caption) &&
+        !/^(?:figura|figure)\s+\d+\b/i.test(previous))
+      findings.push({level:"warn", text:label + "no se detectó numeración cercana; revise el rótulo APA 7."});
+    if (!caption && !previous)
+      findings.push({level:"warn", text:label + "no se detectó título o descripción cercana."});
+    if (image && !image.getAttribute("alt")?.trim())
+      findings.push({level:"warn", text:label + "revisar texto alternativo o carácter decorativo de la imagen."});
+    findings.push({level:"warn", text:label + "verificar título, nota y atribución de derechos cuando corresponda."});
+  }
+  const headings = [...root.querySelectorAll(".apa-heading, h1, h2, h3, h4, h5, h6")]
+    .filter(el => !el.classList.contains("apa-references-heading"));
+  for (const [index, heading] of headings.entries()) {
+    const label = "Encabezado " + (index + 1) + " — ";
+    if (!heading.textContent.trim())
+      findings.push({level:"error", text:label + "encabezado vacío."});
+    if (heading.textContent.trim().length > 180)
+      findings.push({level:"warn", text:label + "encabezado extenso; revisar jerarquía y legibilidad."});
+  }
+
   const missingAlt = root.querySelectorAll("img[data-missing-alt='true']").length;
   if (missingAlt) findings.push({ level: "error", text: `${missingAlt} imagen(es) no tienen texto alternativo detectable.` });
   else if (root.querySelector("img")) {
@@ -938,15 +967,21 @@ function renderAudit(result) {
   const navigateFinding = (li, item) => {
     const refMatch = /^Referencia (\d+) —/.exec(item.text);
     const tableMatch = /^Tabla (\d+) —/.exec(item.text);
+    const figureMatch = /^Figura (\d+) —/.exec(item.text);
+    const headingMatch = /^Encabezado (\d+) —/.exec(item.text);
     const target = refMatch
       ? parseReferences(els.preview)[Number(refMatch[1]) - 1]?.element
       : tableMatch
         ? els.preview.querySelectorAll("table")[Number(tableMatch[1]) - 1]
-        : null;
+        : figureMatch
+          ? [...els.preview.querySelectorAll("figure, img")].filter(el => el.matches("figure") || !el.closest("figure"))[Number(figureMatch[1]) - 1]
+          : headingMatch
+            ? [...els.preview.querySelectorAll(".apa-heading, h1, h2, h3, h4, h5, h6")].filter(el => !el.classList.contains("apa-references-heading"))[Number(headingMatch[1]) - 1]
+            : null;
     if (!target) return;
     const description = refMatch
       ? "referencia " + refMatch[1]
-      : "tabla " + tableMatch[1];
+      : tableMatch ? "tabla " + tableMatch[1] : figureMatch ? "figura " + figureMatch[1] : "encabezado " + headingMatch[1];
     li.tabIndex = 0;
     li.setAttribute("role", "button");
     li.setAttribute("aria-label", "Ir a la " + description + " en el editor");
