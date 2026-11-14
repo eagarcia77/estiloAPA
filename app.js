@@ -991,8 +991,7 @@ function renderAudit(result) {
       "Figuras": "figure, img",
       "Lista de referencias": ".apa-reference, .apa-references-heading",
       "Correspondencia referencias-citas": ".apa-reference, .apa-references-heading",
-      "Verificación bibliográfica externa": ".apa-reference",
-      "Citas en el texto": "p"
+      "Verificación bibliográfica externa": ".apa-reference"
     };
     const selector = selectors[criterion];
     const target = selector ? els.preview.querySelector(selector) : null;
