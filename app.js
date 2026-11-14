@@ -874,39 +874,75 @@ function renderAudit(result) {
   lastAudit = result;
   els.score.textContent = `${result.score}%`;
   els.auditList.replaceChildren();
-  for (const item of result.findings) {
-    const li = document.createElement("li");
-    li.className = item.level;
-    li.textContent = item.text;
+  const groups = [
+    {level: "ok", title: "Cumple según la comprobación automática"},
+    {level: "error", title: "No cumple: requiere corrección"},
+    {level: "warn", title: "Pendiente de verificar o revisar"}
+  ];
+  const counts = {ok: 0, error: 0, warn: 0};
+  for (const item of result.findings) counts[item.level] = (counts[item.level] || 0) + 1;
+  const summary = document.createElement("p");
+  summary.setAttribute("role", "status");
+  summary.textContent = "Auditoría APA 7: " + counts.ok + " comprobaciones favorables · " +
+    counts.error + " incumplimientos detectados · " + counts.warn + " advertencias.";
+  els.auditList.before(summary);
+  // Replace previous summary on every audit instead of accumulating elements.
+  const previous = els.auditList.previousElementSibling;
+  if (previous && previous !== summary && previous.dataset.apaAuditSummary === "true") previous.remove();
+  summary.dataset.apaAuditSummary = "true";
+  const navigateFinding = (li, item) => {
     const refMatch = /^Referencia (\d+) —/.exec(item.text);
-    if (refMatch) {
-      const number = Number(refMatch[1]);
-      const target = parseReferences(els.preview)[number - 1]?.element;
-      if (target) {
-        li.tabIndex = 0;
-        li.setAttribute("role", "button");
-        li.setAttribute("aria-label", "Ir a la referencia " + number + " en el editor");
-        li.title = "Seleccionar esta referencia en el editor";
-        const navigate = () => {
-          target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.focus?.();
-          const selection = window.getSelection();
-          const range = document.createRange();
-          range.selectNodeContents(target);
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-        };
-        li.addEventListener("click", navigate);
-        li.addEventListener("keydown", event => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            navigate();
-          }
-        });
+    if (!refMatch) return;
+    const number = Number(refMatch[1]);
+    const target = parseReferences(els.preview)[number - 1]?.element;
+    if (!target) return;
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
+    li.setAttribute("aria-label", "Ir a la referencia " + number + " en el editor");
+    li.title = "Seleccionar esta referencia en el editor";
+    const navigate = () => {
+      target.scrollIntoView({behavior: "smooth", block: "center"});
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      els.preview.focus();
+    };
+    li.addEventListener("click", navigate);
+    li.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        navigate();
       }
+    });
+  };
+  for (const group of groups) {
+    const section = document.createElement("li");
+    section.className = "apa-audit-group";
+    const heading = document.createElement("strong");
+    heading.textContent = group.title + " (" + counts[group.level] + ")";
+    section.append(heading);
+    const details = document.createElement("ul");
+    for (const item of result.findings.filter(f => f.level === group.level)) {
+      const li = document.createElement("li");
+      li.className = item.level;
+      li.textContent = item.text;
+      navigateFinding(li, item);
+      details.append(li);
     }
-    els.auditList.append(li);
+    if (!details.children.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "No se registraron hallazgos en esta categoría.";
+      details.append(empty);
+    }
+    section.append(details);
+    els.auditList.append(section);
   }
+  const caveat = document.createElement("li");
+  caveat.className = "apa-audit-group";
+  caveat.textContent = "Alcance: revisión automática orientativa. Los resultados favorables no certifican el cumplimiento integral de APA 7; compruebe visualmente el DOCX exportado y verifique los metadatos de las fuentes.";
+  els.auditList.append(caveat);
   els.metrics.innerHTML = `
     <span><strong>${result.metrics.citations}</strong> citas</span>
     <span><strong>${result.metrics.references}</strong> referencias</span>
@@ -1520,8 +1556,14 @@ function downloadAudit() {
     `Citas sin referencia: ${lastAudit.metrics.unmatchedCitations}`,
     `Referencias sin cita: ${lastAudit.metrics.uncitedReferences}`,
     "",
-    "Observaciones:",
-    ...lastAudit.findings.map((item) => `- [${item.level.toUpperCase()}] ${item.text}`),
+    "CUMPLE (COMPROBACIÓN AUTOMÁTICA):",
+    ...lastAudit.findings.filter(item => item.level === "ok").map(item => "- " + item.text),
+    "",
+    "NO CUMPLE (ERRORES DETECTADOS):",
+    ...lastAudit.findings.filter(item => item.level === "error").map(item => "- " + item.text),
+    "",
+    "PENDIENTE DE VERIFICAR:",
+    ...lastAudit.findings.filter(item => item.level === "warn").map(item => "- " + item.text),
     "",
     "Nota: esta auditoría es heurística y requiere revisión académica humana."
   ];
