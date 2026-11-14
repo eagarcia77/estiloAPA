@@ -584,12 +584,23 @@ function normalizeApaTableNotes(root) {
   }
 }
 
+function normalizeApaTableAlignment(root) {
+  // APA tables use left-aligned text by default; do not alter cell contents.
+  for (const cell of root.querySelectorAll("table th, table td")) {
+    cell.style.textAlign = "left";
+    for (const block of cell.querySelectorAll("p, div, h1, h2, h3, h4, h5, h6")) {
+      block.style.textAlign = "left";
+    }
+  }
+}
+
 function applyApaRules(root) {
   replaceDivsWithParagraphs(root);
   normalizeHeadingLevels(root);
   normalizeReferences(root);
   normalizeReferenceItalics(root);
   normalizeApaTableCaptions(root);
+  normalizeApaTableAlignment(root);
   normalizeApaTableNotes(root);
   normalizeFigures(root);
   autoLinkUrls(root);
