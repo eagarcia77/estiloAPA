@@ -844,6 +844,32 @@ function auditDocument(root) {
     }
   }
 
+  // Element-level APA 7 table review: report only what can be observed
+  // reliably in the editor, and keep visual checks explicitly pending.
+  const apaTables = [...root.querySelectorAll("table")];
+  for (const [index, table] of apaTables.entries()) {
+    const before = [];
+    let previous = table.previousElementSibling;
+    for (let depth = 0; previous && depth < 3; depth++, previous = previous.previousElementSibling)
+      before.push(previous.textContent.replace(/\s+/g, " ").trim());
+    const caption = table.querySelector("caption")?.textContent.trim() || "";
+    const nearby = [caption, ...before];
+    const hasNumber = nearby.some(value => /^(?:tabla|table)\s+\d+\b/i.test(value));
+    const hasTitle = Boolean(caption && !/^(?:tabla|table)\s+\d+\s*$/i.test(caption)) ||
+      before.some(value => value.length > 5 && !/^(?:tabla|table)\s+\d+\s*$/i.test(value) &&
+        !/^(?:nota|note)\.\s/i.test(value) && value.length < 180);
+    const label = "Tabla " + (index + 1) + " — ";
+    if (!hasNumber) findings.push({level: "warn", text: label + "no se identificó un número de tabla cercano; revise el rótulo APA 7."});
+    else findings.push({level: "ok", text: label + "número de tabla detectado."});
+    if (!hasTitle) findings.push({level: "warn", text: label + "no se identificó un título cercano; compruebe título en cursiva y ubicación."});
+    const cells = [...table.querySelectorAll("td, th")];
+    if (cells.some(cell => !cell.textContent.trim()))
+      findings.push({level: "warn", text: label + "contiene celdas vacías; confirme si son intencionales."});
+    if (!table.querySelector("th"))
+      findings.push({level: "warn", text: label + "no se identificaron celdas de encabezado semánticas; revise accesibilidad."});
+    findings.push({level: "warn", text: label + "verificar visualmente líneas horizontales APA 7, notas y legibilidad de columnas tras exportar."});
+  }
+
   const missingAlt = root.querySelectorAll("img[data-missing-alt='true']").length;
   if (missingAlt) findings.push({ level: "error", text: `${missingAlt} imagen(es) no tienen texto alternativo detectable.` });
   else if (root.querySelector("img")) {
