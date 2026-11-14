@@ -939,6 +939,52 @@ function renderAudit(result) {
     section.append(details);
     els.auditList.append(section);
   }
+  // Criterion-level matrix distinguishes verified checks from export settings.
+  const matrix = document.createElement("li");
+  matrix.className = "apa-audit-group";
+  const matrixTitle = document.createElement("strong");
+  matrixTitle.textContent = "Matriz de cumplimiento por criterio APA 7";
+  matrix.append(matrixTitle);
+  const matrixTable = document.createElement("table");
+  const matrixCaption = document.createElement("caption");
+  matrixCaption.textContent = "Evaluación orientativa del documento en el editor";
+  matrixTable.append(matrixCaption);
+  const matrixHeader = document.createElement("tr");
+  for (const label of ["Criterio", "Resultado", "Evidencia y acción"]) {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = label;
+    matrixHeader.append(cell);
+  }
+  matrixTable.append(matrixHeader);
+  const has = (level, phrase) => result.findings.some(f => f.level === level && f.text.includes(phrase));
+  const rows = [
+    ["Márgenes e interlineado", "Configurado para exportar", "Confirmar márgenes de 2.54 cm y doble espacio en el DOCX final."],
+    ["Fuente", "Configurado para exportar", "Fuente seleccionada: " + els.fontFamily.value + ". Confirmar tamaño y consistencia en Word."],
+    ["Numeración de páginas", els.pageNumbers.checked ? "Configurado para exportar" : "Revisar", "Inspeccionar encabezado y secuencia de páginas del DOCX."],
+    ["Encabezados", "Revisión pendiente", "Comprobar niveles 1 a 5, jerarquía y estilo visual."],
+    ["Tablas", "Revisión pendiente", "Verificar número, título, notas, bordes y legibilidad de columnas."],
+    ["Figuras", "Revisión pendiente", "Verificar número, título, notas y accesibilidad cuando corresponda."],
+    ["Citas en el texto", result.metrics.unmatchedCitations ? "No cumple (coincidencias)" : result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
+      result.metrics.unmatchedCitations + " cita(s) sin referencia detectada(s); comprobar citas narrativas, parentéticas y textuales."],
+    ["Lista de referencias", has("error", "Referencias está vacía") ? "No cumple" : result.metrics.references ? "Revisión parcial" : "Revisión pendiente",
+      result.metrics.references + " referencia(s) reconocida(s). Verificar sangría, orden, cursivas y metadatos."],
+    ["Correspondencia referencias-citas", result.metrics.uncitedReferences ? "No cumple (coincidencias)" : result.metrics.references && result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
+      result.metrics.uncitedReferences + " referencia(s) sin cita reconocida(s)."],
+    ["Verificación bibliográfica externa", "No verificado", "Confirmar título, autores, edición, editorial y DOI con fuentes originales."]
+  ];
+  for (const [criterion, status, evidence] of rows) {
+    const tr = document.createElement("tr");
+    for (const [index, value] of [criterion, status, evidence].entries()) {
+      const cell = document.createElement(index === 0 ? "th" : "td");
+      if (index === 0) cell.scope = "row";
+      cell.textContent = value;
+      tr.append(cell);
+    }
+    matrixTable.append(tr);
+  }
+  matrix.append(matrixTable);
+  els.auditList.append(matrix);
   const caveat = document.createElement("li");
   caveat.className = "apa-audit-group";
   caveat.textContent = "Alcance: revisión automática orientativa. Los resultados favorables no certifican el cumplimiento integral de APA 7; compruebe visualmente el DOCX exportado y verifique los metadatos de las fuentes.";
