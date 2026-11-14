@@ -2087,9 +2087,25 @@ async function downloadDocx() {
           const liveTable = liveTables[tableIndex];
           const liveWidths = liveTable ? [...liveTable.rows[0]?.cells || []].map(cell => cell.getBoundingClientRect().width) : [];
           const totalWidth = liveWidths.reduce((a,b)=>a+b,0);
-          const widths = totalWidth > 0 && liveWidths.length === rows[0].cells.length
-            ? liveWidths.map(w => Math.max(1, Math.round(w / totalWidth * 100)))
-            : null;
+          // Prevent tiny imported columns from forcing awkward word wrapping.
+          // Keep the relative proportions of usable columns and give each
+          // column a reasonable minimum share of the available page width.
+          const columnCount = rows[0].cells.length;
+          const minShare = columnCount <= 4 ? 15 : Math.min(12, 70 / columnCount);
+          const rawShares = totalWidth > 0 && liveWidths.length === columnCount
+            ? liveWidths.map(w => Math.max(0, w) / totalWidth * 100)
+            : Array(columnCount).fill(100 / columnCount);
+          const shares = rawShares.map(value => Math.max(minShare, value));
+          const excess = shares.reduce((sum, value) => sum + value, 0) - 100;
+          if (excess > 0) {
+            const adjustable = shares.map(value => Math.max(0, value - minShare));
+            const available = adjustable.reduce((sum, value) => sum + value, 0);
+            if (available > 0) shares.forEach((value, i) => {
+              shares[i] = value - excess * adjustable[i] / available;
+            });
+          }
+          const widths = shares.map(value => Math.round(value / 100 * 9360));
+          widths[widths.length - 1] += 9360 - widths.reduce((sum, value) => sum + value, 0);
           // APA 7 table rules: horizontal top, header separator and bottom.
           // No vertical lines or interior grid. Word units: 8 = 1 pt.
           const rule = { style: api.BorderStyle?.SINGLE || "single", size: 8, color: "000000" };
@@ -2102,7 +2118,7 @@ async function downloadDocx() {
             rows,
             borders,
             width: { size: 100, type: WidthType.PERCENTAGE },
-            ...(widths ? { columnWidths: widths.map(w => Math.round(w / 100 * 9360)) } : {}),
+            columnWidths: widths,
             layout: api.TableLayoutType?.FIXED,
           }));
         }
