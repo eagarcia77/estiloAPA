@@ -937,15 +937,25 @@ function renderAudit(result) {
   summary.dataset.apaAuditSummary = "true";
   const navigateFinding = (li, item) => {
     const refMatch = /^Referencia (\d+) —/.exec(item.text);
-    if (!refMatch) return;
-    const number = Number(refMatch[1]);
-    const target = parseReferences(els.preview)[number - 1]?.element;
+    const tableMatch = /^Tabla (\d+) —/.exec(item.text);
+    const target = refMatch
+      ? parseReferences(els.preview)[Number(refMatch[1]) - 1]?.element
+      : tableMatch
+        ? els.preview.querySelectorAll("table")[Number(tableMatch[1]) - 1]
+        : null;
     if (!target) return;
+    const description = refMatch
+      ? "referencia " + refMatch[1]
+      : "tabla " + tableMatch[1];
     li.tabIndex = 0;
     li.setAttribute("role", "button");
-    li.setAttribute("aria-label", "Ir a la referencia " + number + " en el editor");
-    li.title = "Seleccionar esta referencia en el editor";
+    li.setAttribute("aria-label", "Ir a la " + description + " en el editor");
+    li.title = "Localizar " + description + " en el editor";
     const navigate = () => {
+      if (!target.isConnected || !els.preview.contains(target)) {
+        setStatus("El documento cambió. Actualice la auditoría para localizar el elemento.", "warn");
+        return;
+      }
       target.scrollIntoView({behavior: "smooth", block: "center"});
       const selection = window.getSelection();
       const range = document.createRange();
