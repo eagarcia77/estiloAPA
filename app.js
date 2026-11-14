@@ -969,7 +969,7 @@ function renderAudit(result) {
   matrixCaption.textContent = "Evaluación orientativa del documento en el editor";
   matrixTable.append(matrixCaption);
   const matrixHeader = document.createElement("tr");
-  for (const label of ["Criterio", "Resultado", "Evidencia y acción"]) {
+  for (const label of ["Criterio", "Resultado", "Evidencia y acción", "Localizar"]) {
     const cell = document.createElement("th");
     cell.scope = "col";
     cell.textContent = label;
@@ -984,6 +984,39 @@ function renderAudit(result) {
       if (index === 0) cell.scope = "row";
       cell.textContent = value;
       tr.append(cell);
+    }
+    const selectors = {
+      "Encabezados": ".apa-heading, h1, h2, h3, h4, h5, h6",
+      "Tablas": "table",
+      "Figuras": "figure, img",
+      "Lista de referencias": ".apa-reference, .apa-references-heading",
+      "Correspondencia referencias-citas": ".apa-reference, .apa-references-heading",
+      "Verificación bibliográfica externa": ".apa-reference",
+      "Citas en el texto": "p"
+    };
+    const selector = selectors[criterion];
+    const target = selector ? els.preview.querySelector(selector) : null;
+    if (target) {
+      const action = document.createElement("td");
+      const jump = document.createElement("button");
+      jump.type = "button";
+      jump.textContent = "Ir al elemento";
+      jump.setAttribute("aria-label", "Ir al primer elemento de " + criterion);
+      jump.addEventListener("click", () => {
+        target.scrollIntoView({behavior: "smooth", block: "center"});
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        els.preview.focus();
+      });
+      action.append(jump);
+      tr.append(action);
+    } else {
+      const action = document.createElement("td");
+      action.textContent = selector ? "Sin elemento localizado" : "Revisión del documento";
+      tr.append(action);
     }
     matrixTable.append(tr);
   }
