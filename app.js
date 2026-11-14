@@ -755,6 +755,25 @@ function auditDocument(root) {
   if (resourceNotesInBibliography.length) {
     findings.push({ level: "warn", text: `${resourceNotesInBibliography.length} nota(s) de recursos sugeridos no son referencias APA 7; ubíquelas fuera de la bibliografía.` });
   }
+  // Report unparsed bibliography entries instead of silently omitting them.
+  const bibliographyCandidates = [];
+  if (refsHeading) {
+    let sibling = refsHeading.nextElementSibling;
+    while (sibling && !sibling.matches(".apa-heading, h1, h2, h3, h4, h5, h6")) {
+      const value = sibling.textContent.replace(/\s+/g, " ").trim();
+      if (value && !sibling.classList.contains("apa-reference") &&
+          !/^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading|nota(?:s)? sobre)\s*:/i.test(value) &&
+          !/^(?:nota|note)\.\s/i.test(value)) {
+        bibliographyCandidates.push(value);
+      }
+      sibling = sibling.nextElementSibling;
+    }
+  }
+  if (bibliographyCandidates.length) {
+    const samples = bibliographyCandidates.slice(0, 3).map(v => v.slice(0, 95)).join(" | ");
+    findings.push({level: "warn", text: bibliographyCandidates.length +
+      " posible(s) entrada(s) bibliográfica(s) sin estructura APA reconocible (revise autor, fecha y título): " + samples + "."});
+  }
   if (refsHeading) {
     points += 10;
     findings.push({ level: "ok", text: "Se identificó una sección de Referencias." });
