@@ -1077,27 +1077,21 @@ function renderAudit(result) {
   const matrixTitle = document.createElement("strong");
   matrixTitle.textContent = "Matriz de cumplimiento por criterio APA 7";
   matrix.append(matrixTitle);
-  const matrixTable = document.createElement("table");
-  const matrixCaption = document.createElement("caption");
-  matrixCaption.textContent = "Evaluación orientativa del documento en el editor";
-  matrixTable.append(matrixCaption);
-  const matrixHeader = document.createElement("tr");
-  for (const label of ["Criterio", "Resultado", "Evidencia y acción", "Localizar"]) {
-    const cell = document.createElement("th");
-    cell.scope = "col";
-    cell.textContent = label;
-    matrixHeader.append(cell);
-  }
-  matrixTable.append(matrixHeader);
+  // A vertical checklist remains readable inside the narrow review sidebar.
+  const matrixTable = document.createElement("div");
+  matrixTable.className = "apa-criteria-cards";
   const rows = getApaAuditCriteria(result);
   for (const [criterion, status, evidence] of rows) {
-    const tr = document.createElement("tr");
-    for (const [index, value] of [criterion, status, evidence].entries()) {
-      const cell = document.createElement(index === 0 ? "th" : "td");
-      if (index === 0) cell.scope = "row";
-      cell.textContent = value;
-      tr.append(cell);
-    }
+    const tr = document.createElement("section");
+    tr.className = "apa-criterion-card";
+    const heading = document.createElement("strong");
+    heading.textContent = criterion;
+    const statusLine = document.createElement("p");
+    statusLine.textContent = status;
+    statusLine.className = "apa-criterion-status";
+    const evidenceLine = document.createElement("p");
+    evidenceLine.textContent = evidence;
+    tr.append(heading, statusLine, evidenceLine);
     const selectors = {
       "Encabezados": ".apa-heading, h1, h2, h3, h4, h5, h6",
       "Tablas": "table",
@@ -1109,7 +1103,7 @@ function renderAudit(result) {
     const selector = selectors[criterion];
     const target = selector ? els.preview.querySelector(selector) : null;
     if (target) {
-      const action = document.createElement("td");
+      const action = document.createElement("div");
       const jump = document.createElement("button");
       jump.type = "button";
       jump.textContent = "Ir al elemento";
@@ -1126,7 +1120,7 @@ function renderAudit(result) {
       action.append(jump);
       tr.append(action);
     } else {
-      const action = document.createElement("td");
+      const action = document.createElement("div");
       action.textContent = selector ? "Sin elemento localizado" : "Revisión del documento";
       tr.append(action);
     }
