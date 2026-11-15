@@ -1120,6 +1120,7 @@ function renderAudit(result) {
       li.className = item.level;
       li.textContent = item.text;
       navigateFinding(li, item);
+      offerTableTitle(li, item);
       details.append(li);
     }
     if (!details.children.length) {
