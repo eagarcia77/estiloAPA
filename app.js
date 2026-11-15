@@ -1030,6 +1030,41 @@ function renderAudit(result) {
     .forEach(previous => previous.remove());
   summary.dataset.apaAuditSummary = "true";
   els.auditList.before(summary);
+  const offerTableTitle = (li, item) => {
+    const match = /^Tabla (\\d+) — no se identificó un título APA 7/.exec(item.text);
+    if (!match) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Añadir título a esta tabla";
+    button.setAttribute("aria-label", "Añadir título APA 7 a la tabla " + match[1]);
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      const table = els.preview.querySelectorAll("table")[Number(match[1]) - 1];
+      if (!table) { setStatus("Actualice la auditoría: la tabla ya no está disponible.", "warn"); return; }
+      const suggested = window.prompt("Título descriptivo de la tabla " + match[1] + " (sin el número):");
+      if (suggested === null) return;
+      const title = suggested.replace(/\\s+/g, " ").trim();
+      if (!title) { setStatus("No se añadió un título vacío.", "warn"); return; }
+      if (title.length > 250) { setStatus("El título es demasiado extenso. Resúmalo antes de continuar.", "warn"); return; }
+      const p = document.createElement("p");
+      p.className = "apa-table-title no-indent";
+      p.style.fontStyle = "italic";
+      p.textContent = title;
+      const label = table.previousElementSibling;
+      if (label && /^(?:tabla|table)\\s+\\d+[a-z]?\\.?$/i.test(label.textContent.trim())) {
+        label.after(p);
+      } else {
+        const number = document.createElement("p");
+        number.className = "apa-table-label no-indent";
+        number.style.fontWeight = "bold";
+        number.textContent = "Tabla " + match[1];
+        table.before(number, p);
+      }
+      setStatus("Título añadido a la tabla " + match[1] + ". Puede editarlo en el documento.", "ok");
+      runAudit(false);
+    });
+    li.append(document.createTextNode(" "), button);
+  };
   const navigateFinding = (li, item) => {
     const refMatch = /^Referencia (\d+) —/.exec(item.text);
     const tableMatch = /^Tabla (\d+) —/.exec(item.text);
