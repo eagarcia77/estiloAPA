@@ -252,9 +252,8 @@ function initWordRibbon() {
   shell.append(statusLine);
   shell.classList.add("word-ribbon-enabled");
   activate("inicio");
-  // Simplified workspace: show primary actions immediately; advanced
-  // Word-style tools remain one click away on any device.
-  shell.classList.add("word-ribbon-collapsed");
+  // Keep the active Home tools visible on desktop; compact screens may collapse.
+  if (window.matchMedia("(max-width: 760px)").matches) shell.classList.add("word-ribbon-collapsed");
   syncCollapseButton();
   syncFocusButton();
   window.EstiloAPARibbon = {
