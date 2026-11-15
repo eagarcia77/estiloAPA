@@ -812,7 +812,7 @@ function auditDocument(root) {
     const citationTokens = citationName.split(/\s+/).filter(Boolean);
     // Personal-author citations may name two surnames, while the reference parser
     // stores the first surname. Never accept a lone surname for institutional authors.
-    if (/^[^,]+,\\s*[A-ZÁÉÍÓÚÑ]\\./.test(ref.text)) {
+    if (/^[^,]+,\s*[A-ZÁÉÍÓÚÑ]\./.test(ref.text)) {
       return citationTokens[0] === refTokens[0] &&
         (citationTokens.length === 1 || citationTokens.length === 2 && citationTokens[1] === refTokens[0] ||
          citationTokens.length >= 2 && ref.text.toLowerCase().includes(citationTokens[citationTokens.length - 1]));
