@@ -717,17 +717,18 @@ function parseCitations(root) {
     }
   }
 
-  // Capture complete institutional names and both surnames in narrative citations.
-  // A bounded prefix prevents ordinary prose from being mistaken for an author.
-  const narrativeRegex = new RegExp(`\\b([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+(?:\\s+(?:[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+|of|the|de|del|la|las|los|and|y|&)){0,7})\\s*\\((${yearToken})\\)`, "g");
+  // Resolve institutional authors from the bibliography before generic surname parsing.
+  // This prevents "Association (2020)" from replacing the complete organization.
+  for (const ref of parseReferences(root)) {
+    if (!ref.year || !ref.author || /^[^,]+,\\s*[A-ZÁÉÍÓÚÑ]\\./.test(ref.text)) continue;
+    const escaped = ref.author.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+    const institutional = new RegExp(escaped + "\\s*\\((" + yearToken + ")\\)", "gi");
+    for (const match of text.matchAll(institutional)) add(ref.author, match[1], match[0], "narrativa");
+  }
+  const narrativeRegex = new RegExp(`\\b([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+(?:\\s+(?:et\\s+al\\.|&|y)\\s+[A-ZÁÉÍÓÚÑ]?[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]*)?)\\s*\\((${yearToken})\\)`, "g");
   for (const match of text.matchAll(narrativeRegex)) {
-    const words = match[1].trim().split(/\\s+/);
-    // Prefer an exact full-name match against the known bibliography.
-    const known = parseReferences(root).find(ref => ref.year === match[2].toLowerCase() &&
-      normalizeKeyPart(ref.author) === normalizeKeyPart(match[1]));
-    const author = known ? known.author : words.length > 2 && /\\b(?:y|&)\\b/i.test(match[1])
-      ? words.slice(-3).join(" ") : words.length > 2 ? words.slice(-1)[0] : match[1];
-    add(author, match[2], match[0], "narrativa");
+    if (citations.some(c => c.type === "narrativa" && c.year === match[2].toLowerCase() && c.raw.endsWith(match[0]))) continue;
+    add(match[1], match[2], match[0], "narrativa");
   }
   return citations;
 }
