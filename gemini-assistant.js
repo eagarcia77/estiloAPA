@@ -2,6 +2,15 @@
 const editor = document.getElementById("preview");
 const section = document.getElementById("geminiAssistant");
 if (editor && section) {
+  // Keep Gemini visible beside the editor rather than below a long document.
+  const editorPanel = editor.closest(".preview-panel");
+  const toolbar = editorPanel?.querySelector(".preview-toolbar");
+  if (toolbar) {
+    toolbar.after(section);
+    section.classList.remove("simple-secondary");
+    section.style.cssText = "margin: 12px 0; padding: 12px 16px; border: 1px solid #cbd5df; border-radius: 10px; background: #f7fafc;";
+    section.querySelector("summary").style.cssText = "cursor: pointer; font-weight: 700; color: #175e50;";
+  }
   const endpoint = section.querySelector("#geminiEndpoint");
   const task = section.querySelector("#geminiTask");
   const accessToken = section.querySelector("#geminiAccessToken");
