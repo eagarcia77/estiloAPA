@@ -970,11 +970,11 @@ function renderAudit(result) {
   summary.setAttribute("role", "status");
   summary.textContent = "Auditoría APA 7: " + counts.ok + " comprobaciones favorables · " +
     counts.error + " incumplimientos detectados · " + counts.warn + " advertencias.";
-  els.auditList.before(summary);
-  // Replace previous summary on every audit instead of accumulating elements.
-  const previous = els.auditList.previousElementSibling;
-  if (previous && previous !== summary && previous.dataset.apaAuditSummary === "true") previous.remove();
+  // Keep exactly one summary when a document is edited and re-audited.
+  els.auditList.parentElement?.querySelectorAll('[data-apa-audit-summary="true"]')
+    .forEach(previous => previous.remove());
   summary.dataset.apaAuditSummary = "true";
+  els.auditList.before(summary);
   const navigateFinding = (li, item) => {
     const refMatch = /^Referencia (\d+) —/.exec(item.text);
     const tableMatch = /^Tabla (\d+) —/.exec(item.text);
