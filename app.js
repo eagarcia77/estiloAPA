@@ -7,6 +7,8 @@ const PDFJS_WORKER_URL = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSIO
 
 const els = {
   files: document.querySelector("#files"),
+  importSelectedBtn: document.querySelector("#importSelectedBtn"),
+  importStatus: document.querySelector("#importStatus"),
   dropZone: document.querySelector("#dropZone"),
   fileList: document.querySelector("#fileList"),
   fontFamily: document.querySelector("#fontFamily"),
@@ -47,6 +49,10 @@ const yearToken = "(?:19|20)\\d{2}[a-z]?|n\\.d\\.|s\\.f\\.";
 function setStatus(message = "", type = "") {
   els.status.textContent = message;
   els.status.className = `status ${type}`.trim();
+  if (els.importStatus) {
+    els.importStatus.textContent = message;
+    els.importStatus.className = `status ${type}`.trim();
+  }
 }
 
 function formatBytes(bytes) {
@@ -85,6 +91,12 @@ function setFiles(fileList) {
   setStatus("Opening and formatting document in APA 7…");
   void formatSelectedFiles(importRequestId);
 }
+
+els.importSelectedBtn?.addEventListener("click", () => {
+  const files = els.files?.files;
+  if (files?.length) setFiles(files);
+  else setStatus("Seleccione primero un documento DOCX, PDF, TXT o HTML.", "warn");
+});
 
 els.files.addEventListener("change", (event) => {
   const files = Array.from(event.target.files || []);
@@ -1562,6 +1574,7 @@ async function formatSelectedFiles(requestId = importRequestId) {
   const files = [...selectedFiles];
   importingDocument = true;
   els.formatBtn.disabled = true;
+  if (els.importSelectedBtn) els.importSelectedBtn.disabled = true;
   setStatus("Applying APA 7 formatting…");
   try {
     const wrapper = document.createElement("div");
@@ -1631,6 +1644,7 @@ async function formatSelectedFiles(requestId = importRequestId) {
     if (requestId === importRequestId) {
       importingDocument = false;
       els.formatBtn.disabled = false;
+      if (els.importSelectedBtn) els.importSelectedBtn.disabled = false;
     }
   }
 }
