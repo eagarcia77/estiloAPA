@@ -810,7 +810,8 @@ function auditDocument(root) {
       const value = sibling.textContent.replace(/\s+/g, " ").trim();
       if (value && !sibling.classList.contains("apa-reference") &&
           !/^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading|nota(?:s)? sobre)\s*:/i.test(value) &&
-          !/^(?:nota|note)\s*[:.\-–—]\s*/i.test(value) &&\n          !sibling.classList.contains("apa-reference-review-note")) {
+          !/^(?:nota|note)\s*[:.\-–—]\s*/i.test(value) &&
+          !sibling.classList.contains("apa-reference-review-note")) {
         bibliographyCandidates.push(value);
       }
       sibling = sibling.nextElementSibling;
