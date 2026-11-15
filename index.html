@@ -50,6 +50,7 @@
   <script type="module" src="accessibility-preferences.js?v=20261112-accessibility3"></script>
   <script type="module" src="quick-actions.js?v=20261112-ribbon7"></script>
   <script type="module" src="context-tools.js?v=20261112-context9"></script>
+  <script type="module" src="gemini-assistant.js?v=20261114-gemini1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -135,6 +136,26 @@
       <div id="metrics" class="metrics" aria-label="Review Metrics"></div>
       <div class="button-row compact"><button id="reauditBtn" type="button" disabled>Run Review Again</button><button id="downloadAuditBtn" type="button" disabled>Download Report</button></div>
       <ul id="auditList" class="audit-list"><li>Select one or more files or click “Try Sample”.</li></ul>
+        </div>
+      </details>
+    </section>
+    <section class="panel simple-secondary" id="geminiAssistant" aria-labelledby="geminiTitle">
+      <details>
+        <summary>Asistente IA · Gemini (opcional)</summary>
+        <div class="simple-details-inner">
+          <h2 id="geminiTitle">Revisión académica con Gemini</h2>
+          <p>Gemini proporciona sugerencias; no cambia el documento. Se necesita un servidor intermediario HTTPS configurado por el administrador. Nunca escriba aquí una clave API.</p>
+          <label for="geminiEndpoint">URL HTTPS del servidor Gemini</label>
+          <input id="geminiEndpoint" type="url" placeholder="https://su-servidor.example/api/gemini" autocomplete="off" style="width:100%;max-width:100%">
+          <label for="geminiTask">Tipo de revisión</label>
+          <select id="geminiTask"><option value="apa7">Revisión APA 7</option><option value="citations">Citas y referencias</option><option value="tables">Tablas y figuras</option><option value="clarity">Claridad y redacción académica</option></select>
+          <label for="geminiScope">Contenido que se enviará</label>
+          <select id="geminiScope"><option value="selection">Solo texto seleccionado</option><option value="document">Documento completo (máximo 24,000 caracteres)</option></select>
+          <label><input id="geminiConsent" type="checkbox"> Autorizo enviar el contenido elegido al servidor configurado y a Gemini para esta solicitud.</label>
+          <div class="button-row"><button id="geminiRun" type="button">Solicitar sugerencias</button><button id="geminiCopy" type="button" disabled>Copiar sugerencias</button></div>
+          <p id="geminiStatus" role="status" aria-live="polite"></p>
+          <label for="geminiOutput">Sugerencias para revisar manualmente</label>
+          <textarea id="geminiOutput" rows="9" readonly style="width:100%;max-width:100%"></textarea>
         </div>
       </details>
     </section>
