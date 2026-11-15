@@ -798,7 +798,7 @@ function auditDocument(root) {
       const value = sibling.textContent.replace(/\s+/g, " ").trim();
       if (value && !sibling.classList.contains("apa-reference") &&
           !/^(?:recursos? sugeridos?|lecturas? recomendadas?|recommended resources|additional reading|nota(?:s)? sobre)\s*:/i.test(value) &&
-          !/^(?:nota|note)\.\s/i.test(value)) {
+          !/^(?:nota|note)\s*[:.\-–—]\s*/i.test(value) &&\n          !sibling.classList.contains("apa-reference-review-note")) {
         bibliographyCandidates.push(value);
       }
       sibling = sibling.nextElementSibling;
@@ -890,13 +890,20 @@ function auditDocument(root) {
     const caption = table.querySelector("caption")?.textContent.trim() || "";
     const nearby = [caption, ...before];
     const hasNumber = nearby.some(value => /^(?:tabla|table)\s+\d+\b/i.test(value));
-    const hasTitle = Boolean(caption && !/^(?:tabla|table)\s+\d+\s*$/i.test(caption)) ||
-      before.some(value => value.length > 5 && !/^(?:tabla|table)\s+\d+\s*$/i.test(value) &&
-        !/^(?:nota|note)\.\s/i.test(value) && value.length < 180);
+    // Only a dedicated title adjacent to the table is reliable evidence.
+    // Do not mistake a preceding body paragraph for an APA table title.
+    const titleElement = table.previousElementSibling;
+    const precedingLabel = titleElement?.previousElementSibling;
+    const dedicatedTitle = titleElement?.classList.contains("apa-table-title") ||
+      (precedingLabel && /^(?:tabla|table)\\s+\\d+\\s*$/i.test(precedingLabel.textContent.trim()) &&
+       titleElement && titleElement.textContent.trim().length > 0 &&
+       titleElement.textContent.trim().length < 180 &&
+       !/^(?:tabla|table|nota|note)\\b/i.test(titleElement.textContent.trim()));
+    const hasTitle = Boolean(caption && !/^(?:tabla|table)\\s+\\d+\\s*$/i.test(caption)) || Boolean(dedicatedTitle);
     const label = "Tabla " + (index + 1) + " — ";
     if (!hasNumber) findings.push({level: "warn", text: label + "no se identificó un número de tabla cercano; revise el rótulo APA 7."});
     else findings.push({level: "ok", text: label + "número de tabla detectado."});
-    if (!hasTitle) findings.push({level: "warn", text: label + "no se identificó un título cercano; compruebe título en cursiva y ubicación."});
+    if (!hasTitle) findings.push({level: "warn", text: label + "no se identificó un título APA 7 asociado a la tabla; añada un título descriptivo en cursiva debajo del número."});
     const cells = [...table.querySelectorAll("td, th")];
     if (cells.some(cell => !cell.textContent.trim()))
       findings.push({level: "warn", text: label + "contiene celdas vacías; confirme si son intencionales."});
@@ -967,7 +974,7 @@ function getApaAuditCriteria(result) {
     ["Fuente", "Configurado para exportar", "Fuente seleccionada: " + els.fontFamily.value + ". Confirmar tamaño y consistencia en Word."],
     ["Numeración de páginas", els.pageNumbers.checked ? "Configurado para exportar" : "Revisar", "Inspeccionar encabezado y secuencia de páginas del DOCX."],
     ["Encabezados", "Revisión pendiente", "Comprobar niveles 1 a 5, jerarquía y estilo visual."],
-    ["Tablas", "Revisión pendiente", "Verificar número, título, notas, bordes y legibilidad de columnas."],
+    ["Tablas", result.findings.some(f => f.level === "warn" && /^Tabla \\d+ — no se identificó/.test(f.text)) ? "Requiere corrección o revisión" : "Revisión visual pendiente", "Verificar número, título en cursiva, encabezados, notas, bordes y legibilidad de columnas."],
     ["Figuras", "Revisión pendiente", "Verificar número, título, notas y accesibilidad cuando corresponda."],
     ["Citas en el texto", result.metrics.unmatchedCitations ? "No cumple (coincidencias)" : result.metrics.citations ? "Cumple (coincidencias detectadas)" : "Revisión pendiente",
       result.metrics.unmatchedCitations + " cita(s) sin referencia detectada(s); comprobar citas narrativas, parentéticas y textuales."],
