@@ -777,12 +777,12 @@ function auditDocument(root) {
     // language while the bibliography retains the official English name.
     // Limit this equivalence to the exact organization and year; do not
     // infer arbitrary translations or merge unrelated authors.
-    const citationFull = String(citation.author || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
-    const referenceFull = String(ref.author || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
-    if (/^(ocde|organizacion para la cooperacion y el desarrollo economicos)$/.test(citationFull) &&
-        /^organisation for economic co.operation and development$/.test(referenceFull)) return true;
-    const refTokens = referenceName.split(/\\s+/).filter(Boolean);
-    const citationTokens = citationName.split(/\\s+/).filter(Boolean);
+    const citationFull = String(citation.author || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const referenceFull = String(ref.author || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const oecdAliases = new Set(["ocde", "organizacion para la cooperacion y el desarrollo economicos", "organizacion para la cooperacion y el desarrollo economico"]);
+    if (oecdAliases.has(citationFull) && /^organisation for economic co-operation and development$/.test(referenceFull)) return true;
+    const refTokens = referenceName.split(/\s+/).filter(Boolean);
+    const citationTokens = citationName.split(/\s+/).filter(Boolean);
     // Personal-author citations may name two surnames, while the reference parser
     // stores the first surname. Never accept a lone surname for institutional authors.
     if (/^[^,]+,\\s*[A-ZÁÉÍÓÚÑ]\\./.test(ref.text)) {
