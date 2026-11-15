@@ -24,7 +24,7 @@ export default {
     const origin = request.headers.get("Origin") || "";
     const allowed = "https://eagarcia77.github.io";
     if (origin !== allowed) return new Response("Forbidden", {status:403});
-    if (request.method === "OPTIONS") return reply({},204,allowed);
+    if (request.method === "OPTIONS") return reply({},200,allowed);
     if (request.method !== "POST") return reply({error:"Method not allowed"},405,allowed);
     if (!env.GEMINI_API_KEY || !env.APP_ACCESS_TOKEN || env.APP_ACCESS_TOKEN.length < 24)
       return reply({error:"Server not configured"},503,allowed);
