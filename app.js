@@ -721,7 +721,7 @@ function parseCitations(root) {
   // This prevents "Association (2020)" from replacing the complete organization.
   for (const ref of parseReferences(root)) {
     if (!ref.year || !ref.author || /^[^,]+,\\s*[A-ZÁÉÍÓÚÑ]\\./.test(ref.text)) continue;
-    const escaped = ref.author.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+    const escaped = ref.author.split("").map(ch => "\\^$.*+?()[]{}|".includes(ch) ? "\\\\" + ch : ch).join("");
     const institutional = new RegExp(escaped + "\\s*\\((" + yearToken + ")\\)", "gi");
     for (const match of text.matchAll(institutional)) add(ref.author, match[1], match[0], "narrativa");
   }
