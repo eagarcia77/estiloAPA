@@ -915,12 +915,15 @@ function auditDocument(root) {
     // Do not mistake a preceding body paragraph for an APA table title.
     const titleElement = table.previousElementSibling;
     const precedingLabel = titleElement?.previousElementSibling;
-    const dedicatedTitle = titleElement?.classList.contains("apa-table-title") ||
-      (precedingLabel && /^(?:tabla|table)\\s+\\d+\\s*$/i.test(precedingLabel.textContent.trim()) &&
-       titleElement && titleElement.textContent.trim().length > 0 &&
-       titleElement.textContent.trim().length < 180 &&
-       !/^(?:tabla|table|nota|note)\\b/i.test(titleElement.textContent.trim()));
-    const hasTitle = Boolean(caption && !/^(?:tabla|table)\\s+\\d+\\s*$/i.test(caption)) || Boolean(dedicatedTitle);
+    const isNumber = value => /^(?:tabla|table)\s+\d+[a-z]?\.?$/i.test((value || "").trim());
+    const hasDedicatedTitle = Boolean(titleElement && titleElement.classList.contains("apa-table-title") &&
+      titleElement.textContent.trim()) ||
+      Boolean(precedingLabel && isNumber(precedingLabel.textContent) && titleElement &&
+        /^(?:P|DIV)$/.test(titleElement.tagName) &&
+        titleElement.textContent.trim().length > 0 &&
+        titleElement.textContent.trim().length < 180 &&
+        !/^(?:tabla|table|nota|note)\b/i.test(titleElement.textContent.trim()));
+    const hasTitle = Boolean(caption && !isNumber(caption)) || hasDedicatedTitle;
     const label = "Tabla " + (index + 1) + " — ";
     if (!hasNumber) findings.push({level: "warn", text: label + "no se identificó un número de tabla cercano; revise el rótulo APA 7."});
     else findings.push({level: "ok", text: label + "número de tabla detectado."});
