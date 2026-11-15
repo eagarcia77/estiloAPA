@@ -773,6 +773,14 @@ function auditDocument(root) {
     const citationName = normalizeKeyPart(citation.author);
     const referenceName = normalizeKeyPart(ref.author);
     if (citationName === referenceName) return true;
+    // APA 7 institutional abbreviations may be written in the document's
+    // language while the bibliography retains the official English name.
+    // Limit this equivalence to the exact organization and year; do not
+    // infer arbitrary translations or merge unrelated authors.
+    const citationFull = String(citation.author || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+    const referenceFull = String(ref.author || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+    if (/^(ocde|organizacion para la cooperacion y el desarrollo economicos)$/.test(citationFull) &&
+        /^organisation for economic co.operation and development$/.test(referenceFull)) return true;
     const refTokens = referenceName.split(/\\s+/).filter(Boolean);
     const citationTokens = citationName.split(/\\s+/).filter(Boolean);
     // Personal-author citations may name two surnames, while the reference parser
