@@ -144,3 +144,11 @@ body.apa-page-view .apa-paper {
     zoom: 1 !important;
   }
 }
+
+/* APA review: readable criterion cards in narrow and wide side panels. */
+.apa-criteria-cards { display: grid; gap: 10px; width: 100%; min-width: 0; margin-top: 10px; }
+.apa-criterion-card { display: grid; gap: 5px; min-width: 0; padding: 12px; border: 1px solid #d8e3e2; border-radius: 9px; background: #fff; overflow-wrap: anywhere; word-break: normal; }
+.apa-criterion-card > strong { font-size: 0.94rem; line-height: 1.4; }
+.apa-criterion-card p { margin: 0; line-height: 1.5; white-space: normal; }
+.apa-criterion-status { font-weight: 600; color: #265b56; }
+.apa-criterion-card button { justify-self: start; max-width: 100%; white-space: normal; }
