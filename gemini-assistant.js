@@ -4,6 +4,7 @@ const section = document.getElementById("geminiAssistant");
 if (editor && section) {
   const endpoint = section.querySelector("#geminiEndpoint");
   const task = section.querySelector("#geminiTask");
+  const accessToken = section.querySelector("#geminiAccessToken");
   const scope = section.querySelector("#geminiScope");
   const consent = section.querySelector("#geminiConsent");
   const run = section.querySelector("#geminiRun");
@@ -25,6 +26,7 @@ if (editor && section) {
     output.value = "";
     copy.disabled = true;
     if (!consent.checked) { status.textContent = "Confirme el envío de contenido antes de continuar."; return; }
+    if (!accessToken.value.trim()) { status.textContent = "Introduzca la clave de acceso del servidor (no la clave API de Google)."; return; }
     let url;
     try { url = safeEndpoint(endpoint.value.trim()); }
     catch (error) { status.textContent = error.message; return; }
@@ -38,7 +40,7 @@ if (editor && section) {
     try {
       const response = await fetch(url.toString(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken.value.trim() },
         body: JSON.stringify({ task: task.value, content }),
         signal: controller.signal,
         credentials: "omit",
