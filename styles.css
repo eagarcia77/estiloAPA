@@ -152,3 +152,7 @@ body.apa-page-view .apa-paper {
 .apa-criterion-card p { margin: 0; line-height: 1.5; white-space: normal; }
 .apa-criterion-status { font-weight: 600; color: #265b56; }
 .apa-criterion-card button { justify-self: start; max-width: 100%; white-space: normal; }
+
+.import-selected-btn { display:block; width:100%; margin:10px 0 6px; padding:11px 12px; font-weight:700; border-radius:8px; border:1px solid #087a66; background:#087a66; color:white; cursor:pointer; }
+.import-selected-btn:disabled { opacity:.65; cursor:wait; }
+#importStatus { overflow-wrap:anywhere; margin:6px 0 12px; line-height:1.5; }
