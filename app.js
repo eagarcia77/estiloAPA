@@ -1,4 +1,4 @@
-const APP_VERSION = "3.4.8";
+const APP_VERSION = "3.4.9";
 // PDF.js 6 uses Map.getOrInsertComputed, unavailable in Safari 18 on iPadOS.
 // Keep the core and worker pinned to the same Safari-compatible release.
 const PDFJS_VERSION = "4.10.38";
@@ -807,7 +807,7 @@ function auditDocument(root) {
     const citationFull = String(citation.author || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const referenceFull = String(ref.author || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const oecdAliases = new Set(["ocde", "organizacion para la cooperacion y el desarrollo economicos", "organizacion para la cooperacion y el desarrollo economico"]);
-    if (oecdAliases.has(citationFull) && /^organisation for economic co-operation and development$/.test(referenceFull)) return true;
+    if (oecdAliases.has(citationFull) && /^organisation for economic co.operation and development$/.test(referenceFull)) return true;
     const refTokens = referenceName.split(/\s+/).filter(Boolean);
     const citationTokens = citationName.split(/\s+/).filter(Boolean);
     // Personal-author citations may name two surnames, while the reference parser
@@ -1827,6 +1827,8 @@ function downloadAudit() {
   if (!lastAudit) return;
   const lines = [
     `APA7 Module Formatter v${APP_VERSION}`,
+    "Motor de auditoría: APA7-20261114-r88",
+    "Nota: la puntuación es heurística; no constituye certificación de cumplimiento APA 7.",
     `Puntuación heurística: ${lastAudit.score}%`,
     "",
     `Citas detectadas: ${lastAudit.metrics.citations}`,
