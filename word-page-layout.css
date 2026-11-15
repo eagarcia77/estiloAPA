@@ -72,3 +72,18 @@ body.apa-page-view .apa-paper {
     margin:0!important;zoom:1!important;
   }
 }
+
+/* The editable sheet must retain physical letter dimensions on desktop.
+   Scroll the workspace instead of stretching the paper to viewport width. */
+@media (min-width: 900px) {
+  .paper-wrap { overflow-x: auto; }
+  .apa-paper, body.apa-page-view .apa-paper {
+    width: 8.5in;
+    max-width: none;
+    min-width: 8.5in;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1in;
+    box-sizing: border-box;
+  }
+}
