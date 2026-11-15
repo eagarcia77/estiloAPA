@@ -717,8 +717,18 @@ function parseCitations(root) {
     }
   }
 
-  const narrativeRegex = new RegExp(`\\b([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+(?:\\s+(?:et\\s+al\\.|&|y)\\s+[A-ZÁÉÍÓÚÑ]?[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]*)?)\\s*\\((${yearToken})\\)`, "g");
-  for (const match of text.matchAll(narrativeRegex)) add(match[1], match[2], match[0], "narrativa");
+  // Capture complete institutional names and both surnames in narrative citations.
+  // A bounded prefix prevents ordinary prose from being mistaken for an author.
+  const narrativeRegex = new RegExp(`\\b([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+(?:\\s+(?:[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]+|of|the|de|del|la|las|los|and|y|&)){0,7})\\s*\\((${yearToken})\\)`, "g");
+  for (const match of text.matchAll(narrativeRegex)) {
+    const words = match[1].trim().split(/\\s+/);
+    // Prefer an exact full-name match against the known bibliography.
+    const known = parseReferences(root).find(ref => ref.year === match[2].toLowerCase() &&
+      normalizeKeyPart(ref.author) === normalizeKeyPart(match[1]));
+    const author = known ? known.author : words.length > 2 && /\\b(?:y|&)\\b/i.test(match[1])
+      ? words.slice(-3).join(" ") : words.length > 2 ? words.slice(-1)[0] : match[1];
+    add(author, match[2], match[0], "narrativa");
+  }
   return citations;
 }
 
@@ -746,8 +756,22 @@ function auditDocument(root) {
   const citations = parseCitations(root);
   // Match full institutional names and their derived initials, while keeping
   // author-year suffixes (2025a vs 2025b) distinct.
-  const authorYearMatch = (citation, ref) => citation.year === ref.year &&
-    apaAuthorAliases(citation.author).some(alias => apaAuthorAliases(ref.author).includes(alias));
+  const authorYearMatch = (citation, ref) => {
+    if (citation.year !== ref.year) return false;
+    const citationName = normalizeKeyPart(citation.author);
+    const referenceName = normalizeKeyPart(ref.author);
+    if (citationName === referenceName) return true;
+    const refTokens = referenceName.split(/\\s+/).filter(Boolean);
+    const citationTokens = citationName.split(/\\s+/).filter(Boolean);
+    // Personal-author citations may name two surnames, while the reference parser
+    // stores the first surname. Never accept a lone surname for institutional authors.
+    if (/^[^,]+,\\s*[A-ZÁÉÍÓÚÑ]\\./.test(ref.text)) {
+      return citationTokens[0] === refTokens[0] &&
+        (citationTokens.length === 1 || citationTokens.length === 2 && citationTokens[1] === refTokens[0] ||
+         citationTokens.length >= 2 && ref.text.toLowerCase().includes(citationTokens[citationTokens.length - 1]));
+    }
+    return apaAuthorAliases(citation.author).some(alias => apaAuthorAliases(ref.author).includes(alias));
+  };
   const unmatchedCitations = citations.filter(citation =>
     !references.some(ref => authorYearMatch(citation, ref)));
   const uncitedReferences = references.filter(ref => ref.key &&
