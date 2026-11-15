@@ -596,6 +596,32 @@ function normalizeApaTableNotes(root) {
   }
 }
 
+function normalizeApaTableHeaders(root) {
+  // Mammoth may import Word's visual header row as plain TD cells.
+  // Upgrade only a first row with meaningful text in every cell;
+  // preserve the original cell content, colspan, styles and editability.
+  for (const table of root.querySelectorAll("table")) {
+    if (table.querySelector("th")) continue;
+    const first = table.querySelector("tr");
+    if (!first) continue;
+    const cells = [...first.children].filter(el => el.matches("td,th"));
+    if (cells.length < 2 || cells.some(cell => !cell.textContent.trim())) continue;
+    // Avoid promoting a first data row without evidence of a header:
+    // Word header rows are marked with w:tblHeader, but Mammoth often
+    // discards that metadata. A two-or-more-row table with a compact
+    // first row is a conservative candidate; flag uncertain cases in audit.
+    if (table.querySelectorAll("tr").length < 2 ||
+        cells.some(cell => cell.textContent.trim().length > 90)) continue;
+    for (const cell of cells) {
+      const th = document.createElement("th");
+      for (const attribute of [...cell.attributes]) th.setAttribute(attribute.name, attribute.value);
+      th.setAttribute("scope", "col");
+      while (cell.firstChild) th.append(cell.firstChild);
+      cell.replaceWith(th);
+    }
+  }
+}
+
 function normalizeApaTableAlignment(root) {
   // APA tables use left-aligned text by default; do not alter cell contents.
   for (const cell of root.querySelectorAll("table th, table td")) {
@@ -612,6 +638,7 @@ function applyApaRules(root) {
   normalizeReferences(root);
   normalizeReferenceItalics(root);
   normalizeApaTableCaptions(root);
+  normalizeApaTableHeaders(root);
   normalizeApaTableAlignment(root);
   normalizeApaTableNotes(root);
   normalizeFigures(root);
