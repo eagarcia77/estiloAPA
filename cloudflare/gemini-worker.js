@@ -52,10 +52,24 @@ export default {
           generationConfig:{temperature:0.2,maxOutputTokens:1800}
         })
       });
-      if(!response.ok) return reply({error:"Gemini request failed"},502,allowed);
+      if(!response.ok) {
+        // Only expose a safe category. Never relay Google's raw response or credentials.
+        const categories = {
+          400: ["invalid_request", "Google rechazó la solicitud. Revise el modelo configurado."],
+          401: ["google_authentication", "Google no aceptó la clave API configurada."],
+          403: ["google_permission", "La clave o el proyecto no tienen permiso para utilizar este modelo."],
+          404: ["model_unavailable", "El modelo Gemini configurado no está disponible para esta clave o API."],
+          429: ["quota_exceeded", "Se alcanzó un límite de uso de Gemini. Revise cuotas y facturación."]
+        };
+        const [code, message] = categories[response.status] ||
+          (response.status >= 500
+            ? ["google_unavailable", "Google Gemini no está disponible temporalmente."]
+            : ["google_rejected", "Google rechazó la solicitud."]);
+        return reply({error:message, code},response.status === 429 ? 429 : 502,allowed);
+      }
       const data=await response.json();
       const suggestion=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
-      if(!suggestion) return reply({error:"No response from Gemini"},502,allowed);
+      if(!suggestion) return reply({error:"Gemini no devolvió texto. La respuesta pudo bloquearse por filtros de seguridad.",code:"empty_response"},502,allowed);
       return reply({suggestion},200,allowed);
     } catch {return reply({error:"Gemini request timed out or failed"},504,allowed);}
     finally {clearTimeout(timer);}
