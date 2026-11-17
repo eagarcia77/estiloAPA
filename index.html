@@ -50,7 +50,7 @@
   <script type="module" src="accessibility-preferences.js?v=20261112-accessibility3"></script>
   <script type="module" src="quick-actions.js?v=20261112-ribbon7"></script>
   <script type="module" src="context-tools.js?v=20261112-context9"></script>
-  <script type="module" src="gemini-assistant.js?v=20261115-gemini-visible3"></script>
+  <script type="module" src="gemini-assistant.js?v=20261116-gemini-simplified4"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -144,15 +144,18 @@
         <summary>Asistente IA · Gemini (opcional)</summary>
         <div class="simple-details-inner">
           <h2 id="geminiTitle">Revisión académica con Gemini</h2>
-          <p>Gemini proporciona sugerencias; no cambia el documento. Se necesita un servidor intermediario HTTPS configurado por el administrador. Nunca escriba aquí una clave API.</p>
-          <label for="geminiEndpoint">URL HTTPS del servidor Gemini</label>
-          <input id="geminiEndpoint" type="url" placeholder="https://su-servidor.example/api/gemini" autocomplete="off" style="width:100%;max-width:100%">
-          <label for="geminiAccessToken">Clave de acceso del servidor (distinta de la clave API de Google)</label><input id="geminiAccessToken" type="password" autocomplete="off" placeholder="Clave de acceso temporal" style="width:100%;max-width:100%"><p>La clave de acceso no se guarda en el navegador ni en GitHub. El servidor debe estar configurado antes de utilizar esta función.</p>
+          <p>Gemini revisa el documento y presenta sugerencias sin modificar el texto. La revisión requiere autorización; el acceso seguro por usuario está pendiente de activación.</p>
+          <details id="geminiConnectionSettings"><summary>Configuración de conexión (administrador)</summary>
+            <p>La dirección del servidor se configura automáticamente. Mientras se habilita el acceso seguro por usuario, se necesita una clave temporal de acceso. No introduzca aquí la clave API de Google.</p>
+            <input id="geminiEndpoint" type="hidden" value="https://academic-formatter-gemini.eagarcia77.workers.dev">
+            <label for="geminiAccessToken">Clave temporal de acceso</label>
+            <input id="geminiAccessToken" type="password" autocomplete="off" placeholder="Acceso temporal del servidor" style="width:100%;max-width:100%">
+          </details>
           <label for="geminiTask">Tipo de revisión</label>
           <select id="geminiTask"><option value="apa7">Revisión APA 7</option><option value="citations">Citas y referencias</option><option value="tables">Tablas y figuras</option><option value="clarity">Claridad y redacción académica</option></select>
           <label for="geminiScope">Contenido que se enviará</label>
           <select id="geminiScope"><option value="selection">Solo texto seleccionado</option><option value="document">Documento completo (máximo 24,000 caracteres)</option></select>
-          <label><input id="geminiConsent" type="checkbox"> Autorizo enviar el contenido elegido al servidor configurado y a Gemini para esta solicitud.</label>
+          <label><input id="geminiConsent" type="checkbox"> Autorizo enviar el contenido elegido a Gemini mediante el servidor seguro para esta revisión.</label>
           <div class="button-row"><button id="geminiRun" type="button">Solicitar sugerencias</button><button id="geminiCopy" type="button" disabled>Copiar sugerencias</button></div>
           <p id="geminiStatus" role="status" aria-live="polite"></p>
           <label for="geminiOutput">Sugerencias para revisar manualmente</label>
