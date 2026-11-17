@@ -55,7 +55,14 @@ if (editor && section) {
         credentials: "omit",
         cache: "no-store"
       });
-      if (!response.ok) throw new Error("El servidor respondió con HTTP " + response.status + ".");
+      if (!response.ok) {
+        let serverMessage = "";
+        try {
+          const detail = await response.json();
+          if (typeof detail.error === "string") serverMessage = detail.error.slice(0, 240);
+        } catch { /* Older Worker deployments may return a generic error. */ }
+        throw new Error(serverMessage || ("El servidor respondió con HTTP " + response.status + "."));
+      }
       const data = await response.json();
       if (typeof data.suggestion !== "string") throw new Error("El servidor no devolvió sugerencias válidas.");
       output.value = data.suggestion.slice(0, 30000);
