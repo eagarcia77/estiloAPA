@@ -35,7 +35,7 @@ if (editor && section) {
     output.value = "";
     copy.disabled = true;
     if (!consent.checked) { status.textContent = "Confirme el envío de contenido antes de continuar."; return; }
-    if (!accessToken.value.trim()) { status.textContent = "Introduzca la clave de acceso del servidor (no la clave API de Google)."; return; }
+    if (!accessToken.value.trim()) { section.querySelector("#geminiConnectionSettings").open = true; status.textContent = "La conexión todavía requiere activar el acceso seguro por usuario. Para la prueba actual, introduzca la clave temporal en Configuración de conexión."; return; }
     let url;
     try { url = safeEndpoint(endpoint.value.trim()); }
     catch (error) { status.textContent = error.message; return; }
