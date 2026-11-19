@@ -21,6 +21,17 @@ if (editor && section) {
   const status = section.querySelector("#geminiStatus");
   const copy = section.querySelector("#geminiCopy");
   const MAX_CHARS = 24000;
+  const counter = section.querySelector("#geminiContentCount");
+  const refreshCount = () => {
+    const content = scope.value === "selection" ? selectedText() : editor.innerText.trim();
+    counter.textContent = scope.value === "selection"
+      ? (content ? "Selección: " + content.length + " caracteres." : "Seleccione texto dentro del documento.")
+      : "Documento: " + content.length + " de " + MAX_CHARS + " caracteres permitidos.";
+  };
+  scope.addEventListener("change", refreshCount);
+  editor.addEventListener("input", refreshCount);
+  document.addEventListener("selectionchange", refreshCount);
+  refreshCount();
   const safeEndpoint = value => {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.hash) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini.");
@@ -32,8 +43,6 @@ if (editor && section) {
     return selection.toString().trim();
   };
   run.addEventListener("click", async () => {
-    output.value = "";
-    copy.disabled = true;
     if (!consent.checked) { status.textContent = "Confirme el envío de contenido antes de continuar."; return; }
     if (!accessToken.value.trim()) { section.querySelector("#geminiConnectionSettings").open = true; status.textContent = "La conexión todavía requiere activar el acceso seguro por usuario. Para la prueba actual, introduzca la clave temporal en Configuración de conexión."; return; }
     let url;
@@ -69,8 +78,9 @@ if (editor && section) {
       copy.disabled = !output.value;
       status.textContent = "Sugerencias recibidas. Revise antes de incorporar cualquier cambio.";
     } catch (error) {
-      status.textContent = error.name === "AbortError" ? "La solicitud excedió el tiempo de espera." : "No se pudo conectar: " + error.message;
-    } finally { clearTimeout(timeout); run.disabled = false; }
+      const msg = error.name === "AbortError" ? "La solicitud excedió el tiempo de espera." : error.message;
+      status.textContent = "No se pudo completar la revisión: " + msg + (/HTTP 502/.test(msg) ? " Revise si el Worker de Cloudflare tiene publicado el código más reciente." : "");
+    } finally { clearTimeout(timeout); run.disabled = false; copy.disabled = !output.value; }
   });
   copy.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(output.value); status.textContent = "Sugerencias copiadas."; }
