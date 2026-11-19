@@ -31,7 +31,6 @@ if (editor && section) {
   scope.addEventListener("change", refreshCount);
   editor.addEventListener("input", refreshCount);
   document.addEventListener("selectionchange", refreshCount);
-  refreshCount();
   const safeEndpoint = value => {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.hash) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini.");
@@ -42,6 +41,7 @@ if (editor && section) {
     if (!selection || !selection.rangeCount || !editor.contains(selection.anchorNode) || !editor.contains(selection.focusNode)) return "";
     return selection.toString().trim();
   };
+  refreshCount();
   run.addEventListener("click", async () => {
     if (!consent.checked) { status.textContent = "Confirme el envío de contenido antes de continuar."; return; }
     if (!accessToken.value.trim()) { section.querySelector("#geminiConnectionSettings").open = true; status.textContent = "La conexión todavía requiere activar el acceso seguro por usuario. Para la prueba actual, introduzca la clave temporal en Configuración de conexión."; return; }
