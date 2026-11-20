@@ -67,8 +67,10 @@ export default {
             : ["google_rejected", "Google rechazó la solicitud."]);
         return reply({error:message, code},response.status === 429 ? 429 : 502,allowed);
       }
-      const data=await response.json();
-      const suggestion=(data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+      let data;
+      try { data = await response.json(); }
+      catch { return reply({error:"Gemini devolvió una respuesta que no se pudo interpretar.",code:"invalid_provider_response"},502,allowed); }
+      const suggestion=(data?.candidates?.[0]?.content?.parts||[]).map(p=>typeof p.text==="string"?p.text:"").join("\n").trim();
       if(!suggestion) return reply({error:"Gemini no devolvió texto. La respuesta pudo bloquearse por filtros de seguridad.",code:"empty_response"},502,allowed);
       return reply({suggestion},200,allowed);
     } catch {return reply({error:"Gemini request timed out or failed"},504,allowed);}
