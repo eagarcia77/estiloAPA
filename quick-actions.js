@@ -12,7 +12,6 @@
     const actions = [
       {label:'Undo', icon:'↶', selector:'#apaEditorShell [data-cmd="undo"]'},
       {label:'Redo', icon:'↷', selector:'#apaEditorShell [data-cmd="redo"]'},
-      {label:'Save DOCX', icon:'↓', selector:'#downloadDocxBtn'},
       {label:'Focus editor', icon:'⌗', selector:'#preview', focus:true}
     ];
     actions.forEach(item => {
@@ -31,14 +30,6 @@
         if (item.focus) target.focus();
         else target.click();
       });
-      if (item.label==='Save DOCX') {
-        const original=document.querySelector(item.selector);
-        if (original) {
-          const sync=()=>{button.disabled=original.disabled;};
-          sync();
-          new MutationObserver(sync).observe(original,{attributes:true,attributeFilter:['disabled']});
-        }
-      }
       bar.append(button);
     });
     // Integrate shortcuts into the existing ribbon header, preserving its tabs and handlers.
