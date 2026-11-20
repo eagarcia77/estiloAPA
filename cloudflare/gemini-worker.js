@@ -33,8 +33,15 @@ export default {
       return reply({error:"Unauthorized"},401,allowed);
     if (Number(request.headers.get("Content-Length") || 0) > 90000)
       return reply({error:"Payload too large"},413,allowed);
+    // Enforce the limit even when Content-Length is missing or inaccurate.
+    let rawBody;
+    try { rawBody = await request.text(); }
+    catch { return reply({error:"Unable to read request"},400,allowed); }
+    if (new TextEncoder().encode(rawBody).byteLength > 90000)
+      return reply({error:"Payload too large"},413,allowed);
     let payload;
-    try { payload = await request.json(); } catch { return reply({error:"Invalid JSON"},400,allowed); }
+    try { payload = JSON.parse(rawBody); }
+    catch { return reply({error:"Invalid JSON"},400,allowed); }
     const {task,content} = payload || {};
     if (!Object.hasOwn(TASKS,task) || typeof content !== "string" || !content.trim() || content.length > 24000)
       return reply({error:"Invalid task or content"},400,allowed);
