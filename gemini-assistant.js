@@ -72,8 +72,11 @@ if (editor && section) {
         } catch { /* Older Worker deployments may return a generic error. */ }
         throw new Error(serverMessage || ("El servidor respondió con HTTP " + response.status + "."));
       }
-      const data = await response.json();
-      if (typeof data.suggestion !== "string") throw new Error("El servidor no devolvió sugerencias válidas.");
+      let data;
+      try { data = await response.json(); }
+      catch { throw new Error("El servidor devolvió una respuesta que no se pudo interpretar."); }
+      if (!data || typeof data.suggestion !== "string" || !data.suggestion.trim())
+        throw new Error("Gemini no devolvió sugerencias de texto válidas.");
       output.value = data.suggestion.slice(0, 30000);
       copy.disabled = !output.value;
       status.textContent = "Sugerencias recibidas. Revise antes de incorporar cualquier cambio.";
