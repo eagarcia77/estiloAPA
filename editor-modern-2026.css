@@ -171,7 +171,7 @@ body { background:var(--studio-canvas); color:var(--studio-ink); }
   scrollbar-gutter:stable;
   overscroll-behavior:contain;
 }
-.paper-wrap .apa-paper { margin-inline:auto; }
+/* Preserve existing paper centering: the ruler measures the page's actual position. */
 .word-ribbon-enabled .word-ribbon-panel[hidden] { display:none!important; }
 .word-ribbon-tabs [role="tab"] { white-space:nowrap; }
 .word-ribbon-tabs [role="tab"][aria-selected="true"] {
