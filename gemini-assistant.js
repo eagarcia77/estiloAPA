@@ -33,7 +33,7 @@ if (editor && section) {
   document.addEventListener("selectionchange", refreshCount);
   const safeEndpoint = value => {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.username || url.password || url.hash) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini.");
+    if (url.protocol !== "https:" || url.username || url.password || url.hash || url.search || url.port) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini, sin parámetros ni puertos personalizados.");
     return url;
   };
   const selectedText = () => {
@@ -62,6 +62,7 @@ if (editor && section) {
         body: JSON.stringify({ task: task.value, content }),
         signal: controller.signal,
         credentials: "omit",
+        redirect: "error", // Never forward the bearer token or document to a redirect target.
         cache: "no-store"
       });
       if (!response.ok) {
