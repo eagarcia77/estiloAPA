@@ -6,7 +6,9 @@ if (editor && section) {
   const editorPanel = editor.closest(".preview-panel");
   const toolbar = editorPanel?.querySelector(".preview-toolbar");
   if (toolbar) {
-    toolbar.after(section);
+    // Keep optional AI below the document instead of pushing the ribbon off screen.
+    const paper = editor.closest(".paper-wrap");
+    (paper || toolbar).after(section);
     section.classList.remove("simple-secondary");
     section.style.cssText = "margin: 12px 0; padding: 12px 16px; border: 1px solid #cbd5df; border-radius: 10px; background: #f7fafc;";
     section.querySelector("summary").style.cssText = "cursor: pointer; font-weight: 700; color: #175e50;";
