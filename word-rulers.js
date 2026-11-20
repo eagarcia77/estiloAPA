@@ -280,7 +280,25 @@
       hide: () => toggleRulers(false),
       update: scheduleRender,
       apply: applyIndent,
-      getActiveIndent: () => readModel()?.read(chosen()) || null
+      getActiveIndent: () => readModel()?.read(chosen()) || null,
+      // Read-only browser diagnostics for validating paper/ruler alignment.
+      diagnose: () => {
+        const page = root()?.getBoundingClientRect();
+        const ruler = horizontal?.getBoundingClientRect();
+        if (!page || !ruler) return { ok: false, reason: "Ruler or page unavailable" };
+        const styles = window.getComputedStyle(root());
+        const leftErrorPx = Number((ruler.left - page.left).toFixed(2));
+        const rightErrorPx = Number((ruler.right - page.right).toFixed(2));
+        return {
+          ok: Math.abs(leftErrorPx) <= 1 && Math.abs(rightErrorPx) <= 1,
+          leftErrorPx, rightErrorPx,
+          pageWidthPx: Number(page.width.toFixed(2)),
+          rulerWidthPx: Number(ruler.width.toFixed(2)),
+          pagePaddingLeftPx: styles.paddingLeft,
+          pagePaddingRightPx: styles.paddingRight,
+          scrollLeftPx: wrap.scrollLeft
+        };
+      }
     };
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
