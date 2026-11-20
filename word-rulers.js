@@ -76,10 +76,12 @@
     });
     marker.addEventListener("pointermove", event => {
       if (!drag || drag.pointerId !== event.pointerId || drag.kind !== name || !metrics) return;
-      const x = event.clientX - metrics.originPageX;
+      // Marker positions are relative to the paper, not the viewport.
+      // The right marker must measure backward from the right text margin.
+      const paperX = event.clientX - metrics.rootLeft;
       const value = name === "right" ?
-        (metrics.textRightX - (event.clientX - metrics.rootLeft)) / metrics.pixelsPerIn :
-        x / metrics.pixelsPerIn;
+        (metrics.textRightX - paperX) / metrics.pixelsPerIn :
+        (paperX - metrics.textLeftX) / metrics.pixelsPerIn;
       drag.value = limit(snap(value), 0, MAX_IN);
       const pos = name === "right" ?
         metrics.textRightX - drag.value * metrics.pixelsPerIn :
@@ -132,17 +134,49 @@
     if (!el || !wrap || !horizontal) return null;
     const rect = el.getBoundingClientRect(), wrapRect = wrap.getBoundingClientRect();
     const cs = window.getComputedStyle(el);
-    const zoom = Number.parseFloat(cs.zoom || el.style.zoom || "1") || 1;
-    const pixelsPerIn = 96 * zoom;
-    const padLeft = Number.parseFloat(cs.paddingLeft || "0") * zoom;
-    const padRight = Number.parseFloat(cs.paddingRight || "0") * zoom;
-    const padTop = Number.parseFloat(cs.paddingTop || "0") * zoom;
+    // Derive the rendered CSS-pixel scale from the actual page geometry.
+    // This also handles CSS zoom and transforms without multiplying twice.
+    const layoutWidth = el.offsetWidth || rect.width;
+    const scale = layoutWidth > 0 ? rect.width / layoutWidth : 1;
+    const pixelsPerIn = 96 * scale;
+    const padLeft = (Number.parseFloat(cs.paddingLeft) || 0) * scale;
+    const padRight = (Number.parseFloat(cs.paddingRight) || 0) * scale;
+    const padTop = (Number.parseFloat(cs.paddingTop) || 0) * scale;
     const textLeftX = padLeft;
     const textRightX = Math.max(textLeftX, rect.width - padRight);
     const rootOffset = rect.left - wrapRect.left + wrap.scrollLeft;
     const yOffset = rect.top - wrapRect.top + wrap.scrollTop;
+    // Keep the ruler in the scrollable page coordinate system. A margin-left
+    // shifts layout and can make the scrollable area wider than the paper.
+    // A CSS zoom/transform can scale the ruler independently of its CSS width.
+    // Calibrate rendered width rather than assuming one CSS pixel equals one screen pixel.
     horizontal.style.width = rect.width + "px";
-    horizontal.style.marginLeft = rootOffset + "px";
+    horizontal.style.marginLeft = "0px";
+    const initialRulerRect = horizontal.getBoundingClientRect();
+    const rulerScale = horizontal.offsetWidth > 0 ? initialRulerRect.width / horizontal.offsetWidth : 1;
+    horizontal.style.width = Math.max(0, rect.width / (rulerScale || 1)) + "px";
+    // Align to the actual rendered paper edge, not an assumed flex/grid offset.
+    // Measure the ruler without its prior correction to avoid cumulative drift.
+    horizontal.style.transform = "none";
+    // Position using the real page rectangle after layout. Recheck both edges
+    // so CSS centering, borders, or a zoomed workspace cannot leave a drift.
+    const rulerRect = horizontal.getBoundingClientRect();
+    const correction = rect.left - rulerRect.left;
+    horizontal.style.transform = `translateX(${correction}px)`;
+    const aligned = horizontal.getBoundingClientRect();
+    const leftError = aligned.left - rect.left;
+    const rightError = aligned.right - rect.right;
+    if (Math.abs(leftError) > 1 || Math.abs(rightError) > 1) {
+      // A final measured adjustment avoids guessing the parent padding.
+      horizontal.style.width = Math.max(0, (rect.width - rightError + leftError) / (rulerScale || 1)) + "px";
+      horizontal.style.transform = `translateX(${correction - leftError}px)`;
+    }
+    // Report the final rendered result, not the temporary measurement before correction.
+    const finalRect = horizontal.getBoundingClientRect();
+    const finalLeftError = finalRect.left - rect.left;
+    const finalRightError = finalRect.right - rect.right;
+    horizontal.dataset.alignmentError = Math.max(Math.abs(finalLeftError), Math.abs(finalRightError)).toFixed(2);
+    horizontal.dataset.alignmentOk = String(Math.abs(finalLeftError) <= 1 && Math.abs(finalRightError) <= 1);
     horizontal.style.setProperty("--word-text-start", textLeftX + "px");
     horizontal.style.setProperty("--word-text-end", textRightX + "px");
     vertical.style.left = Math.max(0, rootOffset - 22) + "px";
@@ -256,7 +290,25 @@
       hide: () => toggleRulers(false),
       update: scheduleRender,
       apply: applyIndent,
-      getActiveIndent: () => readModel()?.read(chosen()) || null
+      getActiveIndent: () => readModel()?.read(chosen()) || null,
+      // Read-only browser diagnostics for validating paper/ruler alignment.
+      diagnose: () => {
+        const page = root()?.getBoundingClientRect();
+        const ruler = horizontal?.getBoundingClientRect();
+        if (!page || !ruler) return { ok: false, reason: "Ruler or page unavailable" };
+        const styles = window.getComputedStyle(root());
+        const leftErrorPx = Number((ruler.left - page.left).toFixed(2));
+        const rightErrorPx = Number((ruler.right - page.right).toFixed(2));
+        return {
+          ok: Math.abs(leftErrorPx) <= 1 && Math.abs(rightErrorPx) <= 1,
+          leftErrorPx, rightErrorPx,
+          pageWidthPx: Number(page.width.toFixed(2)),
+          rulerWidthPx: Number(ruler.width.toFixed(2)),
+          pagePaddingLeftPx: styles.paddingLeft,
+          pagePaddingRightPx: styles.paddingRight,
+          scrollLeftPx: wrap.scrollLeft
+        };
+      }
     };
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

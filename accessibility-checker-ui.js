@@ -21,7 +21,9 @@ const ready = () => {
   wave.href='https://wave.webaim.org/'; wave.target='_blank'; wave.rel='noopener noreferrer';
   wave.textContent='Official WAVE (external)';
   controls.append(button,wave);
-  toolbar.after(controls);
+  // Accessibility tools are secondary; place them after the editable page.
+  const paper = editor.closest(".paper-wrap");
+  (paper || toolbar).after(controls);
   const report=document.createElement('section');
   report.className='accessibility-report';report.hidden=true;
   report.id='accessibilityReport';report.setAttribute('aria-label','Document accessibility findings');
