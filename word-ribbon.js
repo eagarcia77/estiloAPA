@@ -130,7 +130,9 @@ function initWordRibbon() {
   moveGroup(6, insertPanel);
   const insertImage = document.getElementById("insertManualImage") ||
     document.querySelector("#apaEditorShell button[title*='imagen'],#apaEditorShell button[title*='Imagen']");
-  if (insertImage) {
+  // The original Insert Picture control is already in the moved Insert group.
+  // Add a proxy only when the original command lives outside that panel.
+  if (insertImage && !insertPanel.contains(insertImage)) {
     const group = ribbonGroup("Images");
     group.append(ribbonButton("Insert Picture", () => insertImage.click()));
     insertPanel.append(group);
@@ -148,7 +150,6 @@ function initWordRibbon() {
   const fileGroup = ribbonGroup("Documents");
   fileGroup.append(ribbonProxy("Reapply APA 7", "formatBtn"));
   fileGroup.append(ribbonProxy("Try Sample", "demoBtn"));
-  fileGroup.append(ribbonProxy("Export to Word", "downloadDocxBtn"));
   fileGroup.append(ribbonProxy("Export HTML", "downloadHtmlBtn"));
   fileGroup.append(ribbonProxy("Clear Document", "clearBtn"));
   filePanel.append(fileGroup);
