@@ -79,7 +79,7 @@ if (editor && section) {
       status.textContent = "Sugerencias recibidas. Revise antes de incorporar cualquier cambio.";
     } catch (error) {
       const msg = error.name === "AbortError" ? "La solicitud excedió el tiempo de espera." : error.message;
-      status.textContent = "No se pudo completar la revisión: " + msg + (/HTTP 502/.test(msg) ? " Revise si el Worker de Cloudflare tiene publicado el código más reciente." : "");
+      status.textContent = "No se pudo completar la revisión: " + msg + (/HTTP 502/.test(msg) ? " El servicio de Gemini no pudo procesar la solicitud; revise la configuración del Worker y del modelo." : "");
     } finally { clearTimeout(timeout); run.disabled = false; copy.disabled = !output.value; }
   });
   copy.addEventListener("click", async () => {
