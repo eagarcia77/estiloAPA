@@ -146,8 +146,10 @@
     const textRightX = Math.max(textLeftX, rect.width - padRight);
     const rootOffset = rect.left - wrapRect.left + wrap.scrollLeft;
     const yOffset = rect.top - wrapRect.top + wrap.scrollTop;
+    // Keep the ruler in the scrollable page coordinate system. A margin-left
+    // shifts layout and can make the scrollable area wider than the paper.
     horizontal.style.width = rect.width + "px";
-    horizontal.style.marginLeft = rootOffset + "px";
+    horizontal.style.marginLeft = "0px";
     // Align to the actual rendered paper edge, not an assumed flex/grid offset.
     // Measure the ruler without its prior correction to avoid cumulative drift.
     horizontal.style.transform = "none";
