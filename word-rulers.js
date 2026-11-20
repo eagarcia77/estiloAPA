@@ -166,12 +166,17 @@
     const aligned = horizontal.getBoundingClientRect();
     const leftError = aligned.left - rect.left;
     const rightError = aligned.right - rect.right;
-    horizontal.dataset.alignmentError = Math.max(Math.abs(leftError), Math.abs(rightError)).toFixed(2);
     if (Math.abs(leftError) > 1 || Math.abs(rightError) > 1) {
       // A final measured adjustment avoids guessing the parent padding.
       horizontal.style.width = Math.max(0, (rect.width - rightError + leftError) / (rulerScale || 1)) + "px";
       horizontal.style.transform = `translateX(${correction - leftError}px)`;
     }
+    // Report the final rendered result, not the temporary measurement before correction.
+    const finalRect = horizontal.getBoundingClientRect();
+    const finalLeftError = finalRect.left - rect.left;
+    const finalRightError = finalRect.right - rect.right;
+    horizontal.dataset.alignmentError = Math.max(Math.abs(finalLeftError), Math.abs(finalRightError)).toFixed(2);
+    horizontal.dataset.alignmentOk = String(Math.abs(finalLeftError) <= 1 && Math.abs(finalRightError) <= 1);
     horizontal.style.setProperty("--word-text-start", textLeftX + "px");
     horizontal.style.setProperty("--word-text-end", textRightX + "px");
     vertical.style.left = Math.max(0, rootOffset - 22) + "px";
