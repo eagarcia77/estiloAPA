@@ -134,11 +134,14 @@
     if (!el || !wrap || !horizontal) return null;
     const rect = el.getBoundingClientRect(), wrapRect = wrap.getBoundingClientRect();
     const cs = window.getComputedStyle(el);
-    const zoom = Number.parseFloat(cs.zoom || el.style.zoom || "1") || 1;
-    const pixelsPerIn = 96 * zoom;
-    const padLeft = Number.parseFloat(cs.paddingLeft || "0") * zoom;
-    const padRight = Number.parseFloat(cs.paddingRight || "0") * zoom;
-    const padTop = Number.parseFloat(cs.paddingTop || "0") * zoom;
+    // Derive the rendered CSS-pixel scale from the actual page geometry.
+    // This also handles CSS zoom and transforms without multiplying twice.
+    const layoutWidth = el.offsetWidth || rect.width;
+    const scale = layoutWidth > 0 ? rect.width / layoutWidth : 1;
+    const pixelsPerIn = 96 * scale;
+    const padLeft = (Number.parseFloat(cs.paddingLeft) || 0) * scale;
+    const padRight = (Number.parseFloat(cs.paddingRight) || 0) * scale;
+    const padTop = (Number.parseFloat(cs.paddingTop) || 0) * scale;
     const textLeftX = padLeft;
     const textRightX = Math.max(textLeftX, rect.width - padRight);
     const rootOffset = rect.left - wrapRect.left + wrap.scrollLeft;
