@@ -76,10 +76,12 @@
     });
     marker.addEventListener("pointermove", event => {
       if (!drag || drag.pointerId !== event.pointerId || drag.kind !== name || !metrics) return;
-      const x = event.clientX - metrics.originPageX;
+      // Marker positions are relative to the paper, not the viewport.
+      // The right marker must measure backward from the right text margin.
+      const paperX = event.clientX - metrics.rootLeft;
       const value = name === "right" ?
-        (metrics.textRightX - (event.clientX - metrics.rootLeft)) / metrics.pixelsPerIn :
-        x / metrics.pixelsPerIn;
+        (metrics.textRightX - paperX) / metrics.pixelsPerIn :
+        (paperX - metrics.textLeftX) / metrics.pixelsPerIn;
       drag.value = limit(snap(value), 0, MAX_IN);
       const pos = name === "right" ?
         metrics.textRightX - drag.value * metrics.pixelsPerIn :
