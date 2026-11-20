@@ -153,9 +153,20 @@
     // Align to the actual rendered paper edge, not an assumed flex/grid offset.
     // Measure the ruler without its prior correction to avoid cumulative drift.
     horizontal.style.transform = "none";
+    // Position using the real page rectangle after layout. Recheck both edges
+    // so CSS centering, borders, or a zoomed workspace cannot leave a drift.
     const rulerRect = horizontal.getBoundingClientRect();
     const correction = rect.left - rulerRect.left;
     horizontal.style.transform = `translateX(${correction}px)`;
+    const aligned = horizontal.getBoundingClientRect();
+    const leftError = aligned.left - rect.left;
+    const rightError = aligned.right - rect.right;
+    horizontal.dataset.alignmentError = Math.max(Math.abs(leftError), Math.abs(rightError)).toFixed(2);
+    if (Math.abs(leftError) > 1 || Math.abs(rightError) > 1) {
+      // A final measured adjustment avoids guessing the parent padding.
+      horizontal.style.width = Math.max(0, rect.width - rightError + leftError) + "px";
+      horizontal.style.transform = `translateX(${correction - leftError}px)`;
+    }
     horizontal.style.setProperty("--word-text-start", textLeftX + "px");
     horizontal.style.setProperty("--word-text-end", textRightX + "px");
     vertical.style.left = Math.max(0, rootOffset - 22) + "px";
