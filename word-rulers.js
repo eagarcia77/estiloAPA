@@ -148,8 +148,13 @@
     const yOffset = rect.top - wrapRect.top + wrap.scrollTop;
     // Keep the ruler in the scrollable page coordinate system. A margin-left
     // shifts layout and can make the scrollable area wider than the paper.
+    // A CSS zoom/transform can scale the ruler independently of its CSS width.
+    // Calibrate rendered width rather than assuming one CSS pixel equals one screen pixel.
     horizontal.style.width = rect.width + "px";
     horizontal.style.marginLeft = "0px";
+    const initialRulerRect = horizontal.getBoundingClientRect();
+    const rulerScale = horizontal.offsetWidth > 0 ? initialRulerRect.width / horizontal.offsetWidth : 1;
+    horizontal.style.width = Math.max(0, rect.width / (rulerScale || 1)) + "px";
     // Align to the actual rendered paper edge, not an assumed flex/grid offset.
     // Measure the ruler without its prior correction to avoid cumulative drift.
     horizontal.style.transform = "none";
@@ -164,7 +169,7 @@
     horizontal.dataset.alignmentError = Math.max(Math.abs(leftError), Math.abs(rightError)).toFixed(2);
     if (Math.abs(leftError) > 1 || Math.abs(rightError) > 1) {
       // A final measured adjustment avoids guessing the parent padding.
-      horizontal.style.width = Math.max(0, rect.width - rightError + leftError) + "px";
+      horizontal.style.width = Math.max(0, (rect.width - rightError + leftError) / (rulerScale || 1)) + "px";
       horizontal.style.transform = `translateX(${correction - leftError}px)`;
     }
     horizontal.style.setProperty("--word-text-start", textLeftX + "px");
