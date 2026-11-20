@@ -1,0 +1,110 @@
+/* EstiloAPA 2026: modern application chrome; never alter exported document formatting. */
+:root {
+  --studio-ink:#1c3043;
+  --studio-muted:#5b7084;
+  --studio-border:#d7e1e9;
+  --studio-accent:#087c73;
+  --studio-accent-soft:#e7f5f1;
+  --studio-surface:#ffffff;
+  --studio-canvas:#edf2f6;
+}
+body { background:var(--studio-canvas); color:var(--studio-ink); }
+.site-header {
+  background:linear-gradient(110deg,#123b43 0%,#17665e 100%);
+  border-bottom:1px solid #b9d9d2;
+  box-shadow:0 2px 12px rgba(18,45,57,.09);
+}
+.site-header .header-inner { min-height:70px; padding-block:.5rem; }
+.site-header .app-brand-logo { max-height:52px; width:auto; object-fit:contain; }
+.layout { padding:12px clamp(8px,1.3vw,22px) 24px; gap:10px; }
+.preview-panel {
+  border:1px solid var(--studio-border);
+  border-radius:15px;
+  background:var(--studio-surface);
+  box-shadow:0 8px 30px rgba(26,55,76,.07);
+  padding:10px;
+}
+.preview-toolbar {
+  border-bottom:1px solid var(--studio-border);
+  background:var(--studio-surface);
+  padding:8px 10px 12px;
+  gap:12px;
+}
+.preview-toolbar #preview-title { font-size:.86rem; letter-spacing:.01em; color:var(--studio-muted); }
+.simple-primary-actions button,
+.simple-tools-menu > summary {
+  border-radius:9px;
+  min-height:38px;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.simple-primary-actions button:hover:not(:disabled),
+.simple-tools-menu > summary:hover { box-shadow:0 2px 8px rgba(23,65,74,.1); }
+.simple-tools-content { border-radius:12px; border-color:var(--studio-border); box-shadow:0 14px 40px rgba(20,46,65,.16); }
+.word-ribbon-enabled {
+  background:#fff;
+  border:1px solid var(--studio-border);
+  border-radius:12px;
+}
+.word-ribbon-tabs {
+  background:#f5f8fa;
+  border-bottom:1px solid var(--studio-border);
+  gap:3px;
+  padding:5px 9px 0;
+}
+.word-ribbon-tabs [role="tab"] {
+  color:#425b70;
+  border-radius:8px 8px 0 0;
+  min-height:36px;
+  padding:7px 12px;
+  transition:background-color .15s ease,color .15s ease;
+}
+.word-ribbon-tabs [role="tab"]:hover { background:#e9f0f3; color:#1d4653; }
+.word-ribbon-tabs [role="tab"][aria-selected="true"] {
+  background:#fff;
+  color:#086c63;
+  box-shadow:inset 0 -3px var(--studio-accent);
+}
+.word-ribbon-panels { background:#fff; }
+.word-ribbon-panel { padding:8px; gap:4px; }
+.word-ribbon-group, .word-ribbon-panel .word-ribbon-legacy-group { border-color:#e4ebf0; }
+.word-ribbon-group-label { color:var(--studio-muted); font-weight:650; }
+.word-ribbon-panel button:not(:disabled):hover,
+.word-ribbon-action:not(:disabled):hover { background:var(--studio-accent-soft); border-color:#8ac6bb; }
+.word-ribbon-view-actions { background:#f8fafb; border-color:var(--studio-border); }
+.word-ribbon-status { background:#fafcfd; border-color:var(--studio-border); color:var(--studio-muted); }
+.paper-wrap {
+  background:var(--studio-canvas);
+  border:1px solid #e0e8ee;
+  border-radius:12px;
+  padding-block:12px;
+}
+.apa-paper {
+  box-shadow:0 5px 22px rgba(27,50,68,.14);
+  background:#fff;
+}
+/* The ruler must retain its independent page-edge calibration. */
+.word-ruler-horizontal { border-color:#b8c8d5; background:#f6f9fb; }
+.word-ruler-marker:focus-visible, .word-ribbon-tabs [role="tab"]:focus-visible,
+.simple-primary-actions button:focus-visible, .simple-tools-menu > summary:focus-visible {
+  outline:3px solid #0b8076;
+  outline-offset:2px;
+}
+@media (max-width:760px) {
+  .site-header .header-inner { min-height:56px; }
+  .site-header .app-brand-logo { max-height:42px; }
+  .layout { padding:6px 5px 14px; }
+  .preview-panel { padding:5px; border-radius:10px; }
+  .preview-toolbar { flex-wrap:wrap; padding:6px; }
+  .word-ribbon-tabs { flex-wrap:nowrap; overflow-x:auto; }
+  .word-ribbon-tabs [role="tab"] { white-space:nowrap; min-height:42px; }
+  .paper-wrap { padding-block:6px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .simple-primary-actions button, .simple-tools-menu > summary,
+  .word-ribbon-tabs [role="tab"] { transition:none; }
+}
+@media print {
+  .site-header, .preview-toolbar, .word-ribbon-enabled { display:none!important; }
+  .preview-panel, .paper-wrap { box-shadow:none!important; border:0!important; padding:0!important; background:#fff!important; }
+  .apa-paper { box-shadow:none!important; }
+}
