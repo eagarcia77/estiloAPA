@@ -148,6 +148,12 @@
     const yOffset = rect.top - wrapRect.top + wrap.scrollTop;
     horizontal.style.width = rect.width + "px";
     horizontal.style.marginLeft = rootOffset + "px";
+    // Align to the actual rendered paper edge, not an assumed flex/grid offset.
+    // Measure the ruler without its prior correction to avoid cumulative drift.
+    horizontal.style.transform = "none";
+    const rulerRect = horizontal.getBoundingClientRect();
+    const correction = rect.left - rulerRect.left;
+    horizontal.style.transform = `translateX(${correction}px)`;
     horizontal.style.setProperty("--word-text-start", textLeftX + "px");
     horizontal.style.setProperty("--word-text-end", textRightX + "px");
     vertical.style.left = Math.max(0, rootOffset - 22) + "px";
