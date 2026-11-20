@@ -108,3 +108,53 @@ body { background:var(--studio-canvas); color:var(--studio-ink); }
   .preview-panel, .paper-wrap { box-shadow:none!important; border:0!important; padding:0!important; background:#fff!important; }
   .apa-paper { box-shadow:none!important; }
 }
+
+/* Studio refinement: keep commands legible without crowding the document. */
+.preview-toolbar { position:relative; top:auto; z-index:20; }
+.simple-primary-actions { flex-wrap:wrap; row-gap:6px; }
+.simple-primary-actions #simpleOpenBtn {
+  background:#087c73; color:#fff; border-color:#087c73;
+  font-weight:700;
+}
+.simple-primary-actions #simpleOpenBtn:hover:not(:disabled) {
+  background:#06685f; border-color:#06685f;
+}
+.simple-primary-actions #downloadDocxBtn:not(:disabled) {
+  background:#fff; border-color:#a8bdc8; color:#24485c;
+}
+.simple-primary-actions button:disabled { opacity:.6; cursor:not-allowed; }
+.word-ribbon-tabs [role="tab"][aria-selected="true"] { font-weight:750; }
+.word-ribbon-enabled select, .word-ribbon-enabled button {
+  max-width:100%; font-family:inherit;
+}
+.word-ribbon-enabled button:focus-visible,
+.word-ribbon-enabled select:focus-visible,
+.simple-tools-content button:focus-visible,
+#preview:focus-visible {
+  outline:2px solid #087c73;
+  outline-offset:2px;
+}
+.word-ribbon-status { font-variant-numeric:tabular-nums; }
+#simpleQuickStatus:not(:empty) { margin:5px 0; }
+#simpleQuickStatus .status { border-radius:8px; }
+.simple-secondary:has(details[open]) {
+  border:1px solid var(--studio-border);
+  border-radius:12px;
+  box-shadow:0 14px 36px rgba(27,54,72,.12);
+}
+@media (min-width:761px) and (max-width:1199px) {
+  .word-ribbon-panel { gap:3px; padding:6px; }
+  .word-ribbon-group { padding:5px 7px; }
+  .word-ribbon-panel .word-ribbon-legacy-group { padding:4px 6px; }
+}
+@media (max-width:760px) {
+  .simple-primary-actions { width:100%; justify-content:flex-start; }
+  .simple-primary-actions button { min-height:44px; }
+  .word-ribbon-panel button, .word-ribbon-panel select { min-height:40px; }
+  .word-ribbon-view-actions { flex-wrap:wrap; }
+}
+/* High contrast should remain readable even when platform colors differ. */
+@media (forced-colors:active) {
+  .word-ribbon-tabs [role="tab"][aria-selected="true"] { outline:2px solid Highlight; }
+  .simple-primary-actions #simpleOpenBtn { border:2px solid ButtonText; }
+}
