@@ -33,14 +33,28 @@ export default {
       return reply({error:"Unauthorized"},401,allowed);
     if (Number(request.headers.get("Content-Length") || 0) > 90000)
       return reply({error:"Payload too large"},413,allowed);
-    // Enforce the limit even when Content-Length is missing or inaccurate.
-    let rawBody;
-    try { rawBody = await request.text(); }
-    catch { return reply({error:"Unable to read request"},400,allowed); }
-    if (new TextEncoder().encode(rawBody).byteLength > 90000)
-      return reply({error:"Payload too large"},413,allowed);
+    // Read incrementally: reject oversized uploads before buffering their entire body.
+    if (!request.body) return reply({error:"Invalid JSON"},400,allowed);
+    const reader = request.body.getReader();
+    const chunks = [];
+    let bytes = 0;
+    try {
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 90000) {
+          await reader.cancel().catch(() => {});
+          return reply({error:"Payload too large"},413,allowed);
+        }
+        chunks.push(value);
+      }
+    } catch { return reply({error:"Unable to read request"},400,allowed); }
+    const bodyBytes = new Uint8Array(bytes);
+    let offset = 0;
+    for (const chunk of chunks) { bodyBytes.set(chunk,offset); offset += chunk.byteLength; }
     let payload;
-    try { payload = JSON.parse(rawBody); }
+    try { payload = JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bodyBytes)); }
     catch { return reply({error:"Invalid JSON"},400,allowed); }
     const {task,content} = payload || {};
     if (!Object.hasOwn(TASKS,task) || typeof content !== "string" || !content.trim() || content.length > 24000)
