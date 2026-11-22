@@ -39,7 +39,7 @@ const assert = require('node:assert/strict');
       return { paper: !!paper, geminiAfterPaper: !!gemini && !!paper && Boolean(paper.compareDocumentPosition(gemini) & Node.DOCUMENT_POSITION_FOLLOWING), accessPresent: !!access, accessAfterPaper: !!access && !!paper && Boolean(paper.compareDocumentPosition(access) & Node.DOCUMENT_POSITION_FOLLOWING) };
     });
     const visualOrder = await page.evaluate(() => {
-      const ribbon = document.querySelector('.word-ribbon-shell, .word-ribbon, #wordRibbon');
+      const ribbon = document.getElementById('apaEditorShell');
       const paper = document.querySelector('.paper-wrap');
       const gemini = document.getElementById('geminiAssistant');
       const access = document.querySelector('.accessibility-controls');
