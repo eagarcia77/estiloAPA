@@ -105,7 +105,18 @@ const fs = require('node:fs');
     else if (rulerScroll.scrolled > 40 && rulerScroll.delta > -30) errors.push('Ruler did not move with document scroll: ' + JSON.stringify(rulerScroll));
     // Import a synthetic Word document based on the structural features of a course module.
     await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
-    await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
+    try {
+      await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
+    } catch (error) {
+      const diagnostic = await page.evaluate(() => ({
+        selectedFiles: Array.from(document.getElementById('files')?.files || []).map(file => ({ name: file.name, size: file.size })),
+        editorText: document.getElementById('preview')?.innerText.slice(0, 1000),
+        auditText: document.getElementById('auditList')?.innerText.slice(0, 1000),
+        status: document.getElementById('simpleQuickStatus')?.innerText.slice(0, 1000),
+        downloadEnabled: !document.getElementById('downloadDocxBtn')?.disabled
+      }));
+      throw new Error('DOCX import timeout: ' + JSON.stringify(diagnostic) + '\\n' + error.message);
+    }
     const imported = await page.locator('#preview').innerText();
     for (const phrase of ['MÓDULO DE PRUEBA APA 7', 'Analítica de datos', 'Computación en la nube', 'Referencias']) {
       if (!imported.includes(phrase)) errors.push('DOCX import missing content: ' + phrase);
