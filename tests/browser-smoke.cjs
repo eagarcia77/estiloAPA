@@ -15,6 +15,23 @@ const assert = require('node:assert/strict');
     const ruler = await page.evaluate(() => window.EstiloAPAWordRulers?.diagnose?.() ?? null);
     if (!ruler) errors.push('Ruler diagnostics are unavailable');
     else if (!ruler.ok) errors.push('Ruler misaligned: ' + JSON.stringify(ruler));
+    // Exercise the ruler at common viewport widths and browser zoom levels.
+    const rulerMatrix = [];
+    for (const width of [1440, 1024, 768, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const zoom of [1, 1.25]) {
+        await page.evaluate(z => { document.documentElement.style.zoom = String(z); }, zoom);
+        await page.evaluate(() => window.EstiloAPAWordRulers?.update?.());
+        await page.waitForTimeout(250);
+        const measured = await page.evaluate(() => window.EstiloAPAWordRulers?.diagnose?.() ?? null);
+        rulerMatrix.push({ width, zoom, ...measured });
+        if (!measured?.ok) errors.push('Ruler mismatch at ' + width + 'px, zoom ' + zoom + ': ' + JSON.stringify(measured));
+      }
+    }
+    await page.evaluate(() => { document.documentElement.style.zoom = ''; });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.evaluate(() => window.EstiloAPAWordRulers?.update?.());
+    await page.waitForTimeout(300);
     const placement = await page.evaluate(() => {
       const paper = document.querySelector('.paper-wrap');
       const gemini = document.getElementById('geminiAssistant');
@@ -27,7 +44,7 @@ const assert = require('node:assert/strict');
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
     assert.ok(await page.locator('main section:visible').count() >= 1, 'Help search must find Gemini');
-    console.log(JSON.stringify({ ruler, placement, helpSearch: 'ok' }, null, 2));
+    console.log(JSON.stringify({ ruler, rulerMatrix, placement, helpSearch: 'ok' }, null, 2));
     if (errors.length) throw new Error(errors.join('\n'));
   } finally {
     await browser.close();
