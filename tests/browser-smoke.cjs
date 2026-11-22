@@ -85,6 +85,14 @@ const fs = require('node:fs');
     if (!firstReapply.trim() || !secondReapply.trim()) errors.push('APA reapply emptied the document');
     if (firstReapply !== secondReapply) errors.push('APA reapply changed document text on the second application');
     if (secondReapply.length > beforeReapply.length * 1.5) errors.push('APA reapply may have duplicated text');
+    // Import a synthetic Word document based on the structural features of a course module.
+    await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
+    await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), { timeout: 20000 });
+    const imported = await page.locator('#preview').innerText();
+    for (const phrase of ['MÓDULO DE PRUEBA APA 7', 'Analítica de datos', 'Computación en la nube', 'Referencias']) {
+      if (!imported.includes(phrase)) errors.push('DOCX import missing content: ' + phrase);
+    }
+    if (await page.locator('#preview table').count() < 1) errors.push('DOCX import lost the table');
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
