@@ -12,3 +12,7 @@ Si el cambio no afecta al usuario, registrar «Sin cambios de ayuda necesarios»
 - Se crea `help.html` con búsqueda local y secciones sobre importación, edición, APA 7, reglas, revisión, accesibilidad, Gemini, exportación y solución de problemas.
 - Se incorpora acceso desde la cabecera del editor.
 - Estado: pendiente de validación y publicación mediante PR #24.
+
+## 2026-11-21 — Corrección de regla bajo zoom (rama de auditoría)
+- Se ajusta la conversión entre píxeles visuales y píxeles CSS al posicionar la regla horizontal con zoom del navegador.
+- Se amplía la prueba Chromium a cuatro anchuras de pantalla y dos niveles de zoom; la validación del arreglo queda pendiente de GitHub Actions.
