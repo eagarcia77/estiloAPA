@@ -18,6 +18,25 @@ for term in ("importar", "APA 7", "Gemini", "accesibilidad", "exportar", "regla"
         errors.append(f"Help section missing: {term}")
 if "Regla obligatoria de mantenimiento" not in changelog:
     errors.append("Missing maintenance policy in HELP_CHANGELOG.md")
+# Ensure local navigation links do not point to missing resources.
+from html.parser import HTMLParser
+class LinkCollector(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.links.extend(v for k, v in attrs if k == "href" and v)
+for name, source in (("index.html", index), ("help.html", help_html)):
+    parser = LinkCollector()
+    parser.feed(source)
+    for href in parser.links:
+        target = href.split("#", 1)[0].split("?", 1)[0]
+        if not target or target.startswith(("https://", "http://", "mailto:", "tel:", "javascript:")):
+            continue
+        if not (root / target).is_file():
+            errors.append(f"{name}: broken local link: {href}")
+
 base = os.getenv("HELP_CHECK_BASE", "").strip()
 if base:
     diff = subprocess.run(["git", "diff", "--name-only", f"{base}...HEAD"], cwd=root, capture_output=True, text=True)
