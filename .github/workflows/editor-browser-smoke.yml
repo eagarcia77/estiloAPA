@@ -21,7 +21,7 @@ jobs:
           npm install --no-save playwright@1.58.2
       - name: Create synthetic Word test document
         run: |
-          python3 -m pip install --break-system-packages python-docx==1.2.0
+          apt-get update -qq && apt-get install -y -qq python3-docx
           python3 tests/create_docx_fixture.py
       - name: Start local application
         run: |
