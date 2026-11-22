@@ -1,5 +1,6 @@
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -74,6 +75,11 @@ const assert = require('node:assert/strict');
     assert.ok(await page.locator('main section:visible').count() >= 1, 'Help search must find Gemini');
     console.log(JSON.stringify({ ruler, rulerMatrix, placement, visualOrder, uniqueControls, helpSearch: 'ok' }, null, 2));
     if (errors.length) throw new Error(errors.join('\n'));
+  } catch (error) {
+    fs.mkdirSync('test-results', { recursive: true });
+    await page.screenshot({ path: 'test-results/editor-failure.png', fullPage: true }).catch(() => {});
+    fs.writeFileSync('test-results/error.txt', String(error?.stack || error));
+    throw error;
   } finally {
     await browser.close();
   }
