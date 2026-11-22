@@ -18,10 +18,11 @@ const assert = require('node:assert/strict');
     const placement = await page.evaluate(() => {
       const paper = document.querySelector('.paper-wrap');
       const gemini = document.getElementById('geminiAssistant');
-      const access = document.querySelector('#accessibilityChecker, #accessibilityCheckerControls, .accessibility-checker-controls');
-      return { paper: !!paper, geminiAfterPaper: !!gemini && !!paper && Boolean(paper.compareDocumentPosition(gemini) & Node.DOCUMENT_POSITION_FOLLOWING), accessPresent: !!access };
+      const access = document.querySelector('.accessibility-controls');
+      return { paper: !!paper, geminiAfterPaper: !!gemini && !!paper && Boolean(paper.compareDocumentPosition(gemini) & Node.DOCUMENT_POSITION_FOLLOWING), accessPresent: !!access, accessAfterPaper: !!access && !!paper && Boolean(paper.compareDocumentPosition(access) & Node.DOCUMENT_POSITION_FOLLOWING) };
     });
     if (!placement.geminiAfterPaper) errors.push('Gemini section must follow paper editor');
+    if (!placement.accessAfterPaper) errors.push('Accessibility controls must exist after paper editor');
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
