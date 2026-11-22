@@ -162,14 +162,14 @@
     // so CSS centering, borders, or a zoomed workspace cannot leave a drift.
     const rulerRect = horizontal.getBoundingClientRect();
     const correction = rect.left - rulerRect.left;
-    horizontal.style.transform = `translateX(${correction}px)`;
+    horizontal.style.transform = `translateX(${correction / (rulerScale || 1)}px)`;
     const aligned = horizontal.getBoundingClientRect();
     const leftError = aligned.left - rect.left;
     const rightError = aligned.right - rect.right;
     if (Math.abs(leftError) > 1 || Math.abs(rightError) > 1) {
       // A final measured adjustment avoids guessing the parent padding.
       horizontal.style.width = Math.max(0, (rect.width - rightError + leftError) / (rulerScale || 1)) + "px";
-      horizontal.style.transform = `translateX(${correction - leftError}px)`;
+      horizontal.style.transform = `translateX(${(correction - leftError) / (rulerScale || 1)}px)`;
     }
     // Report the final rendered result, not the temporary measurement before correction.
     const finalRect = horizontal.getBoundingClientRect();
