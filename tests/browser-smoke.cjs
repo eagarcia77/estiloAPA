@@ -85,6 +85,24 @@ const fs = require('node:fs');
     if (!firstReapply.trim() || !secondReapply.trim()) errors.push('APA reapply emptied the document');
     if (firstReapply !== secondReapply) errors.push('APA reapply changed document text on the second application');
     if (secondReapply.length > beforeReapply.length * 1.5) errors.push('APA reapply may have duplicated text');
+    // A non-sticky ruler must scroll out of the way rather than cover paragraphs.
+    const rulerScroll = await page.evaluate(() => {
+      const ruler = document.getElementById('wordRulerHorizontal');
+      const wrap = document.querySelector('.paper-wrap');
+      const editor = document.getElementById('preview');
+      if (!ruler || !wrap || !editor) return { found: false };
+      const before = ruler.getBoundingClientRect().top;
+      const positioning = getComputedStyle(ruler).position;
+      const original = wrap.scrollTop;
+      wrap.scrollTop = Math.min(300, wrap.scrollHeight - wrap.clientHeight);
+      const scrolled = wrap.scrollTop;
+      const after = ruler.getBoundingClientRect().top;
+      wrap.scrollTop = original;
+      return { found: true, positioning, scrolled, delta: after - before };
+    });
+    if (!rulerScroll.found) errors.push('Horizontal ruler not found for scroll test');
+    else if (rulerScroll.positioning === 'sticky' || rulerScroll.positioning === 'fixed') errors.push('Ruler must not overlay scrolled text');
+    else if (rulerScroll.scrolled > 40 && rulerScroll.delta > -30) errors.push('Ruler did not move with document scroll: ' + JSON.stringify(rulerScroll));
     // Import a synthetic Word document based on the structural features of a course module.
     await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
     await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
