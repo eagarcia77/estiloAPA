@@ -57,11 +57,22 @@ const assert = require('node:assert/strict');
     if (!visualOrder.accessBelowPaper) errors.push('Accessibility controls visually overlap or precede the document');
     if (!placement.geminiAfterPaper) errors.push('Gemini section must follow paper editor');
     if (!placement.accessAfterPaper) errors.push('Accessibility controls must exist after paper editor');
+    const uniqueControls = await page.evaluate(() => ({
+      editor: document.querySelectorAll('#preview').length,
+      gemini: document.querySelectorAll('#geminiAssistant').length,
+      accessibilityChecker: document.querySelectorAll('#accessibilityCheckBtn').length,
+      accessibilityPanels: document.querySelectorAll('.accessibility-controls').length,
+      ruler: document.querySelectorAll('#wordRulerHorizontal').length,
+      moreMenu: document.querySelectorAll('#simpleToolsMenu').length
+    }));
+    for (const [name, count] of Object.entries(uniqueControls)) {
+      if (count !== 1) errors.push('Duplicate or missing control ' + name + ': ' + count);
+    }
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
     assert.ok(await page.locator('main section:visible').count() >= 1, 'Help search must find Gemini');
-    console.log(JSON.stringify({ ruler, rulerMatrix, placement, visualOrder, helpSearch: 'ok' }, null, 2));
+    console.log(JSON.stringify({ ruler, rulerMatrix, placement, visualOrder, uniqueControls, helpSearch: 'ok' }, null, 2));
     if (errors.length) throw new Error(errors.join('\n'));
   } finally {
     await browser.close();
