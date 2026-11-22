@@ -69,6 +69,22 @@ const fs = require('node:fs');
     for (const [name, count] of Object.entries(uniqueControls)) {
       if (count !== 1) errors.push('Duplicate or missing control ' + name + ': ' + count);
     }
+    // Check that reapplying APA formatting does not duplicate document text.
+    await page.evaluate(() => document.getElementById('demoBtn')?.click());
+    await page.waitForFunction(() => {
+      const el = document.getElementById('preview');
+      return el && el.innerText.trim().length > 120 && !el.innerText.includes('Formatted content will appear here.');
+    }, { timeout: 15000 });
+    const beforeReapply = await page.locator('#preview').innerText();
+    await page.evaluate(() => document.getElementById('formatBtn')?.click());
+    await page.waitForTimeout(700);
+    const firstReapply = await page.locator('#preview').innerText();
+    await page.evaluate(() => document.getElementById('formatBtn')?.click());
+    await page.waitForTimeout(700);
+    const secondReapply = await page.locator('#preview').innerText();
+    if (!firstReapply.trim() || !secondReapply.trim()) errors.push('APA reapply emptied the document');
+    if (firstReapply !== secondReapply) errors.push('APA reapply changed document text on the second application');
+    if (secondReapply.length > beforeReapply.length * 1.5) errors.push('APA reapply may have duplicated text');
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
