@@ -111,6 +111,19 @@ const fs = require('node:fs');
       if (!imported.includes(phrase)) errors.push('DOCX import missing content: ' + phrase);
     }
     if (await page.locator('#preview table').count() < 1) errors.push('DOCX import lost the table');
+    // Export the imported module and verify that a nonempty DOCX ZIP was downloaded.
+    const exportButton = page.locator('#downloadDocxBtn');
+    if (!(await exportButton.isEnabled())) {
+      errors.push('DOCX export button is disabled after importing a Word document');
+    } else {
+      const downloadPromise = page.waitForEvent('download', { timeout: 20000 });
+      await exportButton.click();
+      const download = await downloadPromise;
+      const exportedPath = await download.path();
+      const bytes = fs.readFileSync(exportedPath);
+      if (!/\\.docx$/i.test(download.suggestedFilename())) errors.push('Export filename is not DOCX: ' + download.suggestedFilename());
+      if (bytes.length < 500 || bytes.subarray(0, 2).toString('ascii') !== 'PK') errors.push('Exported DOCX is empty or not a ZIP package');
+    }
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
