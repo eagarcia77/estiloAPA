@@ -1,0 +1,26 @@
+name: Editor browser smoke test
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Start local application
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/estiloapa-http.log 2>&1 &
+          echo $! > /tmp/estiloapa-http.pid
+      - name: Run browser smoke tests
+        run: node tests/browser-smoke.cjs
