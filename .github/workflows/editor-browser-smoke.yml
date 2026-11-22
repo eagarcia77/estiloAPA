@@ -8,6 +8,8 @@ permissions:
 jobs:
   browser:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +19,6 @@ jobs:
       - name: Install browser test dependencies
         run: |
           npm install --no-save playwright@1.58.2
-          npx playwright install --with-deps chromium
       - name: Start local application
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/estiloapa-http.log 2>&1 &
