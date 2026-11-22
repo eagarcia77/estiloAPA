@@ -87,7 +87,7 @@ const fs = require('node:fs');
     if (secondReapply.length > beforeReapply.length * 1.5) errors.push('APA reapply may have duplicated text');
     // Import a synthetic Word document based on the structural features of a course module.
     await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
-    await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), { timeout: 20000 });
+    await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
     const imported = await page.locator('#preview').innerText();
     for (const phrase of ['MÓDULO DE PRUEBA APA 7', 'Analítica de datos', 'Computación en la nube', 'Referencias']) {
       if (!imported.includes(phrase)) errors.push('DOCX import missing content: ' + phrase);
