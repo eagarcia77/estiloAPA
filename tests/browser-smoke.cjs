@@ -38,13 +38,30 @@ const assert = require('node:assert/strict');
       const access = document.querySelector('.accessibility-controls');
       return { paper: !!paper, geminiAfterPaper: !!gemini && !!paper && Boolean(paper.compareDocumentPosition(gemini) & Node.DOCUMENT_POSITION_FOLLOWING), accessPresent: !!access, accessAfterPaper: !!access && !!paper && Boolean(paper.compareDocumentPosition(access) & Node.DOCUMENT_POSITION_FOLLOWING) };
     });
+    const visualOrder = await page.evaluate(() => {
+      const ribbon = document.querySelector('.word-ribbon-shell, .word-ribbon, #wordRibbon');
+      const paper = document.querySelector('.paper-wrap');
+      const gemini = document.getElementById('geminiAssistant');
+      const access = document.querySelector('.accessibility-controls');
+      const rect = el => el?.getBoundingClientRect();
+      return {
+        ribbonFound: !!ribbon,
+        ribbonAbovePaper: !!ribbon && !!paper && rect(ribbon).bottom <= rect(paper).top + 2,
+        geminiBelowPaper: !!gemini && !!paper && rect(gemini).top >= rect(paper).bottom - 2,
+        accessBelowPaper: !!access && !!paper && rect(access).top >= rect(paper).bottom - 2
+      };
+    });
+    if (!visualOrder.ribbonFound) errors.push('Word ribbon not found');
+    if (!visualOrder.ribbonAbovePaper) errors.push('Word ribbon must appear above the document');
+    if (!visualOrder.geminiBelowPaper) errors.push('Gemini panel visually overlaps or precedes the document');
+    if (!visualOrder.accessBelowPaper) errors.push('Accessibility controls visually overlap or precede the document');
     if (!placement.geminiAfterPaper) errors.push('Gemini section must follow paper editor');
     if (!placement.accessAfterPaper) errors.push('Accessibility controls must exist after paper editor');
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
     await page.locator('#search').fill('Gemini');
     assert.ok(await page.locator('main section:visible').count() >= 1, 'Help search must find Gemini');
-    console.log(JSON.stringify({ ruler, rulerMatrix, placement, helpSearch: 'ok' }, null, 2));
+    console.log(JSON.stringify({ ruler, rulerMatrix, placement, visualOrder, helpSearch: 'ok' }, null, 2));
     if (errors.length) throw new Error(errors.join('\n'));
   } finally {
     await browser.close();
