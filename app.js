@@ -276,6 +276,16 @@ async function convertDocx(arrayBuffer) {
         "p[style-name='Heading 3'] => h3:fresh"
       ],
       includeDefaultStyleMap: true,
+      // Embed DOCX media as data URLs so figures survive local import and editing.
+      convertImage: mammoth.images.imgElement(async (image) => {
+        const base64 = await image.read("base64");
+        const mime = String(image.contentType || "").toLowerCase();
+        if (!/^image\/(png|jpeg|jpg|gif|webp|bmp)$/i.test(mime)) {
+          // Do not create an invalid image element for unsupported media formats.
+          return { alt: "Imagen del documento en un formato no compatible" };
+        }
+        return { src: `data:${mime};base64,${base64}` };
+      }),
     }
   );
   return sanitizeHtml(result.value);

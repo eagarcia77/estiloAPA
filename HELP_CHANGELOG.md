@@ -1,0 +1,30 @@
+# Historial de ayuda — EstiloAPA
+
+## Regla obligatoria de mantenimiento
+Cada cambio que afecte una función, pantalla, procedimiento, mensaje de error, requisito, exportación o integración debe acompañarse en el mismo pull request de:
+1. Una actualización de `help.html` en la sección correspondiente.
+2. Una entrada nueva en este archivo con fecha, función y descripción.
+3. Una comprobación de que los nombres de controles coinciden con `index.html`.
+4. Una revisión de accesibilidad y navegación por teclado de la ayuda.
+Si el cambio no afecta al usuario, registrar «Sin cambios de ayuda necesarios» en la descripción del PR, con justificación.
+
+## 2026-11-21 — Centro de ayuda inicial (rama de auditoría)
+- Se crea `help.html` con búsqueda local y secciones sobre importación, edición, APA 7, reglas, revisión, accesibilidad, Gemini, exportación y solución de problemas.
+- Se incorpora acceso desde la cabecera del editor.
+- Estado: pendiente de validación y publicación mediante PR #24.
+
+## 2026-11-21 — Corrección de regla bajo zoom (rama de auditoría)
+- Se ajusta la conversión entre píxeles visuales y píxeles CSS al posicionar la regla horizontal con zoom del navegador.
+- Se amplía la prueba Chromium a cuatro anchuras de pantalla y dos niveles de zoom; la validación del arreglo queda pendiente de GitHub Actions.
+
+## 2026-11-21 — Regla sin superposición al desplazarse (rama de auditoría)
+- Se elimina el posicionamiento adhesivo de la regla horizontal que ocultaba texto y tablas al desplazarse dentro del documento.
+- La regla permanece fuera del contenido editable y se desplaza junto al documento.
+- Se actualiza la ayuda sobre el comportamiento de la regla.
+- Validación visual en navegador pendiente; cambios sin publicar mediante PR #24.
+
+## 2026-11-23 — Imágenes integradas al importar DOCX
+- Conversión explícita de imágenes compatibles a URL de datos local para mantenerlas dentro del editor.
+- Prueba de regresión con imagen PNG incorporada en un DOCX de ejemplo; verifica importación y nueva importación después de exportar.
+- Se actualizó la ayuda para indicar los formatos compatibles y la necesidad de revisar figuras y texto alternativo.
+- Validación de navegador pendiente antes de integrar en main.

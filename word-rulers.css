@@ -1,7 +1,7 @@
 /* Interactive Word-like rulers. Decoration is outside #preview: never exported. */
 .word-ruler-workspace { position:relative; }
 .word-ruler-horizontal {
-  position:sticky; top:0; z-index:14; box-sizing:border-box;
+  position:relative; z-index:2; box-sizing:border-box;
   height:26px; flex:none; margin-bottom:7px;
   border:1px solid #b6c3d1; border-radius:3px;
   background:#f2f5f8;

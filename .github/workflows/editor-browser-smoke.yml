@@ -1,0 +1,39 @@
+name: Editor browser smoke test
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright@1.58.2
+      - name: Create synthetic Word test document
+        run: |
+          apt-get update -qq && apt-get install -y -qq python3-docx
+          python3 tests/create_docx_fixture.py
+      - name: Start local application
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/estiloapa-http.log 2>&1 &
+          echo $! > /tmp/estiloapa-http.pid
+      - name: Run browser smoke tests
+        run: node tests/browser-smoke.cjs
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-browser-diagnostics
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -6,7 +6,9 @@ if (editor && section) {
   const editorPanel = editor.closest(".preview-panel");
   const toolbar = editorPanel?.querySelector(".preview-toolbar");
   if (toolbar) {
-    toolbar.after(section);
+    // Keep optional AI below the document instead of pushing the ribbon off screen.
+    const paper = editor.closest(".paper-wrap");
+    (paper || toolbar).after(section);
     section.classList.remove("simple-secondary");
     section.style.cssText = "margin: 12px 0; padding: 12px 16px; border: 1px solid #cbd5df; border-radius: 10px; background: #f7fafc;";
     section.querySelector("summary").style.cssText = "cursor: pointer; font-weight: 700; color: #175e50;";
@@ -33,7 +35,7 @@ if (editor && section) {
   document.addEventListener("selectionchange", refreshCount);
   const safeEndpoint = value => {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.username || url.password || url.hash) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini.");
+    if (url.protocol !== "https:" || url.username || url.password || url.hash || url.search || url.port) throw new Error("Utilice una dirección HTTPS válida del servidor Gemini, sin parámetros ni puertos personalizados.");
     return url;
   };
   const selectedText = () => {
@@ -62,6 +64,7 @@ if (editor && section) {
         body: JSON.stringify({ task: task.value, content }),
         signal: controller.signal,
         credentials: "omit",
+        redirect: "error", // Never forward the bearer token or document to a redirect target.
         cache: "no-store"
       });
       if (!response.ok) {
@@ -72,14 +75,17 @@ if (editor && section) {
         } catch { /* Older Worker deployments may return a generic error. */ }
         throw new Error(serverMessage || ("El servidor respondió con HTTP " + response.status + "."));
       }
-      const data = await response.json();
-      if (typeof data.suggestion !== "string") throw new Error("El servidor no devolvió sugerencias válidas.");
+      let data;
+      try { data = await response.json(); }
+      catch { throw new Error("El servidor devolvió una respuesta que no se pudo interpretar."); }
+      if (!data || typeof data.suggestion !== "string" || !data.suggestion.trim())
+        throw new Error("Gemini no devolvió sugerencias de texto válidas.");
       output.value = data.suggestion.slice(0, 30000);
       copy.disabled = !output.value;
       status.textContent = "Sugerencias recibidas. Revise antes de incorporar cualquier cambio.";
     } catch (error) {
       const msg = error.name === "AbortError" ? "La solicitud excedió el tiempo de espera." : error.message;
-      status.textContent = "No se pudo completar la revisión: " + msg + (/HTTP 502/.test(msg) ? " Revise si el Worker de Cloudflare tiene publicado el código más reciente." : "");
+      status.textContent = "No se pudo completar la revisión: " + msg + (/HTTP 502/.test(msg) ? " El servicio de Gemini no pudo procesar la solicitud; revise la configuración del Worker y del modelo." : "");
     } finally { clearTimeout(timeout); run.disabled = false; copy.disabled = !output.value; }
   });
   copy.addEventListener("click", async () => {
