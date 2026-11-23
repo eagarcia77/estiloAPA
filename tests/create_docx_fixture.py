@@ -2,6 +2,8 @@
 No user-uploaded document content is committed to the repository.
 """
 from pathlib import Path
+from io import BytesIO
+from base64 import b64decode
 from docx import Document
 
 out = Path("test-results/apa7-module-fixture.docx")
@@ -20,6 +22,10 @@ for left, right in [("Analítica de datos", "¿Cómo mejorar la calidad?"), ("Co
     cells = table.add_row().cells
     cells[0].text = left
     cells[1].text = right
+# A small embedded PNG catches regressions where DOCX figures disappear.
+png = b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==")
+doc.add_heading("Figura 1", level=2)
+doc.add_picture(BytesIO(png))
 doc.add_heading("Referencias", level=2)
 doc.add_paragraph("Ejemplo, A. (2024). Título ficticio de referencia. Editorial de prueba.")
 doc.save(out)
