@@ -644,6 +644,27 @@ function normalizeApaTableAlignment(root) {
   }
 }
 
+// Preserve imported Word TOC leader runs as a single visual line.
+// Do not rewrite the text or guess page numbers: Mammoth may lose Word tab stops.
+function markImportedTocLeaders(root) {
+  const nodes = [...root.querySelectorAll("p")];
+  let inToc = false;
+  for (const p of nodes) {
+    const value = (p.textContent || "").replace(/\\s+/g, " ").trim();
+    if (/^(?:tabla de contenido(?:s)?|índice(?: general)?|table of contents|contents)\\s*:?$/i.test(value)) {
+      inToc = true;
+      p.classList.add("imported-toc-heading");
+      continue;
+    }
+    if (!inToc) continue;
+    if (/^(?:introducción|introduction|resumen|abstract|descripción del contenido|referencias|references)\\s*$/i.test(value) && !/\\.{4,}/.test(value)) {
+      inToc = false;
+      continue;
+    }
+    if (/\\.{6,}/.test(value)) p.classList.add("imported-toc-leader");
+  }
+}
+
 function applyApaRules(root) {
   replaceDivsWithParagraphs(root);
   normalizeHeadingLevels(root);
@@ -1674,6 +1695,7 @@ async function formatSelectedFiles(requestId = importRequestId) {
       const section = document.createElement("section");
       section.dataset.sourceFile = file.name;
       section.innerHTML = html;
+      markImportedTocLeaders(section);
       // Never replace an existing document with an empty conversion result.
       // Images/tables without text are legitimate content and must be retained.
       const hasImportedContent = Boolean(section.textContent.trim() ||
