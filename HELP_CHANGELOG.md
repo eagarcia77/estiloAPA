@@ -22,3 +22,9 @@ Si el cambio no afecta al usuario, registrar «Sin cambios de ayuda necesarios»
 - La regla permanece fuera del contenido editable y se desplaza junto al documento.
 - Se actualiza la ayuda sobre el comportamiento de la regla.
 - Validación visual en navegador pendiente; cambios sin publicar mediante PR #24.
+
+## 2026-11-23 — Imágenes integradas al importar DOCX
+- Conversión explícita de imágenes compatibles a URL de datos local para mantenerlas dentro del editor.
+- Prueba de regresión con imagen PNG incorporada en un DOCX de ejemplo; verifica importación y nueva importación después de exportar.
+- Se actualizó la ayuda para indicar los formatos compatibles y la necesidad de revisar figuras y texto alternativo.
+- Validación de navegador pendiente antes de integrar en main.
