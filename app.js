@@ -276,9 +276,21 @@ async function convertDocx(arrayBuffer) {
         "p[style-name='Heading 3'] => h3:fresh"
       ],
       includeDefaultStyleMap: true,
+      // Embed DOCX media as data URLs so imported pictures survive local
+      // editing, offline use, and subsequent DOCX export in Safari.
+      convertImage: mammoth.images.imgElement(async image => {
+        const base64 = await image.read("base64");
+        return {
+          src: `data:${image.contentType || "image/png"};base64,${base64}`,
+        };
+      }),
     }
   );
-  return sanitizeHtml(result.value);
+  const html = sanitizeHtml(result.value);
+  if (result.messages?.length) {
+    console.info("DOCX conversion notices:", result.messages.map(message => message.message));
+  }
+  return html;
 }
 
 async function readPdf(file) {
