@@ -647,21 +647,25 @@ function normalizeApaTableAlignment(root) {
 // Preserve imported Word TOC leader runs as a single visual line.
 // Do not rewrite the text or guess page numbers: Mammoth may lose Word tab stops.
 function markImportedTocLeaders(root) {
-  const nodes = [...root.querySelectorAll("p")];
+  // Identify likely Word TOC entries without changing their text or page numbers.
+  // Stop at the first normal body heading after the TOC.
+  const nodes = [...root.querySelectorAll("p,h1,h2,h3")];
   let inToc = false;
-  for (const p of nodes) {
-    const value = (p.textContent || "").replace(/\\s+/g, " ").trim();
-    if (/^(?:tabla de contenido(?:s)?|índice(?: general)?|table of contents|contents)\\s*:?$/i.test(value)) {
+  for (const node of nodes) {
+    const value = (node.textContent || "").replace(/\s+/g, " ").trim();
+    if (/^(?:tabla de contenido(?:s)?|índice(?: general)?|table of contents|contents)\s*:?$/i.test(value)) {
       inToc = true;
-      p.classList.add("imported-toc-heading");
+      node.classList.add("imported-toc-heading");
       continue;
     }
     if (!inToc) continue;
-    if (/^(?:introducción|introduction|resumen|abstract|descripción del contenido|referencias|references)\\s*$/i.test(value) && !/\\.{4,}/.test(value)) {
+    if (/^H[1-6]$/.test(node.tagName) && !/\.{4,}/.test(value)) {
       inToc = false;
       continue;
     }
-    if (/\\.{6,}/.test(value)) p.classList.add("imported-toc-leader");
+    if (node.tagName === "P" && /\.{6,}/.test(value)) {
+      node.classList.add("imported-toc-leader");
+    }
   }
 }
 
