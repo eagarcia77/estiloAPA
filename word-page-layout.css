@@ -87,3 +87,28 @@ body.apa-page-view .apa-paper {
     box-sizing: border-box;
   }
 }
+
+/* Mobile fidelity: preserve the letter-size document instead of reflowing
+   headings, tables of contents and tab stops into a narrow viewport.
+   Horizontal scrolling is intentional in Page View; edit mode remains fluid. */
+@media screen and (max-width: 899px) {
+  body.apa-page-view .paper-wrap {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  body.apa-page-view .apa-paper {
+    width: 8.5in;
+    min-width: 8.5in;
+    max-width: none;
+    padding: var(--word-margin-top) var(--word-margin-right)
+      var(--word-margin-bottom) var(--word-margin-left);
+    margin-inline: auto;
+    box-sizing: border-box;
+  }
+  body.apa-page-view .apa-paper img,
+  body.apa-page-view .apa-paper table {
+    max-width: 100%;
+  }
+}
