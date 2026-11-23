@@ -112,3 +112,14 @@ body.apa-page-view .apa-paper {
     max-width: 100%;
   }
 }
+
+/* Word TOC dotted leaders: prevent browser line wrapping inside imported
+   leader paragraphs. This is a display-only safeguard; original tab stops
+   and page-number fields still require structural DOCX parsing. */
+.apa-paper .imported-toc-leader {
+  white-space: nowrap;
+  width: max-content;
+  max-width: none;
+  text-indent: 0 !important;
+}
+.paper-wrap { overflow-x: auto; }
