@@ -194,9 +194,9 @@ async function extractPdfPages(file) {
 }
 
 function removeRepeatedHeadersAndFooters(pages) {
-  // Institutional footers can occupy several lines above the bottom 8%.
-  // Only suppress recurring lines in the bottom 16%; preserve unique text.
-
+  // PDF coordinates are measured upward from the bottom of each page.
+  // Detect institutional notices as a complete footer region, not isolated lines:
+  // individual lines may wrap differently from one page to another.
   const occurrences = new Map();
   for (const page of pages) {
     for (const line of page.lines) {
@@ -209,20 +209,27 @@ function removeRepeatedHeadersAndFooters(pages) {
       occurrences.get(key).add(page.pageNumber);
     }
   }
-
   const repeated = new Set(
     [...occurrences.entries()]
       .filter(([, pageNumbers]) => pageNumbers.size >= Math.max(2, Math.ceil(pages.length * 0.35)))
       .map(([key]) => key)
   );
-
+  const institutionalNotice = /(?:nota de uso restringido|el presente documento es de uso exclusivo)/i;
   for (const page of pages) {
-    page.lines = page.lines.filter((line) => {
-      const key = normalizeLineKey(line.text);
+    const anchors = page.lines.filter(line =>
+      line.y <= page.height * 0.16 && institutionalNotice.test(line.text)
+    );
+    // Remove the whole notice, including wrapped continuation lines.
+    // Restrict removal to the footer strip so body paragraphs remain intact.
+    const noticeTop = anchors.length ? Math.max(...anchors.map(line => line.y)) : -1;
+    page.lines = page.lines.filter(line => {
       const nearTop = line.y >= page.height * 0.90;
       const nearBottom = line.y <= page.height * 0.16;
-      const pageNumberOnly = nearBottom && /^\s*(?:p[aá]g(?:ina)?\.?\s*)?\d+\s*$/i.test(line.text);
-      return !pageNumberOnly && !(repeated.has(key) && (nearTop || nearBottom));
+      const key = normalizeLineKey(line.text);
+      const pageNumberOnly = nearBottom && /^\\s*(?:p[aá]g(?:ina)?\\.?\\s*)?\\d+\\s*$/i.test(line.text);
+      const noticeContinuation = noticeTop >= 0 && nearBottom && line.y <= noticeTop + 2;
+      return !pageNumberOnly && !noticeContinuation &&
+        !(repeated.has(key) && (nearTop || nearBottom));
     });
   }
 }
