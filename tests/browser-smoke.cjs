@@ -124,6 +124,8 @@ const fs = require('node:fs');
       if (!imported.includes(phrase)) errors.push('DOCX import missing content: ' + phrase);
     }
     if (await page.locator('#preview table').count() < 1) errors.push('DOCX import lost the table');
+    const importedImages = await page.locator('#preview img[src^="data:image/"]').count();
+    if (importedImages < 1) errors.push('DOCX import lost its embedded figure');
     // Export the imported module and verify that a nonempty DOCX ZIP was downloaded.
     const exportButton = page.locator('#downloadDocxBtn');
     if (!(await exportButton.isEnabled())) {
@@ -146,6 +148,7 @@ const fs = require('node:fs');
           if (!roundTrip.includes(phrase)) errors.push('DOCX round-trip missing content: ' + phrase);
         }
         if (await page.locator('#preview table').count() < 1) errors.push('DOCX round-trip lost the table');
+        if (await page.locator('#preview img').count() < 1) errors.push('DOCX round-trip lost its embedded figure');
       }
     }
     await page.locator('a[href="help.html"]').click();
