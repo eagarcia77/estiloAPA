@@ -194,11 +194,14 @@ async function extractPdfPages(file) {
 }
 
 function removeRepeatedHeadersAndFooters(pages) {
+  // Institutional footers can occupy several lines above the bottom 8%.
+  // Only suppress recurring lines in the bottom 16%; preserve unique text.
+
   const occurrences = new Map();
   for (const page of pages) {
     for (const line of page.lines) {
       const nearTop = line.y >= page.height * 0.90;
-      const nearBottom = line.y <= page.height * 0.08;
+      const nearBottom = line.y <= page.height * 0.16;
       if (!nearTop && !nearBottom) continue;
       const key = normalizeLineKey(line.text);
       if (!key || key.length > 140) continue;
@@ -217,7 +220,7 @@ function removeRepeatedHeadersAndFooters(pages) {
     page.lines = page.lines.filter((line) => {
       const key = normalizeLineKey(line.text);
       const nearTop = line.y >= page.height * 0.90;
-      const nearBottom = line.y <= page.height * 0.08;
+      const nearBottom = line.y <= page.height * 0.16;
       const pageNumberOnly = nearBottom && /^\s*(?:p[aá]g(?:ina)?\.?\s*)?\d+\s*$/i.test(line.text);
       return !pageNumberOnly && !(repeated.has(key) && (nearTop || nearBottom));
     });
