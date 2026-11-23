@@ -105,6 +105,8 @@ const fs = require('node:fs');
     else if (rulerScroll.scrolled > 40 && rulerScroll.delta > -30) errors.push('Ruler did not move with document scroll: ' + JSON.stringify(rulerScroll));
     // Import a synthetic Word document based on the structural features of a course module.
     await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
+    // The UI exposes an explicit open action; exercise the same workflow as the user.
+    await page.locator('#importSelectedBtn').click();
     try {
       await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
     } catch (error) {
