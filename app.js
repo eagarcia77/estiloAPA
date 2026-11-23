@@ -280,7 +280,7 @@ async function convertDocx(arrayBuffer) {
       convertImage: mammoth.images.imgElement(async (image) => {
         const base64 = await image.read("base64");
         const mime = String(image.contentType || "").toLowerCase();
-        if (!/^image\\/(png|jpeg|jpg|gif|webp|bmp)$/i.test(mime)) {
+        if (!/^image\/(png|jpeg|jpg|gif|webp|bmp)$/i.test(mime)) {
           // Do not create an invalid image element for unsupported media formats.
           return { alt: "Imagen del documento en un formato no compatible" };
         }
