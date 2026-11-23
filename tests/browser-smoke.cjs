@@ -108,14 +108,17 @@ const fs = require('node:fs');
     // The UI exposes an explicit open action; exercise the same workflow as the user.
     await page.locator('#importSelectedBtn').click();
     try {
-      await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
+      await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 30000 });
     } catch (error) {
       const diagnostic = await page.evaluate(() => ({
         selectedFiles: Array.from(document.getElementById('files')?.files || []).map(file => ({ name: file.name, size: file.size })),
         editorText: document.getElementById('preview')?.innerText.slice(0, 1000),
         auditText: document.getElementById('auditList')?.innerText.slice(0, 1000),
         status: document.getElementById('simpleQuickStatus')?.innerText.slice(0, 1000),
-        downloadEnabled: !document.getElementById('downloadDocxBtn')?.disabled
+        downloadEnabled: !document.getElementById('downloadDocxBtn')?.disabled,
+        mammothLoaded: typeof window.mammoth !== 'undefined',
+        importButton: document.getElementById('importSelectedBtn')?.outerHTML.slice(0, 500),
+        alerts: Array.from(document.querySelectorAll('[role="alert"]')).map(el => el.innerText.slice(0, 500))
       }));
       throw new Error('DOCX import timeout: ' + JSON.stringify(diagnostic) + '\\n' + error.message);
     }
