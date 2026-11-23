@@ -136,6 +136,17 @@ const fs = require('node:fs');
       const bytes = fs.readFileSync(exportedPath);
       if (!/\\.docx$/i.test(download.suggestedFilename())) errors.push('Export filename is not DOCX: ' + download.suggestedFilename());
       if (bytes.length < 500 || bytes.subarray(0, 2).toString('ascii') !== 'PK') errors.push('Exported DOCX is empty or not a ZIP package');
+      // Round-trip the exported file through the same visible import workflow.
+      if (bytes.length >= 500 && bytes.subarray(0, 2).toString('ascii') === 'PK') {
+        await page.locator('#files').setInputFiles(exportedPath);
+        await page.locator('#importSelectedBtn').click();
+        await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
+        const roundTrip = await page.locator('#preview').innerText();
+        for (const phrase of ['MÓDULO DE PRUEBA APA 7', 'Analítica de datos', 'Computación en la nube', 'Referencias']) {
+          if (!roundTrip.includes(phrase)) errors.push('DOCX round-trip missing content: ' + phrase);
+        }
+        if (await page.locator('#preview table').count() < 1) errors.push('DOCX round-trip lost the table');
+      }
     }
     await page.locator('a[href="help.html"]').click();
     await page.waitForURL('**/help.html');
