@@ -127,3 +127,26 @@ body.apa-focus-mode .simple-secondary { display:none !important; }
   .preview-panel { padding:0!important; border:0!important; box-shadow:none!important; }
   .layout { padding:0!important; }
 }
+
+/* Mobile: keep auxiliary checks compact and prioritize the editor. */
+@media screen and (max-width:760px) {
+  .preview-panel details:not([open]) > summary {
+    min-height:40px;
+    padding:.45rem .65rem;
+  }
+  .preview-panel .word-ribbon-tabs {
+    -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+  }
+  .preview-panel .word-ribbon-tabs [role="tab"] {
+    scroll-snap-align:start;
+  }
+  .preview-panel .word-ribbon-status {
+    font-size:.76rem;
+    overflow-wrap:anywhere;
+  }
+  .simple-primary-actions button,
+  .simple-tools-menu > summary {
+    min-height:44px;
+  }
+}
