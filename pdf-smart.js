@@ -354,7 +354,7 @@ async function extractPlacedImages(page) {
     const out=document.createElement("canvas");
     out.width=Math.ceil(r.w*scale);out.height=Math.ceil(r.h*scale);
     out.getContext("2d").drawImage(canvas,r.x*scale,r.y*scale,r.w*scale,r.h*scale,0,0,out.width,out.height);
-    return {type:"image",src:out.toDataURL("image/png"),alt:"Imagen original de la página "+page.pageNumber,pageNumber:page.pageNumber,y:r.y};
+    return {type:"image",src:out.toDataURL("image/png"),alt:"Imagen original de la página "+page.pageNumber,pageNumber:page.pageNumber,y:r.y,uncaptioned:true};
   });
 }
 
@@ -542,7 +542,17 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
   const blocks = [];
   let inReferences = inReferencesAtStart;
   let index = 0;
-  const pendingImages = page.figureImages.size ? [] : [...(page.placedImages || [])];
+  const pendingImages = [...(page.placedImages || [])].filter(image => {
+    // Suppress only images within a recovered captioned figure's vertical region.
+    return ![...page.figureImages.keys()].some(index => {
+      const title = lines[index + 1];
+      if (!title) return false;
+      const start = screenBottomForLine(page, title);
+      const next = lines.slice(index + 2).find(line => noteRegex.test(line.text.trim()) || classifyHeading(line, bodyFontSize));
+      const end = next ? screenTopForLine(page, next) : page.height;
+      return image.y >= start - 4 && image.y < end;
+    });
+  });
 
   while (index < lines.length) {
     const line = lines[index];
@@ -831,7 +841,7 @@ function blocksToHtml(blocks, sortReferences) {
       const noteText = block.text.replace(noteRegex, "").trim();
       output.push(`<p class="apa-note"><strong>Nota.</strong> ${escapeHtml(noteText)}</p>`);
     } else if (block.type === "image") {
-      output.push(`<img class="apa-figure-image" style="display:block;max-width:100%;height:auto;margin:.5em auto 1em;" src="${block.src}" alt="${escapeHtml(block.alt)}">`);
+      output.push(`<img class="${block.uncaptioned ? "pdf-original-image" : "apa-figure-image"}" style="display:block;max-width:100%;height:auto;margin:.5em auto 1em;" src="${block.src}" alt="${escapeHtml(block.alt)}">`);
     } else if (block.type === "table") {
       const [head, ...body] = block.rows;
       output.push(`<table class="apa-table" style="width:100%;border-collapse:collapse;margin:1em 0;"><thead><tr>${head.map((cell) => `<th scope="col" style="border:1px solid #777;padding:.3em;text-align:left;vertical-align:top;">${escapeHtml(cell)}</th>`).join("")}</tr></thead><tbody>${body.map((row) => `<tr>${row.map((cell) => `<td style="border:1px solid #777;padding:.3em;text-align:left;vertical-align:top;">${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
