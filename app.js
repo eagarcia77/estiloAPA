@@ -1679,7 +1679,14 @@ async function formatSelectedFiles(requestId = importRequestId) {
       if (!hasImportedContent) {
         throw new Error("El archivo se pudo abrir, pero no se extrajo contenido editable. No se reemplazó el documento anterior. Si es un PDF escaneado, necesita reconocimiento de texto (OCR).");
       }
+      const importedImages = section.querySelectorAll("img").length;
+      if ([...section.querySelectorAll("img")].some(img => !img.getAttribute("src"))) {
+        throw new Error("El documento contiene una imagen que no pudo recuperarse. Se conservó el documento anterior.");
+      }
       applyApaRules(section);
+      if (section.querySelectorAll("img").length !== importedImages) {
+        throw new Error("El formato APA 7 alteró la cantidad de imágenes. Se conservó el documento anterior.");
+      }
       wrapper.append(section);
       if (i < files.length - 1) {
         const separator = document.createElement("hr");
@@ -1691,6 +1698,7 @@ async function formatSelectedFiles(requestId = importRequestId) {
     if (requestId !== importRequestId) return;
     // Preserve the previous editor until the new document has survived every
     // import hook. An empty post-import editor must never be marked successful.
+    const expectedImportedImages = wrapper.querySelectorAll("img").length;
     const previousHtml = els.preview.innerHTML;
     const previousReady = els.preview.dataset.apaReadyForEditing;
     const hasContent = (node) => Boolean((node.textContent || "").trim() ||
@@ -1707,9 +1715,12 @@ async function formatSelectedFiles(requestId = importRequestId) {
       if (!hasContent(els.preview)) throw new Error("Un módulo del editor eliminó el contenido durante la importación.");
       renderAudit(auditDocument(els.preview));
       if (!hasContent(els.preview)) throw new Error("El contenido desapareció durante la auditoría.");
+      if (els.preview.querySelectorAll("img").length !== expectedImportedImages) {
+        throw new Error("La cantidad de imágenes cambió durante la preparación del editor. Se conservó el documento anterior.");
+      }
       enableDownloads();
       els.preview.dataset.apaReadyForEditing = "true";
-      setStatus("APA 7 applied. Your document is ready to edit.", "success");
+      setStatus("APA 7 aplicado. Documento listo para editar. Imágenes recuperadas: " + expectedImportedImages + ".", "success");
       els.preview.focus();
     } catch (importError) {
       els.preview.innerHTML = previousHtml;
