@@ -325,9 +325,43 @@ async function renderCrop(pageData, top, bottom) {
   return cropCanvas.toDataURL("image/jpeg", 0.90);
 }
 
+// Recover raster images independently of APA figure captions, including cover art.
+async function extractPlacedImages(page) {
+  const pdfjs = await getPdfJs();
+  const ops = await page.proxy.getOperatorList();
+  const viewport = page.proxy.getViewport({ scale: 1 });
+  let matrix = [1,0,0,1,0,0];
+  const stack = [], regions = [];
+  for (let i=0; i<ops.fnArray.length; i++) {
+    const op=ops.fnArray[i], args=ops.argsArray[i];
+    if (op===pdfjs.OPS.save) stack.push(matrix.slice());
+    else if (op===pdfjs.OPS.restore) matrix=stack.pop() || matrix;
+    else if (op===pdfjs.OPS.transform) matrix=pdfjs.Util.transform(matrix,args);
+    else if (op===pdfjs.OPS.paintImageXObject || op===pdfjs.OPS.paintInlineImageXObject) {
+      const m=pdfjs.Util.transform(viewport.transform,matrix);
+      const pts=[[0,0],[1,0],[0,1],[1,1]].map(([x,y])=>[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]]);
+      const x=Math.max(0,Math.min(...pts.map(p=>p[0]))), y=Math.max(0,Math.min(...pts.map(p=>p[1])));
+      const r=Math.min(viewport.width,Math.max(...pts.map(p=>p[0]))), b=Math.min(viewport.height,Math.max(...pts.map(p=>p[1])));
+      if(r-x>=16 && b-y>=16) regions.push({x,y,w:r-x,h:b-y});
+    }
+  }
+  if(!regions.length) return [];
+  const scale=2, vp=page.proxy.getViewport({scale});
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.ceil(vp.width); canvas.height=Math.ceil(vp.height);
+  await page.proxy.render({canvasContext:canvas.getContext("2d"),viewport:vp}).promise;
+  return regions.sort((a,b)=>a.y-b.y).map(r=>{
+    const out=document.createElement("canvas");
+    out.width=Math.ceil(r.w*scale);out.height=Math.ceil(r.h*scale);
+    out.getContext("2d").drawImage(canvas,r.x*scale,r.y*scale,r.w*scale,r.h*scale,0,0,out.width,out.height);
+    return {type:"image",src:out.toDataURL("image/png"),alt:"Imagen original de la página "+page.pageNumber,pageNumber:page.pageNumber,y:r.y};
+  });
+}
+
 async function prepareFigureImages(pages, bodyFontSize) {
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
     const page = pages[pageIndex];
+    page.placedImages = await extractPlacedImages(page);
     for (let index = 0; index < page.lines.length; index += 1) {
       const label = page.lines[index];
       if (!figureLabelRegex.test(label.text.trim())) continue;
@@ -500,7 +534,7 @@ function detectLabeledTable(lines, labelIndex, bodyFontSize) {
 
 function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
   const lines = page.lines;
-  if (!lines.length) return { blocks: [], inReferences: inReferencesAtStart };
+  if (!lines.length) return { blocks: page.placedImages || [], inReferences: inReferencesAtStart };
   const gap = typicalLineGap(lines);
   const leftCandidates = lines.filter((line) => classifyHeading(line, bodyFontSize) === 0).map((line) => line.x);
   const baseLeft = median(leftCandidates) || Math.min(...lines.map((line) => line.x));
@@ -508,9 +542,11 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
   const blocks = [];
   let inReferences = inReferencesAtStart;
   let index = 0;
+  const pendingImages = page.figureImages.size ? [] : [...(page.placedImages || [])];
 
   while (index < lines.length) {
     const line = lines[index];
+    while (pendingImages.length && pendingImages[0].y < page.height - line.y) blocks.push(pendingImages.shift());
     const text = line.text.trim();
 
     if (/\bTabla\s+\d+\b/i.test(text)) {
@@ -664,6 +700,7 @@ function pageToBlocks(page, bodyFontSize, inReferencesAtStart = false) {
     blocks.push({ type: "p", text: paragraphText, html: paragraphHtml, pageNumber: page.pageNumber });
     index = cursor;
   }
+  blocks.push(...pendingImages);
   return { blocks, inReferences };
 }
 
