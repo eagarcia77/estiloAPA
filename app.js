@@ -2301,6 +2301,24 @@ async function downloadDocx() {
       }],
     });
     const blob = await Packer.toBlob(doc);
+    // Validate actual serialized image occurrences, not unique media files:
+    // Word may reuse a single media resource for multiple identical pictures.
+    const expectedImages = clone.querySelectorAll("img").length;
+    if (expectedImages) {
+      const mammothApi = await waitForGlobal("mammoth");
+      let embeddedImages = 0;
+      await mammothApi.convertToHtml({ arrayBuffer: await blob.arrayBuffer() }, {
+        convertImage: mammothApi.images.imgElement(async image => {
+          const data = await image.read("base64");
+          if (data.length) embeddedImages++;
+          return { src: "data:" + image.contentType + ";base64," + data };
+        })
+      });
+      if (embeddedImages !== expectedImages) {
+        throw new Error("Integridad de imágenes: se esperaban " + expectedImages +
+          " y se verificaron " + embeddedImages + ". No se descargó un documento incompleto.");
+      }
+    }
     downloadBlob(blob, "modulo-APA7.docx");
     setStatus("DOCX document exported successfully.", "success");
   } catch (error) {
