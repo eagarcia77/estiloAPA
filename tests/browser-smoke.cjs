@@ -128,6 +128,7 @@ const fs = require('node:fs');
     if (await page.locator('#preview table').count() < 1) errors.push('DOCX import lost the table');
     const importedImages = await page.locator('#preview img[src^="data:image/"]').count();
     if (importedImages < 1) errors.push('DOCX import lost its embedded figure');
+    await page.waitForFunction(() => [...document.querySelectorAll('#preview img')].every(img => img.complete && img.naturalWidth > 0), null, { timeout: 15000 });
     // Export the imported module and verify that a nonempty DOCX ZIP was downloaded.
     const exportButton = page.locator('#downloadDocxBtn');
     if (!(await exportButton.isEnabled())) {
@@ -138,7 +139,7 @@ const fs = require('node:fs');
       const download = await downloadPromise;
       const exportedPath = await download.path();
       const bytes = fs.readFileSync(exportedPath);
-      if (!/\\.docx$/i.test(download.suggestedFilename())) errors.push('Export filename is not DOCX: ' + download.suggestedFilename());
+      if (!/\.docx$/i.test(download.suggestedFilename())) errors.push('Export filename is not DOCX: ' + download.suggestedFilename());
       if (bytes.length < 500 || bytes.subarray(0, 2).toString('ascii') !== 'PK') errors.push('Exported DOCX is empty or not a ZIP package');
       // Round-trip the exported file through the same visible import workflow.
       if (bytes.length >= 500 && bytes.subarray(0, 2).toString('ascii') === 'PK') {
@@ -150,7 +151,8 @@ const fs = require('node:fs');
           if (!roundTrip.includes(phrase)) errors.push('DOCX round-trip missing content: ' + phrase);
         }
         if (await page.locator('#preview table').count() < 1) errors.push('DOCX round-trip lost the table');
-        if (await page.locator('#preview img').count() < 1) errors.push('DOCX round-trip lost its embedded figure');
+        if (await page.locator('#preview img').count() !== importedImages) errors.push('DOCX round-trip changed the image count');
+        await page.waitForFunction(() => [...document.querySelectorAll('#preview img')].every(img => img.complete && img.naturalWidth > 0), null, { timeout: 15000 });
       }
     }
     await page.locator('a[href="help.html"]').click();
