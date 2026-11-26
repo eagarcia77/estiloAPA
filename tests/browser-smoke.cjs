@@ -105,8 +105,7 @@ const fs = require('node:fs');
     else if (rulerScroll.scrolled > 40 && rulerScroll.delta > -30) errors.push('Ruler did not move with document scroll: ' + JSON.stringify(rulerScroll));
     // Import a synthetic Word document based on the structural features of a course module.
     await page.locator('#files').setInputFiles('test-results/apa7-module-fixture.docx');
-    // The UI exposes an explicit open action; exercise the same workflow as the user.
-    await page.locator('#importSelectedBtn').click();
+    // Selecting a file automatically starts import via the input change handler.
     try {
       await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 30000 });
     } catch (error) {
@@ -143,8 +142,8 @@ const fs = require('node:fs');
       if (bytes.length < 500 || bytes.subarray(0, 2).toString('ascii') !== 'PK') errors.push('Exported DOCX is empty or not a ZIP package');
       // Round-trip the exported file through the same visible import workflow.
       if (bytes.length >= 500 && bytes.subarray(0, 2).toString('ascii') === 'PK') {
-        await page.locator('#files').setInputFiles(exportedPath);
-        await page.locator('#importSelectedBtn').click();
+        await page.locator('#preview').fill('Round-trip pending');
+        await page.locator('#files').setInputFiles({ name: 'round-trip.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: bytes });
         await page.waitForFunction(() => document.getElementById('preview')?.innerText.includes('MÓDULO DE PRUEBA APA 7'), null, { timeout: 20000 });
         const roundTrip = await page.locator('#preview').innerText();
         for (const phrase of ['MÓDULO DE PRUEBA APA 7', 'Analítica de datos', 'Computación en la nube', 'Referencias']) {
