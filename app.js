@@ -1890,6 +1890,7 @@ h1,h2,h3,h4,h5,h6 { font: inherit; margin: 1em 0 0; }
   downloadBlob(new Blob([html], { type: "text/html;charset=utf-8" }), "modulo-APA7.html");
 }
 
+const exportImageRuns = new WeakMap();
 function textRunsFromNode(node, api, font, size, inherited = {}) {
   const { TextRun } = api;
   if (node.nodeType === Node.TEXT_NODE) {
@@ -1907,6 +1908,7 @@ function textRunsFromNode(node, api, font, size, inherited = {}) {
     italics: inherited.italics || ["I", "EM"].includes(tag),
     underline: inherited.underline || tag === "U",
   };
+  if (tag === "IMG") return exportImageRuns.has(node) ? [exportImageRuns.get(node)] : [];
   if (tag === "BR") return [new TextRun({ break: 1, font, size })];
   return [...node.childNodes].flatMap((child) => textRunsFromNode(child, api, font, size, style));
 }
@@ -1914,7 +1916,7 @@ function textRunsFromNode(node, api, font, size, inherited = {}) {
 function domBlockToDocxParagraph(element, api, font, size) {
   const { Paragraph, AlignmentType, TextRun } = api;
   const text = element.textContent.replace(/\s+/g, " ").trim();
-  if (!text) return null;
+  if (!text && !element.querySelector("img")) return null;
   const isRef = element.classList.contains("apa-reference");
   const isLevel1 = element.classList.contains("level-1") || element.tagName === "H1";
   const isLevel2 = element.classList.contains("level-2") || element.tagName === "H2";
@@ -2099,6 +2101,10 @@ async function imageToDocxRun(img, api) {
     const scale = Math.min(1, 520 / visibleWidth, 690 / visibleHeight);
     return new api.ImageRun({
       data: bytes,
+      type: bytes[0] === 0x89 && bytes[1] === 0x50 ? "png" :
+        bytes[0] === 0xff && bytes[1] === 0xd8 ? "jpg" :
+        bytes[0] === 0x47 && bytes[1] === 0x49 ? "gif" :
+        bytes[0] === 0x42 && bytes[1] === 0x4d ? "bmp" : undefined,
       transformation: {
         width: Math.max(1, Math.round(visibleWidth * scale)),
         height: Math.max(1, Math.round(visibleHeight * scale)),
@@ -2146,6 +2152,12 @@ async function downloadDocx() {
     const size = fontSettings[font].halfPoints;
     const clone = cleanExportClone();
     [...clone.querySelectorAll("img")].forEach((img, index) => { img.dataset.exportImageIndex = String(index); });
+    // Resolve every image before building Word paragraphs, including nested images.
+    for (const img of clone.querySelectorAll("img")) {
+      const run = await imageToDocxRun(img, api);
+      if (!run) throw new Error("No se pudo incrustar una imagen: " + (img.alt || "sin descripción") + ". Revise la imagen antes de exportar.");
+      exportImageRuns.set(img, run);
+    }
     const children = [];
     const numberingConfigs = [];
     let orderedListIndex = 0;
@@ -2165,7 +2177,7 @@ async function downloadDocx() {
         });
         for (const li of element.querySelectorAll(":scope > li")) {
           const text = li.textContent.replace(/\s+/g, " ").trim();
-          if (!text) continue;
+          if (!text && !li.querySelector("img")) continue;
           children.push(new Paragraph({
             children: textRunsFromNode(li, api, font, size, window.EstiloAPAWordDocxStyles?.childStyle(li, {}) || {}),
             bullet: element.tagName === "UL" ? { level: 0 } : undefined,
@@ -2253,7 +2265,7 @@ async function downloadDocx() {
       if (element.tagName === "FIGURE" || element.tagName === "IMG") {
         const images = element.tagName === "IMG" ? [element] : [...element.querySelectorAll("img")];
         for (const img of images) {
-          const imageRun = await imageToDocxRun(img, api);
+          const imageRun = exportImageRuns.get(img);
           if (imageRun) {
             children.push(new Paragraph({ children: [imageRun], spacing: { line: 480 } }));
           } else {
